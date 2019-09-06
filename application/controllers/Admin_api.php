@@ -1,0 +1,3434 @@
+<?php
+defined('BASEPATH') OR exit('No direct script access allowed');
+
+class Admin_api extends CI_Controller {
+
+		function get_token(){
+			$token = $this->model->getValue('ci_sessions','token',$_POST);
+			if(!empty($token)){
+				$token = decodeToken($token);
+		        $token['timestamp'] = now();
+		        $token = generateToken($token);
+		        $this->model->updateData('ci_sessions',['token'=>$token],['session_id'=>$_POST['session_id']]);
+			}
+			return $token;
+		}
+	/********************************** Admin Login *****************************************/
+		function sign_in(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['email']) || empty($_POST['password'])){
+						$response['message'] = 'Please fill required fields';
+						$response['code'] = 201;
+					}
+					else{
+						$admin = $this->model->getData('login',['email'=>$_POST['email'],'password'=>encyrpt_password($_POST['password'])]);
+						if(!empty($admin)){
+							$_POST['timestamp'] = now();
+							$token = generateToken($_POST);
+
+							$agent = get_agent();
+							$session_id = encyrpt_password($admin[0]['id'].'-'.$agent);
+							
+
+				            $sessions = array('session_id' => $session_id, 'token' => $token,'logged_in'=>true,'created_by'=>$admin[0]['id'],'agent'=>$agent);
+							$isExist = $this->model->isExist('ci_sessions','session_id',$session_id);
+							if($isExist){
+								$this->model->updateData('ci_sessions',$sessions,['session_id'=>$session_id]);
+							}
+							else{
+								$this->model->insertData('ci_sessions',$sessions);
+							}
+							
+							$response['$token'] = $token;
+							$response['session_id'] = $session_id;
+							$response['message'] = 'success';
+							$response['code'] = 200;
+							$response['status'] = true;
+						}
+						else{
+							$response['message'] = 'Username or password is incorrect';
+							$response['code'] = 203;
+						}
+					}
+				}
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+	/********************************** Countries *****************************************/
+
+		function get_countries(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					$select = '*';
+					if(!empty($_POST['select']) && isset($_POST['select'])){
+						$select = $_POST['select'];
+						unset($_POST['select']);
+					}
+					$countries = $this->model->getData('countries',[],$select);
+					$response['countries'] = $countries;
+					$response['message'] = 'success';
+					$response['code'] = 200;
+					$response['status'] = true;
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+	/********************************** States *****************************************/
+
+		function get_states(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					$select = 'id,name';
+					if(!empty($_POST['select']) && isset($_POST['select'])){
+						$select = $_POST['select'];
+						unset($_POST['select']);
+					}
+					$states = $this->model->getData('states',[],$select);
+					$response['states'] = $states;
+					$response['message'] = 'success';
+					$response['code'] = 200;
+					$response['status'] = true;
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function get_states_by_countries(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					$select = 'id,name';
+					if(!empty($_POST['select']) && isset($_POST['select'])){
+						$select = $_POST['select'];
+						unset($_POST['select']);
+					}
+					$states = $this->model->getData('states',['country_id'=>$_POST['country_id']],$select);
+					$response['states'] = $states;
+					$response['message'] = 'success';
+					$response['code'] = 200;
+					$response['status'] = true;
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+	/********************************** Cities *****************************************/
+
+		function get_cities(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					$select = 'id,name';
+					if(!empty($_POST['select']) && isset($_POST['select'])){
+						$select = $_POST['select'];
+						unset($_POST['select']);
+					}
+					$cities = $this->model->getData('cities',[],$select);
+					$response['cities'] = $cities;
+					$response['message'] = 'success';
+					$response['code'] = 200;
+					$response['status'] = true;
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function get_cities_by_state(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					$select = 'id,name';
+					if(!empty($_POST['select']) && isset($_POST['select'])){
+						$select = $_POST['select'];
+						unset($_POST['select']);
+					}
+					$cities = $this->model->getData('cities',['state_id'=>$_POST['state_id']],$select);
+					$response['cities'] = $cities;
+					$response['message'] = 'success';
+					$response['code'] = 200;
+					$response['status'] = true;
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+	/********************************** Company *****************************************/
+		function add_company(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					$id = $this->model->getValue('login','id',['id'=>$_POST['created_by'],'usertype'=>'admin']);
+					if (empty($id)) {
+						$response['message'] = 'Admin id is required';
+						$response['code'] = 201;
+					}
+					else if (empty($_POST['name'])){
+						$response['message'] = 'Please fill required fields';
+						$response['code'] = 201;
+					}
+					else{
+
+						$isExist = $this->model->isExist('company','email',$_POST['email']);
+						$isExist2 = $this->model->isExist('company','prsn_email',$_POST['prsn_email']);
+						$isExist3 = $this->model->isExist('login','phone',$_POST['prsn_contact']);
+						$isExist4 = $this->model->isExist('login','email',$_POST['prsn_email']);
+						if($isExist || $isExist2){
+							$response['message'] = 'Company email or contact person email is already exist';
+							$response['code'] = 201;
+						}
+						else if($isExist3 || $isExist4){
+							$response['message'] = 'Contact person email or phone is already exist';
+							$response['code'] = 201;
+						}
+						else{
+							$company_id = $this->model->insertData('company',$_POST);
+							if(!empty($company_id)){
+								
+								$login = [];
+								$login['fk_id'] = $company_id;
+								$login['username'] = $_POST['contact_prsn_name'];
+								$login['phone'] = $_POST['prsn_contact'];
+								$login['email'] = $_POST['prsn_email'];
+								$login['usertype'] = 'company';
+								$login['status'] = 1;
+								$login['created_by'] = $_POST['created_by'];
+								$this->model->insertData('login',$login);
+							}
+							$response['message'] = 'success';
+							$response['code'] = 200;
+							$response['status'] = true;
+						}
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function get_all_company(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			$validate = validateToken();
+			if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					$id = $this->model->getValue('login','id',['id'=>$_POST['created_by'],'usertype'=>'admin']);
+					if (empty($id)) {
+						$response['message'] = 'Admin id is required';
+						$response['code'] = 201;
+					}
+					else{
+						$select = '*';
+						if(!empty($_POST['select']) && isset($_POST['select'])){
+							$select = $_POST['select'];
+							unset($_POST['select']);
+						}
+						$company = $this->model->getData('company',['created_by'=>$_POST['created_by']],$select);
+						$response['companies'] = $company;
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			}
+			else{
+				$response['message'] = 'Authentication required';
+				$response['code'] = 203;
+			} 
+			echo json_encode($response);
+		}
+
+		function get_company(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					$id = $this->model->getValue('login','id',['id'=>$_POST['created_by'],'usertype'=>'admin']);
+					if (empty($id)) {
+						$response['message'] = 'Admin id is required';
+						$response['code'] = 201;
+					}
+					else if (empty($_POST['id'])){
+						$response['message'] = 'Company id is required';
+						$response['code'] = 201;
+					}
+					else{
+						$select = '*';
+						if(!empty($_POST['select']) && isset($_POST['select'])){
+							$select = $_POST['select'];
+							unset($_POST['select']);
+						}
+						$company = $this->model->getData('company',$_POST,$select);
+						$response['company'] = $company;
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function update_company(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					$id = $this->model->getValue('login','id',['id'=>$_POST['created_by'],'usertype'=>'admin']);
+					if (empty($id)) {
+						$response['message'] = 'Admin id is required';
+						$response['code'] = 201;
+					}
+					else if (empty($_POST['id'])){
+						$response['message'] = 'Company id is required';
+						$response['code'] = 201;
+					}
+					else if (empty($_POST['name'])){
+						$response['message'] = 'Please fill required fields';
+						$response['code'] = 201;
+					}
+					else{
+						$company = $this->model->updateData('company',$_POST,['id'=>$_POST['id']]);
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function delete_company(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					$id = $this->model->getValue('login','id',['id'=>$_POST['created_by'],'usertype'=>'admin']);
+					if (empty($id)) {
+						$response['message'] = 'Admin id is required';
+						$response['code'] = 201;
+					}
+					else if (empty($_POST['id'])){
+						$response['message'] = 'Company id is required';
+						$response['code'] = 201;
+					}
+					else{
+						$company = $this->model->deleteData('company',['id'=>$_POST['id']]);
+						$company = $this->model->deleteData('login',['fk_id'=>$_POST['id'],'usertype'=>'company']);
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+	/********************************** Branch *****************************************/
+		function add_branch(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['manager_name'])){
+						$response['message'] = 'Please fill required fields';
+						$response['code'] = 201;
+					}
+					else{
+						$isExist = $this->model->isExist('branch','email',$_POST['email']);
+						$isExist2 = $this->model->isExist('branch','contact',$_POST['contact']);
+						$isExist3 = $this->model->isExist('login','phone',$_POST['contact']);
+						$isExist4 = $this->model->isExist('login','email',$_POST['email']);
+						if($isExist || $isExist2 || $isExist3 || $isExist4){
+							$response['message'] = 'Email or contact is already exist';
+							$response['code'] = 201;
+						}
+						else{
+							$branch_id = $this->model->insertData('branch',$_POST);
+							if(!empty($branch_id)){
+								
+								$login = [];
+								$login['fk_id'] = $branch_id;
+								$login['username'] = $_POST['manager_name'];
+								$login['phone'] = $_POST['contact'];
+								$login['email'] = $_POST['email'];
+								$login['usertype'] = 'branch';
+								$login['status'] = 1;
+								$login['created_by'] = $_POST['created_by'];
+								$this->model->insertData('login',$login);
+							}
+							$response['message'] = 'success';
+							$response['code'] = 200;
+							$response['status'] = true;
+						}
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function get_all_branches(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					$select = '*';
+					if(!empty($_POST['select']) && isset($_POST['select'])){
+						$select = $_POST['select'];
+						unset($_POST['select']);
+					}
+					$branches = $this->model->getData('branch',['created_by'=>$_POST['created_by']],$select);
+					$response['branches'] = $branches;
+					$response['message'] = 'success';
+					$response['code'] = 200;
+					$response['status'] = true;
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function get_branch(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['id'])){
+						$response['message'] = 'Branch id is required';
+						$response['code'] = 201;
+					}
+					else{
+						$select = '*';
+						if(!empty($_POST['select']) && isset($_POST['select'])) {
+							$select = $_POST['select'];
+							unset($_POST['select']);
+						}
+						$branch = $this->model->getData('branch',$_POST,$select);
+						$response['branch'] = $branch;
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function update_branch(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['id'])){
+						$response['message'] = 'Branch id is required';
+						$response['code'] = 201;
+					}
+					else if (empty($_POST['manager_name'])){
+						$response['message'] = 'Please fill required fields';
+						$response['code'] = 201;
+					}
+					else{
+						// echo '<pre>'; print_r($_POST); exit;
+						$branch = $this->model->updateData('branch',$_POST,['id'=>$_POST['id']]);
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function delete_branch(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					$id = $this->model->getValue('login','id',['id'=>$_POST['created_by'],'usertype'=>'admin']);
+					if (empty($id)) {
+						$response['message'] = 'Admin id is required';
+						$response['code'] = 201;
+					}
+					else if (empty($_POST['id'])){
+						$response['message'] = 'Company id is required';
+						$response['code'] = 201;
+					}
+					else{
+						$company = $this->model->deleteData('branch',['id'=>$_POST['id']]);
+						$company = $this->model->deleteData('login',['fk_id'=>$_POST['id'],'usertype'=>'branch']);
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+	/********************************** Transport Type *****************************************/
+
+		function get_transport_types(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			$validate = validateToken();
+			if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['created_by'])){
+						$response['message'] = 'Created_by is required';
+						$response['code'] = 201;
+					}
+					else{
+						$select = '*';
+						if(!empty($_POST['select']) && isset($_POST['select'])) {
+							$select = $_POST['select'];
+							unset($_POST['select']);
+						}
+						$transport_types = $this->model->getData('transport_type',['created_by'=>$_POST['created_by']],$select);
+						$response['transport_types'] = $transport_types;
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			}
+			else{
+				$response['message'] = 'Authentication required';
+				$response['code'] = 203;
+			} 
+			echo json_encode($response);
+		}
+
+		function transport_types(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['created_by'])) {
+						$response['message'] = 'Created_by is required';
+						$response['code'] = 201;
+					}
+					else{
+						$transport_types = $this->model->getData('transport_type',[],'id');
+						if(!empty($transport_types)){
+							$db_ids = array_column($transport_types, 'id');
+							if(!empty($db_ids)){
+								foreach ($db_ids as $key => $id) {
+									if(!in_array($id, $_POST['type_ids'])){
+										$this->model->deleteData('transport_type',['id'=>$id]);
+									}
+								}
+							}
+						}
+						
+						foreach ($_POST['types'] as $key => $type) {
+							$isExist = $this->model->getValue('transport_type','type',['created_by'=>$_POST['created_by'],'type'=>$type]);
+							if(empty($isExist)){
+								$this->model->insertData('transport_type',['created_by'=>$_POST['created_by'],'type'=>$type]);
+							}
+						}
+						
+						
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+	/********************************** Customer Types *****************************************/
+		function customer_types(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['created_by']) || empty($_POST['types'])) {
+						$response['message'] = 'Please fill required fields';
+						$response['code'] = 201;
+					}
+					else{
+						$types = $this->model->getData('customer_types',[],'id');
+						if(!empty($types)){
+							$db_ids = array_column($types, 'id');
+							if(!empty($db_ids)){
+								foreach ($db_ids as $key => $id) {
+									if(!in_array($id, $_POST['type_ids'])){
+										$this->model->deleteData('customer_types',['id'=>$id]);
+									}
+								}
+							}
+						}
+						
+						if(!empty($_POST['types'])){
+							foreach ($_POST['types'] as $key => $type) {
+								$isExist = $this->model->getValue('customer_types','type',['created_by'=>$_POST['created_by'],'type'=>$type]);
+								if(empty($isExist)){
+									$this->model->insertData('customer_types',['created_by'=>$_POST['created_by'],'type'=>$type]);
+								}
+							}
+						}
+						
+						
+						
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function get_customer_types(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			$validate = validateToken();
+			if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					$select = '*';
+					if(!empty($_POST['select']) && isset($_POST['select'])) {
+						$select = $_POST['select'];
+						unset($_POST['select']);
+					}
+					$customer_types = $this->model->getData('customer_types',['created_by'=>$_POST['created_by']],$select);
+					$response['customer_types'] = $customer_types;
+					$response['message'] = 'success';
+					$response['code'] = 200;
+					$response['status'] = true;
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			}
+			else{
+				$response['message'] = 'Authentication required';
+				$response['code'] = 203;
+			} 
+			echo json_encode($response);
+		}
+
+	/********************************** Customer *****************************************/
+		function add_customer(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['name'])){
+						$response['message'] = 'Please fill required fields';
+						$response['code'] = 201;
+					}
+					else{
+						$isExist = $this->model->isExist('customer','email',$_POST['email']);
+						if(!$isExist){
+							$customer_contacts = $_POST['customer_contacts'];
+							unset($_POST['customer_contacts']);
+							$customer_id = $this->model->insertData('customer',$_POST);
+							if(!empty($customer_id)){
+								foreach ($customer_contacts as $key => $value) {
+									$value['customer_id'] = $customer_id;
+									$this->model->insertData('customer_contacts',$value);
+								}
+								$customer = [];
+								$customer['fk_id'] = $customer_id;
+								$customer['username'] = $_POST['name'];
+								$customer['phone'] = $_POST['contact'];
+								$customer['email'] = $_POST['email'];
+								$customer['usertype'] = 'customer';
+								$customer['status'] = 1;
+								$customer['created_by'] = $_POST['created_by'];
+								$this->model->insertData('login',$customer);
+							}
+							$response['message'] = 'success';
+							$response['code'] = 200;
+							$response['status'] = true;
+						}
+						else{
+							$response['message'] = 'Customer email is already exist';
+							$response['code'] = 201;
+						}
+						
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function get_all_customers(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					$select = '*';
+					$select2 = '*';
+					if(!empty($_POST['select']) && isset($_POST['select'])) {
+						if(!empty($_POST['select']['contacts']) && isset($_POST['select']['contacts'])) {
+							$select2 = $_POST['select']['contacts'];
+							unset($_POST['select']['contacts']);
+						}
+						$select = $_POST['select'];
+						unset($_POST['select']);
+					}
+					$customer = $this->model->getData('customer',['created_by'=>$_POST['created_by']],$select);
+					if(!empty($customer)){
+						foreach ($customer as $key => $value) {
+							$customer[$key]['contacts'] = $this->model->getData('customer_contacts',['customer_id'=>$value['id']],$select2);
+						}
+					}
+					$response['customer'] = $customer;
+					$response['message'] = 'success';
+					$response['code'] = 200;
+					$response['status'] = true;
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function get_customer(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['id'])){
+						$response['message'] = 'Customer id is required';
+						$response['code'] = 201;
+					}
+					else{
+						$select = '*';
+						$select2 = '*';
+						if(!empty($_POST['select']) && isset($_POST['select'])) {
+							if(!empty($_POST['select']['contacts']) && isset($_POST['select']['contacts'])) {
+								$select2 = $_POST['select']['contacts'];
+								unset($_POST['select']['contacts']);
+							}
+							$select = $_POST['select'];
+							unset($_POST['select']);
+						}
+						$customer = $this->model->getData('customer',$_POST,$select);
+						if(!empty($customer)){
+							foreach ($customer as $key => $value) {
+								$customer[$key]['contacts'] = $this->model->getData('customer_contacts',['customer_id'=>$value['id']],$select2);
+							}
+						}
+						$response['customer'] = $customer;
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function update_customer(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['id'])){
+						$response['message'] = 'Customer id is required';
+						$response['code'] = 201;
+					}
+					else if (empty($_POST['name'])){
+						$response['message'] = 'Please fill required fields';
+						$response['code'] = 201;
+					}
+					else{
+						$v_customer_contacts = $_POST['customer_contacts'];
+						unset($_POST['customer_contacts']);
+						$customer = $this->model->updateData('customer',$_POST,['id'=>$_POST['id']]);
+
+						if(!empty($v_customer_contacts)) {
+							$v_ids = array_column($v_customer_contacts, 'id');
+						}
+						else{
+							$v_ids = [];
+						}
+						$db_customer_contacts = $this->model->getData('customer_contacts',['customer_id'=>$_POST['id']]);
+						if(!empty($db_customer_contacts)){
+							$db_ids = array_column($db_customer_contacts, 'id');
+						}
+						else{
+							$db_ids = [];
+						}
+						if(!empty($v_customer_contacts)){
+							foreach ($v_customer_contacts as $key => $value) {
+								if(!in_array($value['id'], $db_ids)) {
+									//insert
+									$value['customer_id'] = $_POST['id'];
+									$this->model->insertData('customer_contacts',$value);
+								}
+								else{
+									//update
+									$value['customer_id'] = $_POST['id'];
+									$this->model->updateData('customer_contacts',$value,['id'=>$value['id']]);
+
+								}
+							}
+						}
+						if(!empty($db_customer_contacts)){
+							foreach ($db_customer_contacts as $key => $value){
+								if(!in_array($value['id'], $v_ids)){
+									$this->model->deleteData('customer_contacts',['id'=>$value['id']]);
+								}
+							}
+						}
+
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function delete_customer(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			$validate = validateToken();
+			if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['id'])){
+						$response['message'] = 'Customer id is required';
+						$response['code'] = 201;
+					}
+					else{
+						$customer = $this->model->deleteData('customer',['id'=>$_POST['id']]);
+						$customer = $this->model->deleteData('customer_contacts',['customer_id'=>$_POST['id']]);
+						$customer = $this->model->deleteData('login',['fk_id'=>$_POST['id'],'usertype'=>'customer']);
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			}
+			else{
+				$response['message'] = 'Authentication required';
+				$response['code'] = 203;
+			} 
+			echo json_encode($response);
+		}
+
+	/********************************** Customer Contacts*****************************************/
+		function add_customer_contact(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['customer_id'])) {
+						$response['message'] = 'Customer id is required';
+						$response['code'] = 201;
+					}
+					else{
+						$this->model->insertData('customer_contacts',$_POST);
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+	/********************************** Designation *****************************************/
+		function designations(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['created_by'])) {
+						$response['message'] = 'Please fill required fields';
+						$response['code'] = 201;
+					}
+					else{
+						$designations = $this->model->getData('designation',[],'id');
+						if(!empty($designations)){
+							$db_ids = array_column($designations, 'id');
+							if(!empty($db_ids)){
+								foreach ($db_ids as $key => $id) {
+									if(!in_array($id, $_POST['designation_ids'])){
+										$this->model->deleteData('designation',['id'=>$id]);
+									}
+								}
+							}
+						}
+						if(!empty($_POST['designations'])){
+							foreach ($_POST['designations'] as $key => $designation) {
+								$isExist = $this->model->getValue('designation','designation',['created_by'=>$_POST['created_by'],'designation'=>$designation]);
+								if(empty($isExist)){
+									$this->model->insertData('designation',['created_by'=>$_POST['created_by'],'designation'=>$designation]);
+								}
+							}	
+						}
+						
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function get_designations(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			$validate = validateToken();
+			if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					$select = '*';
+					if(!empty($_POST['select']) && isset($_POST['select'])) {
+						$select = $_POST['select'];
+						unset($_POST['select']);
+					}
+					$designations = $this->model->getData('designation',['created_by'=>$_POST['created_by']],$select);
+					$response['designations'] = $designations;
+					$response['message'] = 'success';
+					$response['code'] = 200;
+					$response['status'] = true;
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			}
+			else{
+				$response['message'] = 'Authentication required';
+				$response['code'] = 203;
+			} 
+			echo json_encode($response);
+		}
+
+	/********************************** Employee *****************************************/
+		function add_employee(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['name'])){
+						$response['message'] = 'Please fill required fields';
+						$response['code'] = 201;
+					}
+					else{
+						$isExist = $this->model->isExist('employee','email',$_POST['email']);
+						if(!$isExist){
+							$employee_id = $this->model->insertData('employee',$_POST);
+							if(!empty($employee_id)){
+								$employee = [];
+								$employee['fk_id'] = $employee_id;
+								$employee['username'] = $_POST['name'];
+								$employee['phone'] = $_POST['contact'];
+								$employee['email'] = $_POST['email'];
+								$employee['usertype'] = 'employee';
+								$employee['status'] = 1;
+								$employee['created_by'] = $_POST['created_by'];
+								$this->model->insertData('login',$employee);
+							}
+							$response['message'] = 'success';
+							$response['code'] = 200;
+							$response['status'] = true;
+						}
+						else{
+							$response['message'] = 'Employee email is already exist';
+							$response['code'] = 201;
+						}
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function get_all_employee(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					$select = '*';
+					if(!empty($_POST['select']) && isset($_POST['select'])) {
+						$select = $_POST['select'];
+						unset($_POST['select']);
+					}
+					$employees = $this->model->getData('employee',['created_by'=>$_POST['created_by']],$select);
+					$response['employees'] = $employees;
+					$response['message'] = 'success';
+					$response['code'] = 200;
+					$response['status'] = true;
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function get_employee(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['id'])){
+						$response['message'] = 'Employee id is required';
+						$response['code'] = 201;
+					}
+					else{
+						$select = '*';
+						if(!empty($_POST['select']) && isset($_POST['select'])) {
+							$select = $_POST['select'];
+							unset($_POST['select']);
+						}
+						$employee = $this->model->getData('employee',$_POST,$select);
+						$response['employee'] = $employee;
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function update_employee(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['id'])){
+						$response['message'] = 'Employee id is required';
+						$response['code'] = 201;
+					}
+					else{
+						$employee = $this->model->updateData('employee',$_POST,['id'=>$_POST['id']]);
+
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function delete_employee(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			$validate = validateToken();
+			if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['id'])){
+						$response['message'] = 'Employee id is required';
+						$response['code'] = 201;
+					}
+					else{
+						$this->model->deleteData('employee',['id'=>$_POST['id']]);
+						$this->model->deleteData('login',['fk_id'=>$_POST['id'],'usertype'=>'employee']);
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			}
+			else{
+				$response['message'] = 'Authentication required';
+				$response['code'] = 203;
+			} 
+			echo json_encode($response);
+		}	
+
+	/********************************** Vendor Types *****************************************/
+		function vendor_types(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['created_by']) || empty($_POST['types'])) {
+						$response['message'] = 'Please fill required fields';
+						$response['code'] = 201;
+					}
+					else{
+						$types = $this->model->getData('vendor_types',[],'id');
+						if(!empty($types)){
+							$db_ids = array_column($types, 'id');
+							if(!empty($db_ids)){
+								foreach ($db_ids as $key => $id) {
+									if(!in_array($id, $_POST['type_ids'])){
+										$this->model->deleteData('vendor_types',['id'=>$id]);
+									}
+								}
+							}
+						}
+						
+						if(!empty($_POST['types'])){
+							foreach ($_POST['types'] as $key => $type) {
+								$isExist = $this->model->getValue('vendor_types','type',['created_by'=>$_POST['created_by'],'type'=>$type]);
+								if(empty($isExist)){
+									$this->model->insertData('vendor_types',['created_by'=>$_POST['created_by'],'type'=>$type]);
+								}
+							}
+						}
+						
+						
+						
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function get_vendor_types(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			$validate = validateToken();
+			if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					$select = '*';
+					if(!empty($_POST['select']) && isset($_POST['select'])) {
+						$select = $_POST['select'];
+						unset($_POST['select']);
+					}
+					$vendor_types = $this->model->getData('vendor_types',['created_by'=>$_POST['created_by']],$select);
+					$response['vendor_types'] = $vendor_types;
+					$response['message'] = 'success';
+					$response['code'] = 200;
+					$response['status'] = true;
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			}
+			else{
+				$response['message'] = 'Authentication required';
+				$response['code'] = 203;
+			} 
+			echo json_encode($response);
+		}
+
+	/********************************** Vendor *****************************************/
+		function add_vendor(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['contact_prsn_name'])){
+						$response['message'] = 'Please fill required fields';
+						$response['code'] = 201;
+					}
+					else{
+						$isExist = $this->model->isExist('vendor','email',$_POST['email']);
+						$isExist2 = $this->model->isExist('login','email',$_POST['prsn_email']);
+						if(!$isExist && !$isExist2){
+							$vendor_id = $this->model->insertData('vendor',$_POST);
+							if(!empty($vendor_id)){
+								$vendor = [];
+								$vendor['fk_id'] = $vendor_id;
+								$vendor['username'] = $_POST['contact_prsn_name'];
+								$vendor['phone'] = $_POST['contact'];
+								$vendor['email'] = $_POST['email'];
+								$vendor['usertype'] = 'vendor';
+								$vendor['status'] = 1;
+								$vendor['created_by'] = $_POST['created_by'];
+								$this->model->insertData('login',$vendor);
+							}
+							$response['message'] = 'success';
+							$response['code'] = 200;
+							$response['status'] = true;
+						}
+						else{
+							$response['message'] = 'Vendor email is already exist';
+							$response['code'] = 201;
+						}
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function get_all_vendors(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					$select = '*';
+					if(!empty($_POST['select']) && isset($_POST['select'])) {
+						$select = $_POST['select'];
+						unset($_POST['select']);
+					}
+					$vendors = $this->model->getData('vendor',['created_by'=>$_POST['created_by']],$select);
+					$response['vendors'] = $vendors;
+					$response['message'] = 'success';
+					$response['code'] = 200;
+					$response['status'] = true;
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function get_vendor(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['id'])){
+						$response['message'] = 'Vendor id is required';
+						$response['code'] = 201;
+					}
+					else{
+						$select = '*';
+						if(!empty($_POST['select']) && isset($_POST['select'])) {
+							$select = $_POST['select'];
+							unset($_POST['select']);
+						}
+						$vendor = $this->model->getData('vendor',$_POST,$select);
+						$response['vendor'] = $vendor;
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function update_vendor(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['id'])){
+						$response['message'] = 'Vendor id is required';
+						$response['code'] = 201;
+					}
+					else{
+						$vendor = $this->model->updateData('vendor',$_POST,['id'=>$_POST['id']]);
+
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function delete_vendor(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['id'])){
+						$response['message'] = 'Vendor id is required';
+						$response['code'] = 201;
+					}
+					else{
+						$this->model->deleteData('vendor',['id'=>$_POST['id']]);
+						$this->model->deleteData('login',['fk_id'=>$_POST['id'],'usertype'=>'vendor']);
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+	/********************************** Vehicle *****************************************/
+		function add_vehicle(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['regno'])){
+						$response['message'] = 'Please fill required fields';
+						$response['code'] = 201;
+					}
+					else{
+						$isExist = $this->model->isExist('vehicle','regno',$_POST['regno']);
+						if(!$isExist){
+							$vehicle_id = $this->model->insertData('vehicle',$_POST);
+							
+							$response['message'] = 'success';
+							$response['code'] = 200;
+							$response['status'] = true;
+						}
+						else{
+							$response['message'] = 'Registration no is already exist';
+							$response['code'] = 201;
+						}
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function get_all_vehicles(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					$select = '*';
+					if(!empty($_POST['select']) && isset($_POST['select'])) {
+						$select = $_POST['select'];
+						unset($_POST['select']);
+					}
+					$vehicles = $this->model->getData('vehicle',['created_by'=>$_POST['created_by']],$select);
+					$response['vehicles'] = $vehicles;
+					$response['message'] = 'success';
+					$response['code'] = 200;
+					$response['status'] = true;
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function get_vehicle(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['id'])){
+						$response['message'] = 'Vehicle id is required';
+						$response['code'] = 201;
+					}
+					else{
+						$select = '*';
+						if(!empty($_POST['select']) && isset($_POST['select'])) {
+							$select = $_POST['select'];
+							unset($_POST['select']);
+						}
+						$vehicle = $this->model->getData('vehicle',$_POST,$select);
+						$response['vehicle'] = $vehicle;
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function update_vehicle(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['id'])){
+						$response['message'] = 'Vehicle id is required';
+						$response['code'] = 201;
+					}
+					else{
+						$vehicle = $this->model->updateData('vehicle',$_POST,['id'=>$_POST['id']]);
+
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function delete_vehicle(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['id'])){
+						$response['message'] = 'Vehicle id is required';
+						$response['code'] = 201;
+					}
+					else{
+						$this->model->deleteData('vehicle',['id'=>$_POST['id']]);
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}	
+
+	/********************************** Zone *****************************************/
+
+		function add_zone(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['transport_type_id']) || empty($_POST['zone_code']) || empty($_POST['zone'])){
+						$response['message'] = 'Please fill required fields';
+						$response['code'] = 201;
+					}
+					else{
+						$isExist = $this->model->getValue('zone','zone',['created_by'=>$_POST['created_by'],'zone'=>$_POST['zone']]);
+						if(empty($isExist)){
+							$_POST['cities'] = implode(',', $_POST['cities']);
+							$_POST['countries'] = implode(',', $_POST['countries']);
+							$zone_id = $this->model->insertData('zone',$_POST);
+							$response['message'] = 'success';
+							$response['code'] = 200;
+							$response['status'] = true;
+						}
+						else{
+							$response['message'] = 'Zone is already exist';
+							$response['code'] = 201;
+						}
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function get_all_zones(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					$select = '*';
+					if(!empty($_POST['select']) && isset($_POST['select'])) {
+						$select = $_POST['select'];
+						unset($_POST['select']);
+					}
+					$zones = $this->model->getData('zone',['created_by'=>$_POST['created_by']],$select);
+					
+					$response['zone'] = $zone;
+					$response['message'] = 'success';
+					$response['code'] = 200;
+					$response['status'] = true;
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function get_zone(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['id'])){
+						$response['message'] = 'Zone id is required';
+						$response['code'] = 201;
+					}
+					else{
+						$select = '*';
+						if(!empty($_POST['select']) && isset($_POST['select'])) {
+							$select = $_POST['select'];
+							unset($_POST['select']);
+						}
+						$zone = $this->model->getData('zone',$_POST,$select);
+						if(!empty($zone)){
+							foreach ($zone as $key => $value) {
+								$zone[$key]['cities'] = explode(',', $value['cities']);
+								$zone[$key]['countries'] = explode(',', $value['countries']);
+							}
+						}
+						$response['zone'] = $zone;
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function update_zone(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['id'])){
+						$response['message'] = 'Zone id is required';
+						$response['code'] = 201;
+					}
+					else if (empty($_POST['transport_type_id']) || empty($_POST['zone_code']) || empty($_POST['zone'])){
+						$response['message'] = 'Please fill required fields';
+						$response['code'] = 201;
+					}
+					else{
+						$_POST['cities'] = implode(',', $_POST['cities']);
+						$_POST['countries'] = implode(',', $_POST['countries']);
+						$zone = $this->model->updateData('zone',$_POST,['id'=>$_POST['id']]);
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function delete_zone(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['id'])){
+						$response['message'] = 'Zone id is required';
+						$response['code'] = 201;
+					}
+					else{
+						$zone = $this->model->deleteData('zone',['id'=>$_POST['id']]);
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+	/********************************** Zone Areas *****************************************/
+
+		// function add_zone_areas(){
+		// 	$response = array('code' => -1, 'status' => false, 'message' => '');
+		// 	$validate = validateToken();
+		// 	if($validate){
+		// 		if ($_SERVER["REQUEST_METHOD"] == "POST"){
+		// 			if (empty($_POST['state_id']) || empty($_POST['company_id']) || empty($_POST['zone_id'] || empty($_POST['area_name']))){
+		// 				$response['message'] = 'Please fill required fields';
+		// 				$response['code'] = 201;
+		// 			}
+		// 			else{
+		// 				$isExist = $this->model->isExist('zone_areas','area_name',$_POST['area_name']);
+		// 				if(!$isExist){
+		// 					$this->model->insertData('zone_areas',$_POST);
+		// 					$response['message'] = 'success';
+		// 					$response['code'] = 200;
+		// 					$response['status'] = true;
+		// 				}
+		// 				else{
+		// 					$response['message'] = 'Area name is already exist';
+		// 					$response['code'] = 201;
+		// 				}
+		// 			}
+		// 		} 
+		// 		else {
+		// 			$response['message'] = 'No direct script is allowed.';
+		// 			$response['code'] = 204;
+		// 		}
+		// 	}
+		// 	else{
+		// 		$response['message'] = 'Authentication required';
+		// 		$response['code'] = 203;
+		// 	} 
+		// 	echo json_encode($response);
+		// }
+
+		// function get_company_zone_areas(){
+		// 	$response = array('code' => -1, 'status' => false, 'message' => '');
+		// 	$validate = validateToken();
+		// 	if($validate){
+		// 		if ($_SERVER["REQUEST_METHOD"] == "POST"){
+		// 			if (empty($_POST['company_id'])){
+		// 				$response['message'] = 'Company id is required';
+		// 				$response['code'] = 201;
+		// 			}
+		// 			else{
+		// 				$zone_areas = $this->model->getData('zone_areas',['company_id'=>$_POST['company_id']]);
+		// 				$response['zone_areas'] = $zone_areas;
+		// 				$response['message'] = 'success';
+		// 				$response['code'] = 200;
+		// 				$response['status'] = true;
+		// 			}
+		// 		} 
+		// 		else {
+		// 			$response['message'] = 'No direct script is allowed.';
+		// 			$response['code'] = 204;
+		// 		}
+		// 	}
+		// 	else{
+		// 		$response['message'] = 'Authentication required';
+		// 		$response['code'] = 203;
+		// 	} 
+		// 	echo json_encode($response);
+		// }
+
+		// function get_state_zone_areas(){
+		// 	$response = array('code' => -1, 'status' => false, 'message' => '');
+		// 	$validate = validateToken();
+		// 	if($validate){
+		// 		if ($_SERVER["REQUEST_METHOD"] == "POST"){
+		// 			if (empty($_POST['company_id'])){
+		// 				$response['message'] = 'Company id is required';
+		// 				$response['code'] = 201;
+		// 			}
+		// 			else if (empty($_POST['state_id'])){
+		// 				$response['message'] = 'State id is required';
+		// 				$response['code'] = 201;
+		// 			}
+		// 			else{
+		// 				$zone_areas = $this->model->getData('zone_areas',$_POST);
+		// 				$response['zone_areas'] = $zone_areas;
+		// 				$response['message'] = 'success';
+		// 				$response['code'] = 200;
+		// 				$response['status'] = true;
+		// 			}
+		// 		} 
+		// 		else {
+		// 			$response['message'] = 'No direct script is allowed.';
+		// 			$response['code'] = 204;
+		// 		}
+		// 	}
+		// 	else{
+		// 		$response['message'] = 'Authentication required';
+		// 		$response['code'] = 203;
+		// 	} 
+		// 	echo json_encode($response);
+		// }
+
+		// function get_zone_areas(){
+		// 	$response = array('code' => -1, 'status' => false, 'message' => '');
+		// 	$validate = validateToken();
+		// 	if($validate){
+		// 		if ($_SERVER["REQUEST_METHOD"] == "POST"){
+		// 			if (empty($_POST['zone_id'])){
+		// 				$response['message'] = 'Zone id is required';
+		// 				$response['code'] = 201;
+		// 			}
+		// 			else{
+		// 				$zone_areas = $this->model->getData('zone_areas',$_POST);
+		// 				$response['zone_areas'] = $zone_areas;
+		// 				$response['message'] = 'success';
+		// 				$response['code'] = 200;
+		// 				$response['status'] = true;
+		// 			}
+		// 		} 
+		// 		else {
+		// 			$response['message'] = 'No direct script is allowed.';
+		// 			$response['code'] = 204;
+		// 		}
+		// 	}
+		// 	else{
+		// 		$response['message'] = 'Authentication required';
+		// 		$response['code'] = 203;
+		// 	} 
+		// 	echo json_encode($response);
+		// }
+
+		// function update_zone_areas(){
+		// 	$response = array('code' => -1, 'status' => false, 'message' => '');
+		// 	$validate = validateToken();
+		// 	if($validate){
+		// 		if ($_SERVER["REQUEST_METHOD"] == "POST"){
+		// 			if (empty($_POST['id'])){
+		// 				$response['message'] = 'Zone Areas id is required';
+		// 				$response['code'] = 201;
+		// 			}
+		// 			else if (empty($_POST['state_id']) || empty($_POST['company_id']) || empty($_POST['zone_id']) || empty($_POST['area_name'])){
+		// 				$response['message'] = 'Please fill required fields';
+		// 				$response['code'] = 201;
+		// 			}
+		// 			else{
+		// 				$zone_areas = $this->model->updateData('zone_areas',$_POST,['id'=>$_POST['id']]);
+		// 				$response['message'] = 'success';
+		// 				$response['code'] = 200;
+		// 				$response['status'] = true;
+		// 			}
+		// 		} 
+		// 		else {
+		// 			$response['message'] = 'No direct script is allowed.';
+		// 			$response['code'] = 204;
+		// 		}
+		// 	}
+		// 	else{
+		// 		$response['message'] = 'Authentication required';
+		// 		$response['code'] = 203;
+		// 	} 
+		// 	echo json_encode($response);
+		// }
+
+		// function delete_zone_areas(){
+		// 	$response = array('code' => -1, 'status' => false, 'message' => '');
+		// 	$validate = validateToken();
+		// 	if($validate){
+		// 		if ($_SERVER["REQUEST_METHOD"] == "POST"){
+		// 			if (empty($_POST['id'])){
+		// 				$response['message'] = 'Zone Areas id is required';
+		// 				$response['code'] = 201;
+		// 			}
+		// 			else{
+		// 				$zone_areas = $this->model->deleteData('zone_areas',['id'=>$_POST['id']]);
+		// 				$response['message'] = 'success';
+		// 				$response['code'] = 200;
+		// 				$response['status'] = true;
+		// 			}
+		// 		} 
+		// 		else {
+		// 			$response['message'] = 'No direct script is allowed.';
+		// 			$response['code'] = 204;
+		// 		}
+		// 	}
+		// 	else{
+		// 		$response['message'] = 'Authentication required';
+		// 		$response['code'] = 203;
+		// 	} 
+		// 	echo json_encode($response);
+		// }
+
+	/********************************** Pincode *****************************************/
+
+		function add_pincode(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['pincode'])) {
+						$response['message'] = 'Please fill required fields';
+						$response['code'] = 201;
+					}
+					else{
+						$isExist = $this->model->getValue('pincode','pincode',['created_by'=>$_POST['created_by'],'pincode'=>$_POST['pincode']]);
+						if(empty($isExist)){
+							$this->model->insertData('pincode',$_POST);
+							$response['message'] = 'success';
+							$response['code'] = 200;
+							$response['status'] = true;
+						}
+						else{
+							$response['message'] = 'Pincode is already exist';
+							$response['code'] = 201;
+						}
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function get_all_pincodes(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['created_by'])){
+						$response['message'] = 'Created_by is required';
+						$response['code'] = 201;
+					}
+					else{
+						$select = '*';
+						if(!empty($_POST['select']) && isset($_POST['select'])) {
+							$select = $_POST['select'];
+							unset($_POST['select']);
+						}
+						$pincode = $this->model->getData('pincode',['created_by'=>$_POST['created_by']],$select);
+						$response['pincode'] = $pincode;
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function get_pincode(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['id'])){
+						$response['message'] = 'Pincode id is required';
+						$response['code'] = 201;
+					}
+					else{
+						$select = '*';
+						if(!empty($_POST['select']) && isset($_POST['select'])) {
+							$select = $_POST['select'];
+							unset($_POST['select']);
+						}
+						$pincode = $this->model->getData('pincode',$_POST,$select);
+						$response['pincode'] = $pincode;
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				// } 
+				// else {
+				// 	$response['message'] = 'No direct script is allowed.';
+				// 	$response['code'] = 204;
+				// }
+			}
+			else{
+				$response['message'] = 'Authentication required';
+				$response['code'] = 203;
+			} 
+			echo json_encode($response);
+		}
+
+		function update_pincode(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['id'])){
+						$response['message'] = 'Pincode id is required';
+						$response['code'] = 201;
+					}
+					else if (empty($_POST['created_by']) || empty($_POST['pincode'])) {
+						$response['message'] = 'Please fill required fields';
+						$response['code'] = 201;
+					}
+					else{
+						$pincode = $this->model->updateData('pincode',$_POST,['id'=>$_POST['id']]);
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function delete_pincode(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['id'])){
+						$response['message'] = 'Pincode id is required';
+						$response['code'] = 201;
+					}
+					else{
+						$pincode = $this->model->deleteData('pincode',['id'=>$_POST['id']]);
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+	/********************************** Mode *****************************************/
+		// function add_mode(){
+		// 	$response = array('code' => -1, 'status' => false, 'message' => '');
+		// 	// $validate = validateToken();
+		// 	// if($validate){
+		// 		if ($_SERVER["REQUEST_METHOD"] == "POST"){
+		// 			if (empty($_POST['created_by']) || empty($_POST['mode_name']) ){
+		// 				$response['message'] = 'Please fill required fields';
+		// 				$response['code'] = 201;
+		// 			}
+		// 			else{
+		// 				$isExist = $this->model->getValue('mode','mode_name',['created_by'=>$_POST['created_by'],'zone'=>$_POST['zone']]);
+		// 				if(empty($isExist)){
+		// 					$this->model->insertData('mode',$_POST);
+		// 					$response['message'] = 'success';
+		// 					$response['code'] = 200;
+		// 					$response['status'] = true;
+		// 				}
+		// 				else{
+		// 					$response['message'] = 'Mode is already exist';
+		// 					$response['code'] = 201;
+		// 				}
+		// 			}
+		// 		} 
+		// 		else {
+		// 			$response['message'] = 'No direct script is allowed.';
+		// 			$response['code'] = 204;
+		// 		}
+		// 	// }
+		// 	// else{
+		// 	// 	$response['message'] = 'Authentication required';
+		// 	// 	$response['code'] = 203;
+		// 	// } 
+		// 	echo json_encode($response);
+		// }
+
+		function get_all_modes(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			$validate = validateToken();
+			if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['created_by'])){
+						$response['message'] = 'Created_by is required';
+						$response['code'] = 201;
+					}
+					else{
+						$select = '*';
+						if(!empty($_POST['select']) && isset($_POST['select'])) {
+							$select = $_POST['select'];
+							unset($_POST['select']);
+						}
+						$mode = $this->model->getData('mode',['created_by'=>$_POST['created_by']],$select);
+						$response['mode'] = $mode;
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			}
+			else{
+				$response['message'] = 'Authentication required';
+				$response['code'] = 203;
+			} 
+			echo json_encode($response);
+		}
+
+		// function get_mode(){
+		// 	$response = array('code' => -1, 'status' => false, 'message' => '');
+		// 	$validate = validateToken();
+		// 	if($validate){
+		// 		if ($_SERVER["REQUEST_METHOD"] == "POST"){
+		// 			if (empty($_POST['id'])){
+		// 				$response['message'] = 'Mode id is required';
+		// 				$response['code'] = 201;
+		// 			}
+		// 			else{
+		// 				$mode = $this->model->getData('mode',$_POST);
+		// 				$response['mode'] = $mode;
+		// 				$response['message'] = 'success';
+		// 				$response['code'] = 200;
+		// 				$response['status'] = true;
+		// 			}
+		// 		} 
+		// 		else {
+		// 			$response['message'] = 'No direct script is allowed.';
+		// 			$response['code'] = 204;
+		// 		}
+		// 	}
+		// 	else{
+		// 		$response['message'] = 'Authentication required';
+		// 		$response['code'] = 203;
+		// 	} 
+		// 	echo json_encode($response);
+		// }
+
+		// function update_mode(){
+		// 	$response = array('code' => -1, 'status' => false, 'message' => '');
+		// 	$validate = validateToken();
+		// 	if($validate){
+		// 		if ($_SERVER["REQUEST_METHOD"] == "POST"){
+		// 			if (empty($_POST['id'])){
+		// 				$response['message'] = 'Mode id is required';
+		// 				$response['code'] = 201;
+		// 			}
+		// 			else if (empty($_POST['company_id']) || empty($_POST['mode_name'])){
+		// 				$response['message'] = 'Please fill required fields';
+		// 				$response['code'] = 201;
+		// 			}
+		// 			else{
+		// 				$mode = $this->model->updateData('mode',$_POST,['id'=>$_POST['id']]);
+		// 				$response['message'] = 'success';
+		// 				$response['code'] = 200;
+		// 				$response['status'] = true;
+		// 			}
+		// 		} 
+		// 		else {
+		// 			$response['message'] = 'No direct script is allowed.';
+		// 			$response['code'] = 204;
+		// 		}
+		// 	}
+		// 	else{
+		// 		$response['message'] = 'Authentication required';
+		// 		$response['code'] = 203;
+		// 	} 
+		// 	echo json_encode($response);
+		// }
+
+		// function delete_mode(){
+		// 	$response = array('code' => -1, 'status' => false, 'message' => '');
+		// 	$validate = validateToken();
+		// 	if($validate){
+		// 		if ($_SERVER["REQUEST_METHOD"] == "POST"){
+		// 			if (empty($_POST['id'])){
+		// 				$response['message'] = 'Mode id is required';
+		// 				$response['code'] = 201;
+		// 			}
+		// 			else{
+		// 				$mode = $this->model->deleteData('mode',['id'=>$_POST['id']]);
+		// 				$response['message'] = 'success';
+		// 				$response['code'] = 200;
+		// 				$response['status'] = true;
+		// 			}
+		// 		} 
+		// 		else {
+		// 			$response['message'] = 'No direct script is allowed.';
+		// 			$response['code'] = 204;
+		// 		}
+		// 	}
+		// 	else{
+		// 		$response['message'] = 'Authentication required';
+		// 		$response['code'] = 203;
+		// 	} 
+		// 	echo json_encode($response);
+		// }
+
+		function modes(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['created_by'])) {
+						$response['message'] = 'Created_by is required';
+						$response['code'] = 201;
+					}
+					else{
+						$modes = $this->model->getData('mode',[],'id');
+						if(!empty($modes)){
+							$db_ids = array_column($modes, 'id');
+							if(!empty($db_ids)){
+								foreach ($db_ids as $key => $id) {
+									if(!in_array($id, $_POST['mode_ids'])){
+										$this->model->deleteData('mode',['id'=>$id]);
+									}
+								}
+							}
+						}
+						if(!empty($_POST['modes'])){
+							foreach ($_POST['modes'] as $key => $mode_name) {
+								$isExist = $this->model->getValue('mode','mode_name',['created_by'=>$_POST['created_by'],'mode_name'=>$mode_name]);
+								if(empty($isExist)){
+									$this->model->insertData('mode',['created_by'=>$_POST['created_by'],'mode_name'=>$mode_name,'mode_type'=>$_POST['mode_types'][$key]]);
+								}
+							}
+						}
+						
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+	/********************************** Global Rates *****************************************/
+		function global_rates(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['company_id']) || empty($_POST['kg_or_box']) || empty($_POST['transport_type_id']) || empty($_POST['mode_id']) || empty($_POST['global_rates']) ) {
+						$response['message'] = 'Please fill required fields';
+						$response['code'] = 201;
+					}
+					else{
+
+						foreach ($_POST['global_rates'] as $from_zone => $value) {
+							foreach ($value as $to_zone => $rate) {
+								$isExist = $this->model->getValue('global_rates','rate',['company_id'=>$_POST['company_id'],'transport_type_id'=>$_POST['transport_type_id'],'mode_id'=>$_POST['mode_id'],'from_zone_id'=>$from_zone,'to_zone_id'=>$to_zone,'kg_or_box'=>$_POST['kg_or_box']]);
+								if(!empty($isExist)){
+									$this->model->updateData('global_rates',['min_price_for_kg'=>$_POST['min_price_for_kg'],'rate'=>$rate],['company_id'=>$_POST['company_id'],'transport_type_id'=>$_POST['transport_type_id'],'mode_id'=>$_POST['mode_id'],'from_zone_id'=>$from_zone,'to_zone_id'=>$to_zone,'kg_or_box'=>$_POST['kg_or_box']]);
+								}
+								else{
+									$this->model->insertData('global_rates',['min_price_for_kg'=>$_POST['min_price_for_kg'],'kg_or_box'=>$_POST['kg_or_box'],'company_id'=>$_POST['company_id'],'transport_type_id'=>$_POST['transport_type_id'],'mode_id'=>$_POST['mode_id'],'from_zone_id'=>$from_zone,'to_zone_id'=>$to_zone,'rate'=>$rate]);
+								}
+							}
+						}
+						// $this->model->insertData('mode',$_POST);
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function get_global_rates(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			$validate = validateToken();
+			if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['cust_id']) && empty($_POST['mode_id']) && $_POST['transport_type_id']){
+						$response['message'] = 'Please fill required fields';
+						$response['code'] = 201;
+					}
+					else{
+						$select = '*';
+						if(!empty($_POST['select']) && isset($_POST['select'])) {
+							$select = $_POST['select'];
+							unset($_POST['select']);
+						}
+						$global_rates = $this->global_ratesl->getData('global_rates',$_POST,$select);
+						$response['global_rates'] = $global_rates;
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			}
+			else{
+				$response['message'] = 'Authentication required';
+				$response['code'] = 203;
+			} 
+			echo json_encode($response);
+		}
+	
+	/********************************** Customer Rates *****************************************/
+		function customer_rates(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['company_id']) || empty($_POST['cust_id']) || empty($_POST['kg_or_box']) || empty($_POST['transport_type_id']) || empty($_POST['mode_id']) || empty($_POST['customer_rates']) ) {
+						$response['message'] = 'Please fill required fields';
+						$response['code'] = 201;
+					}
+					else{
+
+						foreach ($_POST['customer_rates'] as $from_zone => $value) {
+							foreach ($value as $to_zone => $rate) {
+								$isExist = $this->model->getValue('customer_rates','rate',['company_id'=>$_POST['company_id'],'cust_id'=>$_POST['cust_id'],'transport_type_id'=>$_POST['transport_type_id'],'mode_id'=>$_POST['mode_id'],'from_zone_id'=>$from_zone,'to_zone_id'=>$to_zone,'kg_or_box'=>$_POST['kg_or_box']]);
+								if(!empty($isExist)){
+									$this->model->updateData('customer_rates',['min_price_for_kg'=>$_POST['min_price_for_kg'],'rate'=>$rate],['company_id'=>$_POST['company_id'],'cust_id'=>$_POST['cust_id'],'transport_type_id'=>$_POST['transport_type_id'],'mode_id'=>$_POST['mode_id'],'from_zone_id'=>$from_zone,'to_zone_id'=>$to_zone,'kg_or_box'=>$_POST['kg_or_box']]);
+								}
+								else{
+									$this->model->insertData('customer_rates',['min_price_for_kg'=>$_POST['min_price_for_kg'],'kg_or_box'=>$_POST['kg_or_box'],'company_id'=>$_POST['company_id'],'cust_id'=>$_POST['cust_id'],'transport_type_id'=>$_POST['transport_type_id'],'mode_id'=>$_POST['mode_id'],'from_zone_id'=>$from_zone,'to_zone_id'=>$to_zone,'rate'=>$rate]);
+								}
+							}
+						}
+						// $this->model->insertData('mode',$_POST);
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function get_custmer_rates(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			$validate = validateToken();
+			if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['cust_id']) && empty($_POST['mode_id']) && $_POST['transport_type_id']){
+						$response['message'] = 'Please fill required fields';
+						$response['code'] = 201;
+					}
+					else{
+						$select = '*';
+						if(!empty($_POST['select']) && isset($_POST['select'])) {
+							$select = $_POST['select'];
+							unset($_POST['select']);
+						}
+						$customer_rates = $this->customer_ratesl->getData('customer_rates',$_POST,$select);
+						$response['customer_rates'] = $customer_rates;
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			}
+			else{
+				$response['message'] = 'Authentication required';
+				$response['code'] = 203;
+			} 
+			echo json_encode($response);
+		}
+
+	/********************************** TAT *****************************************/
+		function tat(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['company_id']) || empty($_POST['transport_type_id']) || empty($_POST['mode_id']) || empty($_POST['tat']) ) {
+						$response['message'] = 'Please fill required fields';
+						$response['code'] = 201;
+					}
+					else{
+
+						foreach ($_POST['tat'] as $from_zone => $value) {
+							foreach ($value as $to_zone => $time) {
+								$isExist = $this->model->getValue('tat','time',['company_id'=>$_POST['company_id'],'transport_type_id'=>$_POST['transport_type_id'],'mode_id'=>$_POST['mode_id'],'from_zone_id'=>$from_zone,'to_zone_id'=>$to_zone]);
+								if(!empty($isExist)){
+									$this->model->updateData('tat',['time'=>$time],['company_id'=>$_POST['company_id'],'transport_type_id'=>$_POST['transport_type_id'],'mode_id'=>$_POST['mode_id'],'from_zone_id'=>$from_zone,'to_zone_id'=>$to_zone]);
+								}
+								else{
+									$this->model->insertData('tat',['company_id'=>$_POST['company_id'],'transport_type_id'=>$_POST['transport_type_id'],'mode_id'=>$_POST['mode_id'],'from_zone_id'=>$from_zone,'to_zone_id'=>$to_zone,'time'=>$time]);
+								}
+							}
+						}
+						// $this->model->insertData('mode',$_POST);
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function get_tat(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			$validate = validateToken();
+			if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['mode_id']) && $_POST['transport_type_id']){
+						$response['message'] = 'Please fill required fields';
+						$response['code'] = 201;
+					}
+					else{
+						$select = '*';
+						if(!empty($_POST['select']) && isset($_POST['select'])) {
+							$select = $_POST['select'];
+							unset($_POST['select']);
+						}
+						$tat = $this->tatl->getData('tat',$_POST,$select);
+						$response['tat'] = $tat;
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			}
+			else{
+				$response['message'] = 'Authentication required';
+				$response['code'] = 203;
+			} 
+			echo json_encode($response);
+		}
+	
+	/********************************** Ship(Order) *****************************************/
+
+		function ship(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['shipper_cust_id'])) {
+						$response['message'] = 'Please fill required fields';
+						$response['code'] = 201;
+					}
+					else{
+						// if($_POST['no_of_packages'] > 1){
+						
+						// }
+						$from_zone_id = $this->model->getData('zone',[],'id',[],[],['cities'=>$_POST['shipper_city_id']])[0]['id'];
+						$to_zone_id = $this->model->getData('zone',[],'id',[],[],['cities'=>$_POST['consinee_city_id']])[0]['id'];
+						$current_date = date('Y-m-d');
+						$is_prime = $this->model->getValue('customer','prime_member',['end_date >'=>$current_date,'id'=>$_POST['shipper_cust_id']]);
+						
+						if(!empty($is_prime)){
+							$where = [];
+							$where['cust_id'] = $_POST['shipper_cust_id'];
+							$where['transport_type_id'] = $_POST['transport_type_id'];
+							$where['mode_id'] = $_POST['mode_id'];
+							$where['from_zone_id'] = $from_zone_id;
+							$where['to_zone_id'] = $to_zone_id;
+							$rate = $this->model->getValue('customer_rates','rate',$where);
+						}
+						else{
+							$where = [];
+							$where['transport_type_id'] = $_POST['transport_type_id'];
+							$where['mode_id'] = $_POST['mode_id'];
+							$where['from_zone_id'] = $from_zone_id;
+							$where['to_zone_id'] = $to_zone_id;
+							$rate = $this->model->getValue('global_rates','rate',$where);
+						}
+						$total_kg = 0;
+						if(!empty($_POST['ship_dimensions'])){
+							foreach ($_POST['ship_dimensions'] as $key => $value) {
+								$total_kg = $value['weight'] * $value['qty'];
+							}
+						}
+						$shipping_charges = $total_kg * $rate;
+
+						$mode_name = $this->model->getValue('mode','mode_name',['id'=>$_POST['mode_id']]);
+						$mode_name = strtolower($mode_name);
+
+						$_POST['shipping_charges'] = $shipping_charges;
+
+						if($mode_name == 'ftl'){
+							$_POST['shipping_charges'] = $_POST['ftl_charges'] + $_POST['load_unload_charges'];
+						}
+
+						$payment_type = strtolower($_POST['ship_payment']['payment_type']);
+						if($payment_type == 'cod'){
+							$_POST['shipping_charges'] = $_POST['ship_payment']['cash_charges'];
+						}
+
+						$shiper_insurance_charges = $this->model->getValue('customer','insurance_charges',['id'=>$_POST['shipper_cust_id'] ]);
+						$shiper_fuel_charges = $this->model->getValue('customer','fuel_charges',['id'=>$_POST['shipper_cust_id'] ]);
+						$_POST['insurance_charges'] = $_POST['invoice_value'] * $shiper_insurance_charges;
+						$_POST['fuel_charges'] = ($total_kg * $rate * $shiper_fuel_charges)/100
+						// echo '<pre>'; print_r($mode_name); exit;
+
+						$ship_dimensions = $_POST['ship_dimensions'];
+						$ship_payment = $_POST['ship_payment'];
+						unset($_POST['ship_dimensions']);
+						unset($_POST['ship_payment']);
+						$ship_id = $this->model->insertData('ship',$_POST);
+						if(!empty($ship_dimensions)) {
+							foreach ($ship_dimensions as $key => $ship_dimension) {
+								$ship_dimension['ship_id'] = $ship_id;
+								$ship_dimension['dimensions'] = $ship_dimension['L'].'*'.$ship_dimension['W'].'*'.$ship_dimension['H'];
+								$this->model->insertData('ship_dimensions',$ship_dimension);
+							}
+						}
+						$ship_payment['ship_id'] = $ship_id;
+						$this->model->insertData('ship_payment',$ship_payment);
+
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+
+
+	/********************************** Delivery boys *****************************************/
+		function add_delivery_boy(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['contact'])){
+						$response['message'] = 'Please fill required fields';
+						$response['code'] = 201;
+					}
+					else{
+						$isExist = $this->model->isExist('delivery_boys','contact',$_POST['contact']);
+						if(!$isExist){
+							$delivery_boys_id = $this->model->insertData('delivery_boys',$_POST);
+							
+							$response['message'] = 'success';
+							$response['code'] = 200;
+							$response['status'] = true;
+						}
+						else{
+							$response['message'] = 'Contact is already exist';
+							$response['code'] = 201;
+						}
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function get_all_delivery_boys(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					$select = '*';
+					if(!empty($_POST['select']) && isset($_POST['select'])) {
+						$select = $_POST['select'];
+						unset($_POST['select']);
+					}
+					$delivery_boyss = $this->model->getData('delivery_boys',['created_by'=>$_POST['created_by']],$select);
+					$response['delivery_boyss'] = $delivery_boyss;
+					$response['message'] = 'success';
+					$response['code'] = 200;
+					$response['status'] = true;
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function get_delivery_boy(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['id'])){
+						$response['message'] = 'Delivery boys id is required';
+						$response['code'] = 201;
+					}
+					else{
+						$select = '*';
+						if(!empty($_POST['select']) && isset($_POST['select'])) {
+							$select = $_POST['select'];
+							unset($_POST['select']);
+						}
+						$delivery_boys = $this->model->getData('delivery_boys',$_POST,$select);
+						$response['delivery_boy'] = $delivery_boys;
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function update_delivery_boy(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['id'])){
+						$response['message'] = 'Delivery boy id is required';
+						$response['code'] = 201;
+					}
+					else{
+						$delivery_boys = $this->model->updateData('delivery_boys',$_POST,['id'=>$_POST['id']]);
+
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function delete_delivery_boy(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['id'])){
+						$response['message'] = 'Delivery boys id is required';
+						$response['code'] = 201;
+					}
+					else{
+						$this->model->deleteData('delivery_boys',['id'=>$_POST['id']]);
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}	
+
+	/********************************** Driver *****************************************/
+		function add_driver(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['contact'])){
+						$response['message'] = 'Please fill required fields';
+						$response['code'] = 201;
+					}
+					else{
+						$isExist = $this->model->isExist('driver','contact',$_POST['contact']);
+						if(!$isExist){
+							$driver_id = $this->model->insertData('driver',$_POST);
+							
+							$response['message'] = 'success';
+							$response['code'] = 200;
+							$response['status'] = true;
+						}
+						else{
+							$response['message'] = 'Contact is already exist';
+							$response['code'] = 201;
+						}
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function get_all_drivers(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					$select = '*';
+					if(!empty($_POST['select']) && isset($_POST['select'])) {
+						$select = $_POST['select'];
+						unset($_POST['select']);
+					}
+					$drivers = $this->model->getData('driver',['created_by'=>$_POST['created_by']],$select);
+					$response['drivers'] = $drivers;
+					$response['message'] = 'success';
+					$response['code'] = 200;
+					$response['status'] = true;
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function get_driver(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['id'])){
+						$response['message'] = 'Driver id is required';
+						$response['code'] = 201;
+					}
+					else{
+						$select = '*';
+						if(!empty($_POST['select']) && isset($_POST['select'])) {
+							$select = $_POST['select'];
+							unset($_POST['select']);
+						}
+						$driver = $this->model->getData('driver',$_POST,$select);
+						$response['driver'] = $driver;
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function update_driver(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['id'])){
+						$response['message'] = 'Driver id is required';
+						$response['code'] = 201;
+					}
+					else{
+						$driver = $this->model->updateData('driver',$_POST,['id'=>$_POST['id']]);
+
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function delete_driver(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['id'])){
+						$response['message'] = 'Driver id is required';
+						$response['code'] = 201;
+					}
+					else{
+						$this->model->deleteData('driver',['id'=>$_POST['id']]);
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}	
+
+	/********************************** Sales executive *****************************************/
+		function add_sales_executive(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['contact'])){
+						$response['message'] = 'Please fill required fields';
+						$response['code'] = 201;
+					}
+					else{
+						$isExist = $this->model->isExist('sales_executive','contact',$_POST['contact']);
+						if(!$isExist){
+							 $this->model->insertData('sales_executive',$_POST);
+							
+							$response['message'] = 'success';
+							$response['code'] = 200;
+							$response['status'] = true;
+						}
+						else{
+							$response['message'] = 'Contact is already exist';
+							$response['code'] = 201;
+						}
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function get_all_sales_executives(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					$select = '*';
+					if(!empty($_POST['select']) && isset($_POST['select'])) {
+						$select = $_POST['select'];
+						unset($_POST['select']);
+					}
+					$sales_executives = $this->model->getData('sales_executive',['created_by'=>$_POST['created_by']],$select);
+					$response['sales_executives'] = $sales_executives;
+					$response['message'] = 'success';
+					$response['code'] = 200;
+					$response['status'] = true;
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function get_sales_executive(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['id'])){
+						$response['message'] = 'Sales executive id is required';
+						$response['code'] = 201;
+					}
+					else{
+						$select = '*';
+						if(!empty($_POST['select']) && isset($_POST['select'])) {
+							$select = $_POST['select'];
+							unset($_POST['select']);
+						}
+						$sales_executive = $this->model->getData('sales_executive',$_POST,$select);
+						$response['sales_executive'] = $sales_executive;
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function update_sales_executive(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['id'])){
+						$response['message'] = 'Sales executive id is required';
+						$response['code'] = 201;
+					}
+					else{
+						$sales_executive = $this->model->updateData('sales_executive',$_POST,['id'=>$_POST['id']]);
+
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function delete_sales_executive(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['id'])){
+						$response['message'] = 'Sales executive id is required';
+						$response['code'] = 201;
+					}
+					else{
+						$this->model->deleteData('sales_executive',['id'=>$_POST['id']]);
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}	
+
+	/********************************** Sales charge *****************************************/
+		function add_sales_charge(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['type'])){
+						$response['message'] = 'Please fill required fields';
+						$response['code'] = 201;
+					}
+					else{
+						$isExist = $this->model->isExist('sales_charges','type',$_POST['type']);
+						if(!$isExist){
+							$sales_charges_id = $this->model->insertData('sales_charges',$_POST);
+							
+							$response['message'] = 'success';
+							$response['code'] = 200;
+							$response['status'] = true;
+						}
+						else{
+							$response['message'] = 'Contact is already exist';
+							$response['code'] = 201;
+						}
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function get_all_sales_charges(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					$select = '*';
+					if(!empty($_POST['select']) && isset($_POST['select'])) {
+						$select = $_POST['select'];
+						unset($_POST['select']);
+					}
+					$sales_chargess = $this->model->getData('sales_charges',['created_by'=>$_POST['created_by']],$select);
+					$response['sales_chargess'] = $sales_chargess;
+					$response['message'] = 'success';
+					$response['code'] = 200;
+					$response['status'] = true;
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function get_sales_charge(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['id'])){
+						$response['message'] = 'Sales charge id is required';
+						$response['code'] = 201;
+					}
+					else{
+						$select = '*';
+						if(!empty($_POST['select']) && isset($_POST['select'])) {
+							$select = $_POST['select'];
+							unset($_POST['select']);
+						}
+						$sales_charges = $this->model->getData('sales_charges',$_POST,$select);
+						$response['sales_charge'] = $sales_charges;
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function update_sales_charge(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['id'])){
+						$response['message'] = 'Sales charge id is required';
+						$response['code'] = 201;
+					}
+					else{
+						$sales_charges = $this->model->updateData('sales_charges',$_POST,['id'=>$_POST['id']]);
+
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function delete_sales_charge(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['id'])){
+						$response['message'] = 'Sales charge id is required';
+						$response['code'] = 201;
+					}
+					else{
+						$this->model->deleteData('sales_charges',['id'=>$_POST['id']]);
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}	
+
+	/********************************** Documents *****************************************/
+
+		function get_documents(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			$validate = validateToken();
+			if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['created_by'])){
+						$response['message'] = 'Created_by is required';
+						$response['code'] = 201;
+					}
+					else{
+						$select = '*';
+						if(!empty($_POST['select']) && isset($_POST['select'])) {
+							$select = $_POST['select'];
+							unset($_POST['select']);
+						}
+						$documents = $this->model->getData('document',['created_by'=>$_POST['created_by']],$select);
+						$response['documents'] = $documents;
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			}
+			else{
+				$response['message'] = 'Authentication required';
+				$response['code'] = 203;
+			} 
+			echo json_encode($response);
+		}
+
+		function documents(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['created_by'])) {
+						$response['message'] = 'Created_by is required';
+						$response['code'] = 201;
+					}
+					else{
+						$documents = $this->model->getData('document',[],'id');
+						if(!empty($documents)){
+							$db_ids = array_column($documents, 'id');
+							if(!empty($db_ids)){
+								foreach ($db_ids as $key => $id) {
+									if(!in_array($id, $_POST['doc_ids'])){
+										$this->model->deleteData('document',['id'=>$id]);
+									}
+								}
+							}
+						}
+						
+						foreach ($_POST['docs'] as $key => $name) {
+							$isExist = $this->model->getValue('document','name',['created_by'=>$_POST['created_by'],'name'=>$name]);
+							if(empty($isExist)){
+								$this->model->insertData('document',['created_by'=>$_POST['created_by'],'name'=>$name]);
+							}
+						}
+						
+						
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				} 
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+}
