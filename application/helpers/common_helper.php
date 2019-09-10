@@ -1,5 +1,6 @@
 <?php
-
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
 function strim($str,$charlist=" ",$option=0){
     if(is_string($str))
     {
@@ -778,37 +779,13 @@ function send_email($from,$email, $subject, $message, $attach = '') {
 }
 
 function sendEmail($from,$to,$subject,$message,$attach=''){
-    // echo  $message;
-    $CI = get_instance();
-    $config = Array(
-      'protocol' => 'smtp',
-      'smtp_host' => 'ssl://smtp.googlemail.com',
-      'smtp_port' => 465,
-      'smtp_user' => 'piyush.nerkar@microlan.in', 
-      'smtp_pass' => 'microlan@123', 
-      'mailtype' => 'html',
-      'charset' => 'iso-8859-1',
-      'wordwrap' => TRUE
-    );
-
-
-    $CI->load->library('email',$config);
-    $CI->email->set_newline("\r\n");
-    $CI->email->from($from);
-    $CI->email->to($to);
-    $CI->email->subject($subject);
-    $CI->email->message($message);
-    if(!empty($attach)){
-         $CI->email->attach($attach);
-    }
-    if($CI->email->send())
-    {
-     echo 'Email send.';
-    }
-    else
-    {
-     show_error($this->email->print_debugger());
-    }
+    // Always set content-type when sending HTML email
+    $headers = "MIME-Version: 1.0" . "\r\n";
+    $headers .= "Content-type:text/html;charset=UTF-8" . "\r\n";
+    // More headers
+    $headers .= 'From: '.$from. "\r\n";
+    // $headers .= 'Cc: myboss@example.com' . "\r\n";
+    mail($to,$subject,$message,$headers);
 }
 
 function sendSMS($message,$mobile_no){
@@ -824,10 +801,6 @@ function sendSMS($message,$mobile_no){
     $info = curl_getinfo($ch);
     curl_close($ch);
 }
-
-
-
-
 /****************************** JWT ***********************************************/
     
     function now(){

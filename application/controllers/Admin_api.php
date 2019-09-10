@@ -24,7 +24,12 @@ class Admin_api extends CI_Controller {
 						$response['code'] = 201;
 					}
 					else{
-						$admin = $this->model->getData('login',['email'=>$_POST['email'],'password'=>encyrpt_password($_POST['password'])]);
+						$select = '*';
+						if(!empty($_POST['select']) && isset($_POST['select'])){
+							$select = $_POST['select'];
+							unset($_POST['select']);
+						}
+						$admin = $this->model->getData('login',['email'=>$_POST['email'],'password'=>encyrpt_password($_POST['password'])],$select);
 						if(!empty($admin)){
 							$_POST['timestamp'] = now();
 							$token = generateToken($_POST);
@@ -43,6 +48,7 @@ class Admin_api extends CI_Controller {
 							}
 							
 							$response['$token'] = $token;
+							$response['data'] = $admin[0];
 							$response['session_id'] = $session_id;
 							$response['message'] = 'success';
 							$response['code'] = 200;
@@ -55,6 +61,128 @@ class Admin_api extends CI_Controller {
 					}
 				}
 				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function forgot_password(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['username'])){
+						$response['message'] = 'Please fill required fields';
+						$response['code'] = 201;
+					}
+					else{
+						$login = $this->model->getData('login',['email'=>$_POST['username']]);
+						$login2 = $this->model->getData('login',['phone'=>$_POST['username']]);
+						if(!empty($login)){
+							$login_data = $login[0];
+						}
+						else if(!empty($login2)){
+							$login_data = $login2[0];
+						}
+						if(!empty($login) || !empty($login2)){
+							$otp = get_random_number(6);
+							$this->model->updateData('login',['otp'=>$otp],['id'=>$login_data['id']]);
+							// sendEmail('nerkar.piyush16@gmail.com',$login_data['email'],'otp','otp is'.$otp);
+							$response['message'] = 'success';
+							$response['code'] = 200;
+							$response['status'] = true;
+						}
+						else{
+							$response['message'] = 'Email/Phone is incorrect';
+							$response['code'] = 203;
+						}
+					}
+				}
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function verify_otp_for_password(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['otp'])){
+						$response['message'] = 'Please fill required fields';
+						$response['code'] = 201;
+					}
+					else{
+						$otp = $this->model->getData2('login',['email'=>$_POST['username']],['phone'=>$_POST['username']],'otp,id');
+						if(!empty($otp)){
+							$id = $otp[0]['id'];
+							$otp = $otp[0]['otp'];
+						}
+						if(!empty($otp) && $_POST['otp'] == $otp){
+							$password = $this->model->getValue('login','password',['id'=>$id]);
+							$email = $this->model->getValue('login','email',['id'=>$id]);
+							$key = $email.','.$password;
+							$key = encyrpt_password($key);
+							$response['key'] = $key;
+							$response['message'] = 'success';
+							$response['code'] = 200;
+							$response['status'] = true;
+						}
+						else{
+							$response['message'] = 'Otp is incorrect';
+							$response['code'] = 203;
+						}
+					}
+				}
+				else {
+					$response['message'] = 'No direct script is allowed.';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function reset_password(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if ($_POST['new_password'] != $_POST['confirm_password']){
+						$response['message'] = 'Confirm password mismatch';
+						$response['code'] = 201;
+					}
+					else{
+						$isExist = $this->model->getData('login',['email'=>$_POST['email'],'password'=>$_POST['old_password']]);
+						if(!empty($isExist)){
+							$this->model->updateData('login',['password'=>encyrpt_password($_POST['new_password'])],['email'=>$_POST['email']]);
+							$response['message'] = 'success';
+							$response['code'] = 200;
+							$response['status'] = true;
+						}
+						else{
+							$response['message'] = 'failure';
+							$response['code'] = 203;
+						}
+					}
+				}
+				else{
 					$response['message'] = 'No direct script is allowed.';
 					$response['code'] = 204;
 				}
@@ -602,8 +730,8 @@ class Admin_api extends CI_Controller {
 
 		function get_transport_types(){
 			$response = array('code' => -1, 'status' => false, 'message' => '');
-			$validate = validateToken();
-			if($validate){
+			// $validate = validateToken();
+			// if($validate){
 				if ($_SERVER["REQUEST_METHOD"] == "POST"){
 					if (empty($_POST['created_by'])){
 						$response['message'] = 'Created_by is required';
@@ -626,20 +754,22 @@ class Admin_api extends CI_Controller {
 					$response['message'] = 'No direct script is allowed.';
 					$response['code'] = 204;
 				}
-			}
-			else{
-				$response['message'] = 'Authentication required';
-				$response['code'] = 203;
-			} 
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
 			echo json_encode($response);
 		}
 
 		function transport_types(){
 			$response = array('code' => -1, 'status' => false, 'message' => '');
+			$_POST['types']  = json_decode($_POST['types'],true);
+			$_POST['type_ids']  = json_decode($_POST['type_ids'],true);
 			// $validate = validateToken();
 			// if($validate){
 				if ($_SERVER["REQUEST_METHOD"] == "POST"){
-					if (empty($_POST['created_by'])) {
+					if (empty($_POST['created_by']) || empty($_POST['types'])) {
 						$response['message'] = 'Created_by is required';
 						$response['code'] = 201;
 					}
@@ -656,13 +786,24 @@ class Admin_api extends CI_Controller {
 							}
 						}
 						
-						foreach ($_POST['types'] as $key => $type) {
-							$isExist = $this->model->getValue('transport_type','type',['created_by'=>$_POST['created_by'],'type'=>$type]);
-							if(empty($isExist)){
-								$this->model->insertData('transport_type',['created_by'=>$_POST['created_by'],'type'=>$type]);
+						if(!empty($_POST['types'])){
+							foreach ($_POST['types'] as $key => $type) {
+								
+								if(isset($_POST['type_ids'][$key]) && !empty($_POST['type_ids'][$key])){
+									$this->model->updateData('transport_type',['updated_by'=>$_POST['updated_by'],'type'=>$type],['id'=>$_POST['type_ids'][$key]]);
+								}
+								else{
+									$isExist = $this->model->getValue('transport_type','type',['created_by'=>$_POST['created_by'],'type'=>$type]);
+									if(empty($isExist)){
+										$this->model->insertData('transport_type',['created_by'=>$_POST['created_by'],'type'=>$type]);
+									}
+									else{
+										$response['message'] = 'Already Exist';
+										$response['code'] = 201;
+									}
+								}
 							}
 						}
-						
 						
 						$response['message'] = 'success';
 						$response['code'] = 200;
@@ -684,6 +825,10 @@ class Admin_api extends CI_Controller {
 	/********************************** Customer Types *****************************************/
 		function customer_types(){
 			$response = array('code' => -1, 'status' => false, 'message' => '');
+			$_POST['types']  = json_decode($_POST['types'],true);
+			$_POST['type_ids']  = json_decode($_POST['type_ids'],true);
+			// echo"<pre>";
+			// print_r($_POST);die;
 			// $validate = validateToken();
 			// if($validate){
 				if ($_SERVER["REQUEST_METHOD"] == "POST"){
@@ -706,9 +851,19 @@ class Admin_api extends CI_Controller {
 						
 						if(!empty($_POST['types'])){
 							foreach ($_POST['types'] as $key => $type) {
-								$isExist = $this->model->getValue('customer_types','type',['created_by'=>$_POST['created_by'],'type'=>$type]);
-								if(empty($isExist)){
-									$this->model->insertData('customer_types',['created_by'=>$_POST['created_by'],'type'=>$type]);
+								
+								if(isset($_POST['type_ids'][$key]) && !empty($_POST['type_ids'][$key])){
+									$this->model->updateData('customer_types',['updated_by'=>$_POST['updated_by'],'type'=>$type],['id'=>$_POST['type_ids'][$key]]);
+								}
+								else{
+									$isExist = $this->model->getValue('customer_types','type',['created_by'=>$_POST['created_by'],'type'=>$type]);
+									if(empty($isExist)){
+										$this->model->insertData('customer_types',['created_by'=>$_POST['created_by'],'type'=>$type]);
+									}
+									else{
+										$response['message'] = 'Already Exist';
+										$response['code'] = 201;
+									}
 								}
 							}
 						}
@@ -734,8 +889,8 @@ class Admin_api extends CI_Controller {
 
 		function get_customer_types(){
 			$response = array('code' => -1, 'status' => false, 'message' => '');
-			$validate = validateToken();
-			if($validate){
+			// $validate = validateToken();
+			// if($validate){
 				if ($_SERVER["REQUEST_METHOD"] == "POST"){
 					$select = '*';
 					if(!empty($_POST['select']) && isset($_POST['select'])) {
@@ -752,11 +907,11 @@ class Admin_api extends CI_Controller {
 					$response['message'] = 'No direct script is allowed.';
 					$response['code'] = 204;
 				}
-			}
-			else{
-				$response['message'] = 'Authentication required';
-				$response['code'] = 203;
-			} 
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
 			echo json_encode($response);
 		}
 
@@ -1029,10 +1184,13 @@ class Admin_api extends CI_Controller {
 	/********************************** Designation *****************************************/
 		function designations(){
 			$response = array('code' => -1, 'status' => false, 'message' => '');
+
+			$_POST['designations']  = json_decode($_POST['designations'],true);
+			$_POST['designation_ids']  = json_decode($_POST['designation_ids'],true);
 			// $validate = validateToken();
 			// if($validate){
 				if ($_SERVER["REQUEST_METHOD"] == "POST"){
-					if (empty($_POST['created_by'])) {
+					if (empty($_POST['created_by']) || empty($_POST['designations'])){
 						$response['message'] = 'Please fill required fields';
 						$response['code'] = 201;
 					}
@@ -1050,9 +1208,19 @@ class Admin_api extends CI_Controller {
 						}
 						if(!empty($_POST['designations'])){
 							foreach ($_POST['designations'] as $key => $designation) {
-								$isExist = $this->model->getValue('designation','designation',['created_by'=>$_POST['created_by'],'designation'=>$designation]);
-								if(empty($isExist)){
-									$this->model->insertData('designation',['created_by'=>$_POST['created_by'],'designation'=>$designation]);
+							
+								if(isset($_POST['designation_ids'][$key]) && !empty($_POST['designation_ids'][$key])){
+									$this->model->updateData('designation',['updated_by'=>$_POST['updated_by'],'designation'=>$designation],['id'=>$_POST['designation_ids'][$key]]);
+								}
+								else{
+									$isExist = $this->model->getValue('designation','designation',['created_by'=>$_POST['created_by'],'designation'=>$designation]);
+									if(empty($isExist)){
+										$this->model->insertData('designation',['created_by'=>$_POST['created_by'],'designation'=>$designation]);
+									}
+									else{
+										$response['message'] = 'Already Exist';
+										$response['code'] = 201;
+									}
 								}
 							}	
 						}
@@ -1076,8 +1244,8 @@ class Admin_api extends CI_Controller {
 
 		function get_designations(){
 			$response = array('code' => -1, 'status' => false, 'message' => '');
-			$validate = validateToken();
-			if($validate){
+			// $validate = validateToken();
+			// if($validate){
 				if ($_SERVER["REQUEST_METHOD"] == "POST"){
 					$select = '*';
 					if(!empty($_POST['select']) && isset($_POST['select'])) {
@@ -1094,11 +1262,11 @@ class Admin_api extends CI_Controller {
 					$response['message'] = 'No direct script is allowed.';
 					$response['code'] = 204;
 				}
-			}
-			else{
-				$response['message'] = 'Authentication required';
-				$response['code'] = 203;
-			} 
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
 			echo json_encode($response);
 		}
 
@@ -1272,6 +1440,8 @@ class Admin_api extends CI_Controller {
 	/********************************** Vendor Types *****************************************/
 		function vendor_types(){
 			$response = array('code' => -1, 'status' => false, 'message' => '');
+			$_POST['types']  = json_decode($_POST['types'],true);
+			$_POST['type_ids']  = json_decode($_POST['type_ids'],true);
 			// $validate = validateToken();
 			// if($validate){
 				if ($_SERVER["REQUEST_METHOD"] == "POST"){
@@ -1294,9 +1464,19 @@ class Admin_api extends CI_Controller {
 						
 						if(!empty($_POST['types'])){
 							foreach ($_POST['types'] as $key => $type) {
-								$isExist = $this->model->getValue('vendor_types','type',['created_by'=>$_POST['created_by'],'type'=>$type]);
-								if(empty($isExist)){
-									$this->model->insertData('vendor_types',['created_by'=>$_POST['created_by'],'type'=>$type]);
+								
+								if(isset($_POST['type_ids'][$key]) && !empty($_POST['type_ids'][$key])){
+									$this->model->updateData('vendor_types',['updated_by'=>$_POST['updated_by'],'type'=>$type],['id'=>$_POST['type_ids'][$key]]);
+								}
+								else{
+									$isExist = $this->model->getValue('vendor_types','type',['created_by'=>$_POST['created_by'],'type'=>$type]);
+									if(empty($isExist)){
+										$this->model->insertData('vendor_types',['created_by'=>$_POST['created_by'],'type'=>$type]);
+									}
+									else{
+										$response['message'] = 'Already Exist';
+										$response['code'] = 201;
+									}
 								}
 							}
 						}
@@ -1322,8 +1502,8 @@ class Admin_api extends CI_Controller {
 
 		function get_vendor_types(){
 			$response = array('code' => -1, 'status' => false, 'message' => '');
-			$validate = validateToken();
-			if($validate){
+			// $validate = validateToken();
+			// if($validate){
 				if ($_SERVER["REQUEST_METHOD"] == "POST"){
 					$select = '*';
 					if(!empty($_POST['select']) && isset($_POST['select'])) {
@@ -1340,11 +1520,11 @@ class Admin_api extends CI_Controller {
 					$response['message'] = 'No direct script is allowed.';
 					$response['code'] = 204;
 				}
-			}
-			else{
-				$response['message'] = 'Authentication required';
-				$response['code'] = 203;
-			} 
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
 			echo json_encode($response);
 		}
 
@@ -2233,8 +2413,8 @@ class Admin_api extends CI_Controller {
 
 		function get_all_modes(){
 			$response = array('code' => -1, 'status' => false, 'message' => '');
-			$validate = validateToken();
-			if($validate){
+			// $validate = validateToken();
+			// if($validate){
 				if ($_SERVER["REQUEST_METHOD"] == "POST"){
 					if (empty($_POST['created_by'])){
 						$response['message'] = 'Created_by is required';
@@ -2257,11 +2437,11 @@ class Admin_api extends CI_Controller {
 					$response['message'] = 'No direct script is allowed.';
 					$response['code'] = 204;
 				}
-			}
-			else{
-				$response['message'] = 'Authentication required';
-				$response['code'] = 203;
-			} 
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
 			echo json_encode($response);
 		}
 
@@ -2356,10 +2536,12 @@ class Admin_api extends CI_Controller {
 
 		function modes(){
 			$response = array('code' => -1, 'status' => false, 'message' => '');
+			$_POST['mode_name']  = json_decode($_POST['mode_name'],true);
+			$_POST['mode_ids']  = json_decode($_POST['mode_ids'],true);
 			// $validate = validateToken();
 			// if($validate){
 				if ($_SERVER["REQUEST_METHOD"] == "POST"){
-					if (empty($_POST['created_by'])) {
+					if (empty($_POST['created_by']) || empty($_POST['mode_name'])) {
 						$response['message'] = 'Created_by is required';
 						$response['code'] = 201;
 					}
@@ -2375,11 +2557,25 @@ class Admin_api extends CI_Controller {
 								}
 							}
 						}
-						if(!empty($_POST['modes'])){
-							foreach ($_POST['modes'] as $key => $mode_name) {
-								$isExist = $this->model->getValue('mode','mode_name',['created_by'=>$_POST['created_by'],'mode_name'=>$mode_name]);
-								if(empty($isExist)){
-									$this->model->insertData('mode',['created_by'=>$_POST['created_by'],'mode_name'=>$mode_name,'mode_type'=>$_POST['mode_types'][$key]]);
+						if(!empty($_POST['mode_name'])){
+							foreach ($_POST['mode_name'] as $key => $mode_name) {
+								// $isExist = $this->model->getValue('mode','mode_name',['created_by'=>$_POST['created_by'],'mode_name'=>$mode_name]);
+								// if(empty($isExist)){
+								// 	$this->model->insertData('mode',['created_by'=>$_POST['created_by'],'mode_name'=>$mode_name,'mode_type'=>$_POST['mode_types'][$key]]);
+								// }
+
+								if(isset($_POST['mode_ids'][$key]) && !empty($_POST['mode_ids'][$key])){
+									$this->model->updateData('mode',['updated_by'=>$_POST['updated_by'],'mode_name'=>$mode_name],['id'=>$_POST['mode_ids'][$key]]);
+								}
+								else{
+									$isExist = $this->model->getValue('mode','mode_name',['created_by'=>$_POST['created_by'],'mode_name'=>$mode_name]);
+									if(empty($isExist)){
+										$this->model->insertData('mode',['created_by'=>$_POST['created_by'],'mode_name'=>$mode_name]);
+									}
+									else{
+										$response['message'] = 'Already Exist';
+										$response['code'] = 201;
+									}
 								}
 							}
 						}
@@ -2688,7 +2884,7 @@ class Admin_api extends CI_Controller {
 						$shiper_insurance_charges = $this->model->getValue('customer','insurance_charges',['id'=>$_POST['shipper_cust_id'] ]);
 						$shiper_fuel_charges = $this->model->getValue('customer','fuel_charges',['id'=>$_POST['shipper_cust_id'] ]);
 						$_POST['insurance_charges'] = $_POST['invoice_value'] * $shiper_insurance_charges;
-						$_POST['fuel_charges'] = ($total_kg * $rate * $shiper_fuel_charges)/100
+						$_POST['fuel_charges'] = ($total_kg * $rate * $shiper_fuel_charges)/100;
 						// echo '<pre>'; print_r($mode_name); exit;
 
 						$ship_dimensions = $_POST['ship_dimensions'];

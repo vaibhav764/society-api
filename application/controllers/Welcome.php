@@ -24,5 +24,10 @@ class Welcome extends CI_Controller {
 		// $this->load->view('welcome_message');
 		$video_names = ['a','b','c'];
 		echo json_encode($video_names);
+
+		sendEmail('piyush.nerkar@microlan.in','piyush.nerkar@microlan.in','hiiiiiiiii','hiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii');
+
+		
 	}
+
 }
