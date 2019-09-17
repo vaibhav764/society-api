@@ -264,8 +264,17 @@ class Admin_api extends CI_Controller {
 						$select = $_POST['select'];
 						unset($_POST['select']);
 					}
-					$states = $this->model->getData('states',['country_id'=>$_POST['country_id']],$select);
-					$response['states'] = $states;
+					$state = $this->model->getData('states',['country_id'=>$_POST['country_id']],$select);
+					if(count($state)>0)
+					{
+						$pro_select_box = '';
+						$pro_select_box .= '<option value="">Select State</option>';
+						foreach ($state as $states) {
+							$pro_select_box .='<option value="'.$states['id'].'">'.$states['name'].'</option>';
+						}
+					}
+
+					$response['states'] = $pro_select_box;
 					$response['message'] = 'success';
 					$response['code'] = 200;
 					$response['status'] = true;
@@ -289,7 +298,7 @@ class Admin_api extends CI_Controller {
 			// $validate = validateToken();
 			// if($validate){
 				if ($_SERVER["REQUEST_METHOD"] == "POST"){
-					$select = 'id,name';
+					$select = 'id,city';
 					if(!empty($_POST['select']) && isset($_POST['select'])){
 						$select = $_POST['select'];
 						unset($_POST['select']);
@@ -317,13 +326,23 @@ class Admin_api extends CI_Controller {
 			// $validate = validateToken();
 			// if($validate){
 				if ($_SERVER["REQUEST_METHOD"] == "POST"){
-					$select = 'id,name';
+					$select = 'id,city';
 					if(!empty($_POST['select']) && isset($_POST['select'])){
 						$select = $_POST['select'];
 						unset($_POST['select']);
 					}
 					$cities = $this->model->getData('cities',['state_id'=>$_POST['state_id']],$select);
-					$response['cities'] = $cities;
+					
+					if(count($cities)>0)
+					{
+						$pro_select_box = '';
+						$pro_select_box .= '<option value="">Select City</option>';
+						foreach ($cities as $cities) {
+							$pro_select_box .='<option value="'.$cities['id'].'">'.$cities['city'].'</option>';
+						}
+					}
+
+					$response['cities'] = $pro_select_box;
 					$response['message'] = 'success';
 					$response['code'] = 200;
 					$response['status'] = true;
@@ -403,8 +422,8 @@ class Admin_api extends CI_Controller {
 
 		function get_all_company(){
 			$response = array('code' => -1, 'status' => false, 'message' => '');
-			$validate = validateToken();
-			if($validate){
+			// $validate = validateToken();
+			// if($validate){
 				if ($_SERVER["REQUEST_METHOD"] == "POST"){
 					$id = $this->model->getValue('login','id',['id'=>$_POST['created_by'],'usertype'=>'admin']);
 					if (empty($id)) {
@@ -428,11 +447,11 @@ class Admin_api extends CI_Controller {
 					$response['message'] = 'No direct script is allowed.';
 					$response['code'] = 204;
 				}
-			}
-			else{
-				$response['message'] = 'Authentication required';
-				$response['code'] = 203;
-			} 
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
 			echo json_encode($response);
 		}
 
@@ -441,12 +460,13 @@ class Admin_api extends CI_Controller {
 			// $validate = validateToken();
 			// if($validate){
 				if ($_SERVER["REQUEST_METHOD"] == "POST"){
-					$id = $this->model->getValue('login','id',['id'=>$_POST['created_by'],'usertype'=>'admin']);
-					if (empty($id)) {
-						$response['message'] = 'Admin id is required';
-						$response['code'] = 201;
-					}
-					else if (empty($_POST['id'])){
+					// $id = $this->model->getValue('login','id',['id'=>$_POST['created_by'],'usertype'=>'admin']);
+					// if (empty($id)) {
+					// 	$response['message'] = 'Admin id is required';
+					// 	$response['code'] = 201;
+					// }
+					// else 
+					if (empty($_POST['id'])){
 						$response['message'] = 'Company id is required';
 						$response['code'] = 201;
 					}
@@ -608,6 +628,14 @@ class Admin_api extends CI_Controller {
 						unset($_POST['select']);
 					}
 					$branches = $this->model->getData('branch',['created_by'=>$_POST['created_by']],$select);
+					if(!empty($branches))
+					{
+						foreach ($branches as $key => $value) {
+							
+							$branches[$key]['city_name']=$this->model->getValue('cities','city',['id'=>$value['city_id']]);
+							$branches[$key]['state_name']=$this->model->getValue('states','name',['id'=>$value['state_id']]);
+						}
+					}
 					$response['branches'] = $branches;
 					$response['message'] = 'success';
 					$response['code'] = 200;
@@ -697,7 +725,7 @@ class Admin_api extends CI_Controller {
 			// $validate = validateToken();
 			// if($validate){
 				if ($_SERVER["REQUEST_METHOD"] == "POST"){
-					$id = $this->model->getValue('login','id',['id'=>$_POST['created_by'],'usertype'=>'admin']);
+					$id = $this->model->getValue('login','id',['id'=>$_POST['created_by'],'usertype'=>'company']);
 					if (empty($id)) {
 						$response['message'] = 'Admin id is required';
 						$response['code'] = 201;
@@ -743,7 +771,8 @@ class Admin_api extends CI_Controller {
 							$select = $_POST['select'];
 							unset($_POST['select']);
 						}
-						$transport_types = $this->model->getData('transport_type',['created_by'=>$_POST['created_by']],$select);
+						$transport_types = $this->model->getData('transport_type',$_POST,$select);
+						
 						$response['transport_types'] = $transport_types;
 						$response['message'] = 'success';
 						$response['code'] = 200;
@@ -1273,6 +1302,8 @@ class Admin_api extends CI_Controller {
 	/********************************** Employee *****************************************/
 		function add_employee(){
 			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// echo"<pre>";
+			// print_r($_POST);die;
 			// $validate = validateToken();
 			// if($validate){
 				if ($_SERVER["REQUEST_METHOD"] == "POST"){
@@ -1410,8 +1441,8 @@ class Admin_api extends CI_Controller {
 
 		function delete_employee(){
 			$response = array('code' => -1, 'status' => false, 'message' => '');
-			$validate = validateToken();
-			if($validate){
+			// $validate = validateToken();
+			// if($validate){
 				if ($_SERVER["REQUEST_METHOD"] == "POST"){
 					if (empty($_POST['id'])){
 						$response['message'] = 'Employee id is required';
@@ -1429,11 +1460,11 @@ class Admin_api extends CI_Controller {
 					$response['message'] = 'No direct script is allowed.';
 					$response['code'] = 204;
 				}
-			}
-			else{
-				$response['message'] = 'Authentication required';
-				$response['code'] = 203;
-			} 
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
 			echo json_encode($response);
 		}	
 
@@ -1856,6 +1887,8 @@ class Admin_api extends CI_Controller {
 
 		function add_zone(){
 			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// echo"<pre>";
+			// print_r($_POST);die;
 			// $validate = validateToken();
 			// if($validate){
 				if ($_SERVER["REQUEST_METHOD"] == "POST"){
@@ -1866,8 +1899,8 @@ class Admin_api extends CI_Controller {
 					else{
 						$isExist = $this->model->getValue('zone','zone',['created_by'=>$_POST['created_by'],'zone'=>$_POST['zone']]);
 						if(empty($isExist)){
-							$_POST['cities'] = implode(',', $_POST['cities']);
-							$_POST['countries'] = implode(',', $_POST['countries']);
+							// $_POST['cities'] = implode(',', $_POST['cities']);
+							// $_POST['countries'] = implode(',', $_POST['countries']);
 							$zone_id = $this->model->insertData('zone',$_POST);
 							$response['message'] = 'success';
 							$response['code'] = 200;
@@ -1893,6 +1926,7 @@ class Admin_api extends CI_Controller {
 
 		function get_all_zones(){
 			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// print_r($_POST);die;
 			// $validate = validateToken();
 			// if($validate){
 				if ($_SERVER["REQUEST_METHOD"] == "POST"){
@@ -1903,7 +1937,7 @@ class Admin_api extends CI_Controller {
 					}
 					$zones = $this->model->getData('zone',['created_by'=>$_POST['created_by']],$select);
 					
-					$response['zone'] = $zone;
+					$response['zone'] = $zones;
 					$response['message'] = 'success';
 					$response['code'] = 200;
 					$response['status'] = true;
@@ -1974,8 +2008,8 @@ class Admin_api extends CI_Controller {
 						$response['code'] = 201;
 					}
 					else{
-						$_POST['cities'] = implode(',', $_POST['cities']);
-						$_POST['countries'] = implode(',', $_POST['countries']);
+						// $_POST['cities'] = implode(',', $_POST['cities']);
+						// $_POST['countries'] = implode(',', $_POST['countries']);
 						$zone = $this->model->updateData('zone',$_POST,['id'=>$_POST['id']]);
 						$response['message'] = 'success';
 						$response['code'] = 200;
