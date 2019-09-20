@@ -565,6 +565,71 @@ class Admin_api extends CI_Controller {
 			// } 
 			echo json_encode($response);
 		}
+	/***********************************Company setting************************************/
+		function companySetting(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if(!$validate){
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			//  	echo json_encode($response);
+			//  	return;
+			// }
+			if ($_SERVER["REQUEST_METHOD"] != "POST") {
+				$response['message'] = 'No direct script is allowed.';
+				$response['code'] = 204;
+				echo json_encode($response);
+				return;
+			}
+			$isExist = $this->model->isExist('company_setting','company_id',$_POST['company_id']);
+			if($isExist){
+				$this->model->updateData('company_setting',$_POST,['company_id'=>$_POST['company_id']]);
+			}
+			else{
+				$this->model->insertData('company_setting',$_POST);
+			}			
+			$response['message'] = 'success';
+			$response['code'] = 200;
+			$response['status'] = true;
+			echo json_encode($response);
+		}	
+
+		function getCompanySetting(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if(!$validate){
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			//  	echo json_encode($response);
+			//  	return;
+			// }
+			if ($_SERVER["REQUEST_METHOD"] != "POST") {
+				$response['message'] = 'No direct script is allowed.';
+				$response['code'] = 204;
+				echo json_encode($response);
+			 	return;
+			}
+			if (empty($_POST['company_id'])){
+				$response['message'] = 'Invalid request';
+				$response['code'] = 201;
+				echo json_encode($response);
+			 	return;
+			}
+			$select = '*';
+			if(!empty($_POST['select']) && isset($_POST['select'])) {
+				$select = $_POST['select'];
+				unset($_POST['select']);
+			}
+			$isExist = $this->model->isExist('company_setting','company_id',$_POST['company_id']);
+			if($isExist){
+				$data = $this->model->getData('company_setting',['company_id'=>$_POST['company_id']],$select)[0];
+			}
+			$response['data'] = $data;
+			$response['message'] = 'success';
+			$response['code'] = 200;
+			$response['status'] = true;
+			echo json_encode($response);
+		}	
 
 	/********************************** Branch *****************************************/
 		function add_branch(){
@@ -957,7 +1022,7 @@ class Admin_api extends CI_Controller {
 					else{
 						$isExist = $this->model->isExist('customer','email',$_POST['email']);
 						if(!$isExist){
-							$customer_contacts = $_POST['customer_contacts'];
+							$customer_contacts = json_decode($_POST['customer_contacts'],true);
 							unset($_POST['customer_contacts']);
 							$customer_id = $this->model->insertData('customer',$_POST);
 							if(!empty($customer_id)){
@@ -1359,6 +1424,15 @@ class Admin_api extends CI_Controller {
 						unset($_POST['select']);
 					}
 					$employees = $this->model->getData('employee',['created_by'=>$_POST['created_by']],$select);
+					if(!empty($employees))
+					{
+						foreach ($employees as $key => $value) {
+							
+							$employees[$key]['city_name']=$this->model->getValue('cities','city',['id'=>$value['city_id']]);
+							$employees[$key]['state_name']=$this->model->getValue('states','name',['id'=>$value['state_id']]);
+							$employees[$key]['designation']=$this->model->getValue('designation','designation',['id'=>$value['designation_id']]);
+						}
+					}
 					$response['employees'] = $employees;
 					$response['message'] = 'success';
 					$response['code'] = 200;
@@ -1618,6 +1692,17 @@ class Admin_api extends CI_Controller {
 						unset($_POST['select']);
 					}
 					$vendors = $this->model->getData('vendor',['created_by'=>$_POST['created_by']],$select);
+					if(!empty($vendors))
+					{
+						foreach ($vendors as $key => $value) {
+							
+							$vendors[$key]['city_name']=$this->model->getValue('cities','city',['id'=>$value['city_id']]);
+							$vendors[$key]['state_name']=$this->model->getValue('states','name',['id'=>$value['state_id']]);
+							$vendors[$key]['country_name']=$this->model->getValue('countries','name',['id'=>$value['country_id']]);
+							$vendors[$key]['vendor_type']=$this->model->getValue('vendor_types','type',['id'=>$value['type_id']]);
+
+						}
+					}
 					$response['vendors'] = $vendors;
 					$response['message'] = 'success';
 					$response['code'] = 200;
@@ -1936,7 +2021,13 @@ class Admin_api extends CI_Controller {
 						unset($_POST['select']);
 					}
 					$zones = $this->model->getData('zone',['created_by'=>$_POST['created_by']],$select);
-					
+					if(!empty($zones))
+					{
+						foreach ($zones as $key => $value) {
+							
+							$zones[$key]['transport_name']=$this->model->getValue('transport_type','type',['id'=>$value['transport_type_id']]);
+						}
+					}
 					$response['zone'] = $zones;
 					$response['message'] = 'success';
 					$response['code'] = 200;
