@@ -437,6 +437,7 @@ class Admin_api extends CI_Controller {
 							unset($_POST['select']);
 						}
 						$company = $this->model->getData('company',['created_by'=>$_POST['created_by']],$select);
+						$response['next_id'] = $this->model->generate_next_id('company','autoid','com','3');
 						$response['companies'] = $company;
 						$response['message'] = 'success';
 						$response['code'] = 200;
@@ -629,7 +630,63 @@ class Admin_api extends CI_Controller {
 			$response['code'] = 200;
 			$response['status'] = true;
 			echo json_encode($response);
-		}	
+		}
+		
+		function getCompSetting(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if(!$validate){
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			//  	echo json_encode($response);
+			//  	return;
+			// }
+			if ($_SERVER["REQUEST_METHOD"] != "POST") {
+				$response['message'] = 'No direct script is allowed.';
+				$response['code'] = 204;
+				echo json_encode($response);
+			 	return;
+			}
+			if (empty($_POST['company_id'])){
+				$response['message'] = 'Company id id required';
+				$response['code'] = 201;
+				echo json_encode($response);
+			 	return;
+			}
+			/*
+			*example $_POST['select'] = ['modes','transport_types','customer_types']
+			*/
+			if(empty($_POST['select'])){
+				$response['message'] = 'select array is required';
+				$response['code'] = 201;
+				echo json_encode($response);
+			 	return;
+			}
+			$_POST['select'] = explode(',', $_POST['select']);
+			foreach ($_POST['select'] as $key => $fieldName) {
+				$ids = $this->model->getValue('company_setting',$fieldName,['company_id'=>$_POST['company_id']]);
+				if($fieldName == 'modes'){
+					$ids = explode(',', $ids);
+					$modes = $this->model->getData('mode',[],'id,mode_name',[],['id'=>$ids]);
+					$response['modes'] = $modes;
+				}
+				if($fieldName == 'customer_types'){
+					$ids = explode(',', $ids);
+					$customer_types = $this->model->getData('customer_types',[],'id,type',[],['id'=>$ids]);
+					$response['customer_types'] = $customer_types;
+				}
+				if($fieldName == 'transport_types'){
+					$ids = explode(',', $ids);
+					$transport_types = $this->model->getData('transport_type',[],'id,type',[],['id'=>$ids]);
+					$response['transport_types'] = $transport_types;
+				}
+			}
+			
+			$response['message'] = 'success';
+			$response['code'] = 200;
+			$response['status'] = true;
+			echo json_encode($response);
+		}
 
 	/********************************** Branch *****************************************/
 		function add_branch(){
@@ -826,23 +883,19 @@ class Admin_api extends CI_Controller {
 			// $validate = validateToken();
 			// if($validate){
 				if ($_SERVER["REQUEST_METHOD"] == "POST"){
-					if (empty($_POST['created_by'])){
-						$response['message'] = 'Created_by is required';
-						$response['code'] = 201;
+					
+					$select = '*';
+					if(!empty($_POST['select']) && isset($_POST['select'])) {
+						$select = $_POST['select'];
+						unset($_POST['select']);
 					}
-					else{
-						$select = '*';
-						if(!empty($_POST['select']) && isset($_POST['select'])) {
-							$select = $_POST['select'];
-							unset($_POST['select']);
-						}
-						$transport_types = $this->model->getData('transport_type',$_POST,$select);
-						
-						$response['transport_types'] = $transport_types;
-						$response['message'] = 'success';
-						$response['code'] = 200;
-						$response['status'] = true;
-					}
+					$transport_types = $this->model->getData('transport_type',$_POST,$select);
+					
+					$response['transport_types'] = $transport_types;
+					$response['message'] = 'success';
+					$response['code'] = 200;
+					$response['status'] = true;
+					
 				} 
 				else {
 					$response['message'] = 'No direct script is allowed.';
@@ -1010,58 +1063,52 @@ class Admin_api extends CI_Controller {
 		}
 
 	/********************************** Customer *****************************************/
-		function add_customer(){
-			$response = array('code' => -1, 'status' => false, 'message' => '');
-			// $validate = validateToken();
-			// if($validate){
-				if ($_SERVER["REQUEST_METHOD"] == "POST"){
-					if (empty($_POST['name'])){
-						$response['message'] = 'Please fill required fields';
-						$response['code'] = 201;
-					}
-					else{
-						$isExist = $this->model->isExist('customer','email',$_POST['email']);
-						if(!$isExist){
-							$customer_contacts = json_decode($_POST['customer_contacts'],true);
-							unset($_POST['customer_contacts']);
-							$customer_id = $this->model->insertData('customer',$_POST);
-							if(!empty($customer_id)){
-								foreach ($customer_contacts as $key => $value) {
-									$value['customer_id'] = $customer_id;
-									$this->model->insertData('customer_contacts',$value);
-								}
-								$customer = [];
-								$customer['fk_id'] = $customer_id;
-								$customer['username'] = $_POST['name'];
-								$customer['phone'] = $_POST['contact'];
-								$customer['email'] = $_POST['email'];
-								$customer['usertype'] = 'customer';
-								$customer['status'] = 1;
-								$customer['created_by'] = $_POST['created_by'];
-								$this->model->insertData('login',$customer);
-							}
-							$response['message'] = 'success';
-							$response['code'] = 200;
-							$response['status'] = true;
-						}
-						else{
-							$response['message'] = 'Customer email is already exist';
-							$response['code'] = 201;
-						}
-						
-					}
-				} 
-				else {
-					$response['message'] = 'No direct script is allowed.';
-					$response['code'] = 204;
-				}
-			// }
-			// else{
-			// 	$response['message'] = 'Authentication required';
-			// 	$response['code'] = 203;
-			// } 
+	function add_customer(){
+		$response = array('code' => -1, 'status' => false, 'message' => '');
+		// $validate = validateToken();
+		// if(!$validate){
+		// 	$response['message'] = 'Authentication required';
+		// 	$response['code'] = 203;
+		//  	echo json_encode($response);
+		//  	return;
+		// }
+		if ($_SERVER["REQUEST_METHOD"] != "POST") {
+			$response['message'] = 'No direct script is allowed.';
+			$response['code'] = 204;
 			echo json_encode($response);
+			 return;
 		}
+		$isExist = $this->model->isExist('customer','email',$_POST['email']);
+		$isExist2 = $this->model->isExist('login','email',$_POST['email']);
+		if($isExist || $isExist2){
+			$response['message'] = 'Email exists';
+			$response['code'] = 201;
+			echo json_encode($response);
+			 return;
+		}
+		$customer_contacts = json_decode($_POST['customer_contacts'],true);
+		unset($_POST['customer_contacts']);
+		$customer_id = $this->model->insertData('customer',$_POST);
+		if(!empty($customer_id)){
+			foreach ($customer_contacts as $key => $value) {
+				$value['customer_id'] = $customer_id;
+				$this->model->insertData('customer_contacts',$value);
+			}
+			$customer = [];
+			$customer['fk_id'] = $customer_id;
+			$customer['username'] = $_POST['name'];
+			$customer['phone'] = $_POST['contact'];
+			$customer['email'] = $_POST['email'];
+			$customer['usertype'] = 'customer';
+			$customer['status'] = 1;
+			$customer['created_by'] = $_POST['created_by'];
+			$this->model->insertData('login',$customer);
+		}
+		$response['message'] = 'success';
+		$response['code'] = 200;
+		$response['status'] = true;
+		echo json_encode($response);
+	}
 
 		function get_all_customers(){
 			$response = array('code' => -1, 'status' => false, 'message' => '');
@@ -1084,6 +1131,7 @@ class Admin_api extends CI_Controller {
 							$customer[$key]['contacts'] = $this->model->getData('customer_contacts',['customer_id'=>$value['id']],$select2);
 						}
 					}
+					$response['next_id'] = $this->model->generate_next_id('customer','autoid','cust','3');
 					$response['customer'] = $customer;
 					$response['message'] = 'success';
 					$response['code'] = 200;
@@ -1433,6 +1481,7 @@ class Admin_api extends CI_Controller {
 							$employees[$key]['designation']=$this->model->getValue('designation','designation',['id'=>$value['designation_id']]);
 						}
 					}
+					$response['next_id'] = $this->model->generate_next_id('employee','autoid','emp','3');
 					$response['employees'] = $employees;
 					$response['message'] = 'success';
 					$response['code'] = 200;
@@ -1703,6 +1752,7 @@ class Admin_api extends CI_Controller {
 
 						}
 					}
+					$response['next_id'] = $this->model->generate_next_id('vendor','autoid','ven','3');
 					$response['vendors'] = $vendors;
 					$response['message'] = 'success';
 					$response['code'] = 200;
@@ -2765,8 +2815,8 @@ class Admin_api extends CI_Controller {
 
 		function get_global_rates(){
 			$response = array('code' => -1, 'status' => false, 'message' => '');
-			$validate = validateToken();
-			if($validate){
+			// $validate = validateToken();
+			// if($validate){
 				if ($_SERVER["REQUEST_METHOD"] == "POST"){
 					if (empty($_POST['cust_id']) && empty($_POST['mode_id']) && $_POST['transport_type_id']){
 						$response['message'] = 'Please fill required fields';
@@ -2789,11 +2839,11 @@ class Admin_api extends CI_Controller {
 					$response['message'] = 'No direct script is allowed.';
 					$response['code'] = 204;
 				}
-			}
-			else{
-				$response['message'] = 'Authentication required';
-				$response['code'] = 203;
-			} 
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
 			echo json_encode($response);
 		}
 	
