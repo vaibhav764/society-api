@@ -648,7 +648,7 @@ class Admin_api extends CI_Controller {
 			 	return;
 			}
 			if (empty($_POST['company_id'])){
-				$response['message'] = 'Company id id required';
+				$response['message'] = 'Company id is required';
 				$response['code'] = 201;
 				echo json_encode($response);
 			 	return;
