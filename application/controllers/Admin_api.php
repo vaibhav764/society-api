@@ -2989,11 +2989,11 @@ class Admin_api extends CI_Controller {
 				echo json_encode($response);
 			 	return;
 			}
-			$rates = [];
+			$rates = $this->model->getData('global_rates',['company_id'=>$_POST['company_id'],'transport_type_id'=>$_POST['transport_type_id'],'mode_id'=>$_POST['mode_id'],'kg_or_box'=>$_POST['kg_or_box'],'transport_mode'=>$_POST['transport_mode'],'delivery_type'=>$_POST['delivery_type']],'rates')[0]['rates'];
+			if(empty($rates)) $rates = [];
+			$rates = unserialize($rates);
 			if($_POST['customer_type'] == 'global'){
-				$rates = $this->model->getData('global_rates',['company_id'=>$_POST['company_id'],'transport_type_id'=>$_POST['transport_type_id'],'mode_id'=>$_POST['mode_id'],'kg_or_box'=>$_POST['kg_or_box'],'transport_mode'=>$_POST['transport_mode'],'delivery_type'=>$_POST['delivery_type']],'rates')[0]['rates'];
-				if(empty($rates)) $rates = [];
-				$rates = unserialize($rates);
+				
 			}
 			else{
 				if(empty($_POST['customer_id'])){
