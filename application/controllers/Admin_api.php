@@ -1064,52 +1064,52 @@ class Admin_api extends CI_Controller {
 		}
 
 	/********************************** Customer *****************************************/
-	function add_customer(){
-		$response = array('code' => -1, 'status' => false, 'message' => '');
-		// $validate = validateToken();
-		// if(!$validate){
-		// 	$response['message'] = 'Authentication required';
-		// 	$response['code'] = 203;
-		//  	echo json_encode($response);
-		//  	return;
-		// }
-		if ($_SERVER["REQUEST_METHOD"] != "POST") {
-			$response['message'] = 'No direct script is allowed.';
-			$response['code'] = 204;
-			echo json_encode($response);
-			 return;
-		}
-		$isExist = $this->model->isExist('customer','email',$_POST['email']);
-		$isExist2 = $this->model->isExist('login','email',$_POST['email']);
-		if($isExist || $isExist2){
-			$response['message'] = 'Email exists';
-			$response['code'] = 201;
-			echo json_encode($response);
-			 return;
-		}
-		$customer_contacts = json_decode($_POST['customer_contacts'],true);
-		unset($_POST['customer_contacts']);
-		$customer_id = $this->model->insertData('customer',$_POST);
-		if(!empty($customer_id)){
-			foreach ($customer_contacts as $key => $value) {
-				$value['customer_id'] = $customer_id;
-				$this->model->insertData('customer_contacts',$value);
+		function add_customer(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if(!$validate){
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			//  	echo json_encode($response);
+			//  	return;
+			// }
+			if ($_SERVER["REQUEST_METHOD"] != "POST") {
+				$response['message'] = 'No direct script is allowed.';
+				$response['code'] = 204;
+				echo json_encode($response);
+				 return;
 			}
-			$customer = [];
-			$customer['fk_id'] = $customer_id;
-			$customer['username'] = $_POST['name'];
-			$customer['phone'] = $_POST['contact'];
-			$customer['email'] = $_POST['email'];
-			$customer['usertype'] = 'customer';
-			$customer['status'] = 1;
-			$customer['created_by'] = $_POST['created_by'];
-			$this->model->insertData('login',$customer);
+			$isExist = $this->model->isExist('customer','email',$_POST['email']);
+			$isExist2 = $this->model->isExist('login','email',$_POST['email']);
+			if($isExist || $isExist2){
+				$response['message'] = 'Email exists';
+				$response['code'] = 201;
+				echo json_encode($response);
+				 return;
+			}
+			$customer_contacts = json_decode($_POST['customer_contacts'],true);
+			unset($_POST['customer_contacts']);
+			$customer_id = $this->model->insertData('customer',$_POST);
+			if(!empty($customer_id)){
+				foreach ($customer_contacts as $key => $value) {
+					$value['customer_id'] = $customer_id;
+					$this->model->insertData('customer_contacts',$value);
+				}
+				$customer = [];
+				$customer['fk_id'] = $customer_id;
+				$customer['username'] = $_POST['name'];
+				$customer['phone'] = $_POST['contact'];
+				$customer['email'] = $_POST['email'];
+				$customer['usertype'] = 'customer';
+				$customer['status'] = 1;
+				$customer['created_by'] = $_POST['created_by'];
+				$this->model->insertData('login',$customer);
+			}
+			$response['message'] = 'success';
+			$response['code'] = 200;
+			$response['status'] = true;
+			echo json_encode($response);
 		}
-		$response['message'] = 'success';
-		$response['code'] = 200;
-		$response['status'] = true;
-		echo json_encode($response);
-	}
 
 		function get_all_customers(){
 			$response = array('code' => -1, 'status' => false, 'message' => '');
@@ -2921,6 +2921,99 @@ class Admin_api extends CI_Controller {
 				$response['message'] = 'Authentication required';
 				$response['code'] = 203;
 			} 
+			echo json_encode($response);
+		}
+
+	/********************************** Rates *****************************************/
+		function save_rates(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if(!$validate){
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			//  	echo json_encode($response);
+			//  	return;
+			// }
+			if ($_SERVER["REQUEST_METHOD"] != "POST") {
+				$response['message'] = 'No direct script is allowed.';
+				$response['code'] = 204;
+				echo json_encode($response);
+			 	return;
+			}
+			// if (empty($_POST['customer_type']) || empty($_POST['company_id']) || empty($_POST['kg_or_box']) || empty($_POST['transport_type_id']) || empty($_POST['mode_id']) || empty($_POST['global_rates'])  ) {
+			// 	$response['message'] = 'Please fill required fields';
+			// 	$response['code'] = 201;
+			// 	echo json_encode($response);
+	 		// 		return;
+			// }
+			if($_POST['customer_type'] == 'global'){
+				$isExist = $this->model->getValue('global_rates','rate',['company_id'=>$_POST['company_id'],'transport_type_id'=>$_POST['transport_type_id'],'mode_id'=>$_POST['mode_id'],'kg_or_box'=>$_POST['kg_or_box'],'transport_mode'=>$_POST['transport_mode'],'delivery_type'=>$_POST['delivery_type']]);
+				if(!empty($isExist)){
+					$_POST['rates'] = serialize($_POST['rates']);
+					$this->model->updateData('global_rates',$_POST,['company_id'=>$_POST['company_id'],'transport_type_id'=>$_POST['transport_type_id'],'mode_id'=>$_POST['mode_id'],'kg_or_box'=>$_POST['kg_or_box'],'transport_mode'=>$_POST['transport_mode'],'delivery_type'=>$_POST['delivery_type']]);
+				}
+				else{
+					$_POST['rates'] = serialize($_POST['rates']);
+					$this->model->insertData('global_rates',$_POST);
+				}
+			}
+			if(!empty($_POST['customer_id'])){
+				if($_POST['customer_type'] == 'prime'){
+					$isExist = $this->model->getValue('customer_rates','rate',['customer_id'=>$_POST['customer_id'],'company_id'=>$_POST['company_id'],'transport_type_id'=>$_POST['transport_type_id'],'mode_id'=>$_POST['mode_id'],'from_zone_id'=>$from_zone,'to_zone_id'=>$to_zone,'kg_or_box'=>$_POST['kg_or_box'],'transport_mode'=>$_POST['transport_mode'],'delivery_type'=>$_POST['delivery_type']]);
+					if(!empty($isExist)){
+						$_POST['rates'] = serialize($_POST['rates']);
+						$this->model->updateData('customer_rates',$_POST,['customer_id'=>$_POST['customer_id'],'company_id'=>$_POST['company_id'],'transport_type_id'=>$_POST['transport_type_id'],'mode_id'=>$_POST['mode_id'],'from_zone_id'=>$from_zone,'to_zone_id'=>$to_zone,'kg_or_box'=>$_POST['kg_or_box'],'transport_mode'=>$_POST['transport_mode'],'delivery_type'=>$_POST['delivery_type']]);
+					}
+					else{
+						$_POST['rates'] = serialize($_POST['rates']);
+						$this->model->insertData('customer_rates',$_POST);
+					}
+				}
+			}
+			$response['message'] = 'success';
+			$response['code'] = 200;
+			$response['status'] = true;
+			echo json_encode($response);
+		}
+
+		function get_rates(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if(!$validate){
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			//  	echo json_encode($response);
+			//  	return;
+			// }
+			if ($_SERVER["REQUEST_METHOD"] != "POST") {
+				$response['message'] = 'No direct script is allowed.';
+				$response['code'] = 204;
+				echo json_encode($response);
+			 	return;
+			}
+			$rates = $this->model->getData('global_rates',['company_id'=>$_POST['company_id'],'transport_type_id'=>$_POST['transport_type_id'],'mode_id'=>$_POST['mode_id'],'kg_or_box'=>$_POST['kg_or_box'],'transport_mode'=>$_POST['transport_mode'],'delivery_type'=>$_POST['delivery_type']],'rates')[0]['rates'];
+			if(empty($rates)) $rates = [];
+			$rates = unserialize($rates);
+			if($_POST['customer_type'] == 'global'){
+				
+			}
+			else{
+				if(empty($_POST['customer_id'])){
+					echo json_encode($response);
+					return;
+				}
+				if($_POST['customer_type'] != 'prime'){
+					echo json_encode($response);
+					return;
+				}
+				$rates = $this->model->getData('customer_rates',['customer_id'=>$_POST['customer_id'],'company_id'=>$_POST['company_id'],'transport_type_id'=>$_POST['transport_type_id'],'mode_id'=>$_POST['mode_id'],'from_zone_id'=>$from_zone,'to_zone_id'=>$to_zone,'kg_or_box'=>$_POST['kg_or_box'],'transport_mode'=>$_POST['transport_mode'],'delivery_type'=>$_POST['delivery_type']],'rates')[0]['rates'];
+				if(empty($rates)) $rates = [];
+				$rates = unserialize($rates);
+			}
+			$response['rates'] = $rates;
+			$response['message'] = 'success';
+			$response['code'] = 200;
+			$response['status'] = true;
 			echo json_encode($response);
 		}
 
