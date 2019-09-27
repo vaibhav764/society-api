@@ -1113,6 +1113,7 @@ class Admin_api extends CI_Controller {
 
 		function get_all_customers(){
 			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// print_r($_POST);die; 
 			// $validate = validateToken();
 			// if($validate){
 				if ($_SERVER["REQUEST_METHOD"] == "POST"){
@@ -1129,7 +1130,7 @@ class Admin_api extends CI_Controller {
 					$customer = $this->model->getData('customer',$_POST,$select);
 					if(!empty($customer) && !empty($customer[0]['id'])){
 						foreach ($customer as $key => $value) {
-							$customer[$key]['customer_type'] = $this->model->getValue('customer_types','type',['id'=>$value['type']]);
+							$customer[$key]['customer_type'] = $this->model->getValue('customer_types','type',['id'=>$value['type_id']]);
 							$customer[$key]['contacts'] = $this->model->getData('customer_contacts',['customer_id'=>$value['id']],$select2);
 						}
 					}
