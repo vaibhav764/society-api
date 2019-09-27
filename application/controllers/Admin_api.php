@@ -1036,6 +1036,7 @@ class Admin_api extends CI_Controller {
 
 		function get_customer_types(){
 			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// print_r($_POST);die;
 			// $validate = validateToken();
 			// if($validate){
 				if ($_SERVER["REQUEST_METHOD"] == "POST"){
@@ -1044,7 +1045,7 @@ class Admin_api extends CI_Controller {
 						$select = $_POST['select'];
 						unset($_POST['select']);
 					}
-					$customer_types = $this->model->getData('customer_types',['created_by'=>$_POST['created_by']],$select);
+					$customer_types = $this->model->getData('customer_types',$_POST,$select);
 					$response['customer_types'] = $customer_types;
 					$response['message'] = 'success';
 					$response['code'] = 200;
@@ -1125,9 +1126,10 @@ class Admin_api extends CI_Controller {
 						$select = $_POST['select'];
 						unset($_POST['select']);
 					}
-					$customer = $this->model->getData('customer',['created_by'=>$_POST['created_by']],$select);
+					$customer = $this->model->getData('customer',$_POST,$select);
 					if(!empty($customer) && !empty($customer[0]['id'])){
 						foreach ($customer as $key => $value) {
+							$customer[$key]['customer_type'] = $this->model->getValue('customer_types','type',['id'=>$value['type']]);
 							$customer[$key]['contacts'] = $this->model->getData('customer_contacts',['customer_id'=>$value['id']],$select2);
 						}
 					}
@@ -2070,7 +2072,7 @@ class Admin_api extends CI_Controller {
 						$select = $_POST['select'];
 						unset($_POST['select']);
 					}
-					$zones = $this->model->getData('zone',['created_by'=>$_POST['created_by']],$select);
+					$zones = $this->model->getData('zone',$_POST,$select);
 					if(!empty($zones))
 					{
 						foreach ($zones as $key => $value) {
