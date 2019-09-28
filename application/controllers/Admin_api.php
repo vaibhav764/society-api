@@ -71,6 +71,49 @@ class Admin_api extends CI_Controller {
 			// } 
 			echo json_encode($response);
 		}
+	/********************************** Change Password *****************************************/
+
+		function change_password(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if(!$validate){
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			//  	echo json_encode($response);
+			//  	return;
+			// }
+			if ($_SERVER["REQUEST_METHOD"] != "POST") {
+				$response['message'] = 'No direct script is allowed.';
+				$response['code'] = 204;
+				echo json_encode($response);
+				return;
+			}
+			if ($_POST['new_password'] != $_POST['confirm_password']){
+				$response['message'] = 'Password mismatch';
+				$response['code'] = 201;
+				echo json_encode($response);
+				return;
+			}
+			$isExistEmail = $this->model->isExist('login','email',$_POST['email']);
+			if(!$isExistEmail){
+				$response['message'] = 'Email incorrect';
+				$response['code'] = 201;
+				echo json_encode($response);
+				return;
+			}
+			$isExist = $this->model->getData('login',['email'=>$_POST['email'],'password'=>encyrpt_password($_POST['old_password'])] );
+			if(empty($isExist)){
+				$response['message'] = 'Password incorrect';
+				$response['code'] = 201;
+				echo json_encode($response);
+				return;
+			}
+			$this->model->updateData('login',['password'=>encyrpt_password($_POST['new_password'])],['email'=>$_POST['email']]);
+			$response['message'] = 'success';
+			$response['code'] = 200;
+			$response['status'] = true;
+			echo json_encode($response);
+		} 
 
 	/********************************** Change Password *****************************************/
 
@@ -548,7 +591,7 @@ class Admin_api extends CI_Controller {
 			// $validate = validateToken();
 			// if($validate){
 				if ($_SERVER["REQUEST_METHOD"] == "POST"){
-					$id = $this->model->getValue('login','id',['id'=>$_POST['created_by'],'usertype'=>'admin']);
+					$id = $this->model->getValue('login','id',['id'=>$_POST['created_by']]);
 					if (empty($id)) {
 						$response['message'] = 'Admin id is required';
 						$response['code'] = 201;
@@ -1160,6 +1203,7 @@ class Admin_api extends CI_Controller {
 
 		function get_all_customers(){
 			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// print_r($_POST);die; 
 			// $validate = validateToken();
 			// if($validate){
 				if ($_SERVER["REQUEST_METHOD"] == "POST"){
@@ -1176,7 +1220,7 @@ class Admin_api extends CI_Controller {
 					$customer = $this->model->getData('customer',$_POST,$select);
 					if(!empty($customer) && !empty($customer[0]['id'])){
 						foreach ($customer as $key => $value) {
-							$customer[$key]['customer_type'] = $this->model->getValue('customer_types','type',['id'=>$value['type']]);
+							$customer[$key]['customer_type'] = $this->model->getValue('customer_types','type',['id'=>$value['type_id']]);
 							$customer[$key]['contacts'] = $this->model->getData('customer_contacts',['customer_id'=>$value['id']],$select2);
 						}
 					}
@@ -3009,16 +3053,16 @@ class Admin_api extends CI_Controller {
 				}
 			}
 			if(!empty($_POST['customer_id'])){
-				if($_POST['customer_type'] == 'prime'){
-					$rates = $this->model->getValue('customer_rates','rates',['customer_id'=>$_POST['customer_id'],'company_id'=>$_POST['company_id'],'transport_type_id'=>$_POST['transport_type_id'],'mode_id'=>$_POST['mode_id'],'from_zone_id'=>$from_zone,'to_zone_id'=>$to_zone,'kg_or_box'=>$_POST['kg_or_box'],'transport_mode'=>$_POST['transport_mode'],'delivery_type'=>$_POST['delivery_type']]);
+				if($_POST['customer_type'] == '11'){
+					$rates = $this->model->getValue('customer_rates','rates',['customer_id'=>$_POST['customer_id'],'created_by'=>$_POST['created_by'],'transport_type_id'=>$_POST['transport_type_id'],'mode_id'=>$_POST['mode_id'],'kg_or_box'=>$_POST['kg_or_box'],'transport_mode'=>$_POST['transport_mode'],'delivery_type'=>$_POST['delivery_type']]);
 					if(!empty($rates)){
 						$rates = unserialize($rates);
 						$rates[$_POST['from_zone_id']][$_POST['to_zone_id']] = $_POST['rate'];
 						$_POST['rates'] = serialize($rates);
-						$this->model->updateData('customer_rates',$_POST,['customer_id'=>$_POST['customer_id'],'company_id'=>$_POST['company_id'],'transport_type_id'=>$_POST['transport_type_id'],'mode_id'=>$_POST['mode_id'],'from_zone_id'=>$from_zone,'to_zone_id'=>$to_zone,'kg_or_box'=>$_POST['kg_or_box'],'transport_mode'=>$_POST['transport_mode'],'delivery_type'=>$_POST['delivery_type']]);
+						$this->model->updateData('customer_rates',$_POST,['customer_id'=>$_POST['customer_id'],'created_by'=>$_POST['created_by'],'transport_type_id'=>$_POST['transport_type_id'],'mode_id'=>$_POST['mode_id'],'kg_or_box'=>$_POST['kg_or_box'],'transport_mode'=>$_POST['transport_mode'],'delivery_type'=>$_POST['delivery_type']]);
 					}
 					else{
-						$_POST['rates'] = serialize($_POST['rates']);
+						$_POST['rates'] = serialize($_POST['rate']);
 						$this->model->insertData('customer_rates',$_POST);
 					}
 				}
@@ -3044,7 +3088,7 @@ class Admin_api extends CI_Controller {
 				echo json_encode($response);
 			 	return;
 			}
-			$rates = $this->model->getData('global_rates',['company_id'=>$_POST['company_id'],'transport_type_id'=>$_POST['transport_type_id'],'mode_id'=>$_POST['mode_id'],'kg_or_box'=>$_POST['kg_or_box'],'transport_mode'=>$_POST['transport_mode'],'delivery_type'=>$_POST['delivery_type']],'rates')[0]['rates'];
+			$rates = $this->model->getData('global_rates',['created_by'=>$_POST['created_by'],'transport_type_id'=>$_POST['transport_type_id'],'mode_id'=>$_POST['mode_id'],'kg_or_box'=>$_POST['kg_or_box'],'transport_mode'=>$_POST['transport_mode'],'delivery_type'=>$_POST['delivery_type']],'rates')[0]['rates'];
 			if(!empty($rates)){
 				if($_POST['customer_type'] == 'prime'){
 					if(empty($_POST['customer_id'])){
@@ -3053,7 +3097,7 @@ class Admin_api extends CI_Controller {
 						echo json_encode($response);
 						return;
 					}
-					$customer_rates = $this->model->getData('customer_rates',['customer_id'=>$_POST['customer_id'],'company_id'=>$_POST['company_id'],'transport_type_id'=>$_POST['transport_type_id'],'mode_id'=>$_POST['mode_id'],'from_zone_id'=>$from_zone,'to_zone_id'=>$to_zone,'kg_or_box'=>$_POST['kg_or_box'],'transport_mode'=>$_POST['transport_mode'],'delivery_type'=>$_POST['delivery_type']],'rates')[0]['rates'];
+					$customer_rates = $this->model->getData('customer_rates',['customer_id'=>$_POST['customer_id'],'created_by'=>$_POST['created_by'],'transport_type_id'=>$_POST['transport_type_id'],'mode_id'=>$_POST['mode_id'],'from_zone_id'=>$from_zone,'to_zone_id'=>$to_zone,'kg_or_box'=>$_POST['kg_or_box'],'transport_mode'=>$_POST['transport_mode'],'delivery_type'=>$_POST['delivery_type']],'rates')[0]['rates'];
 					$customer_rates = unserialize($customer_rates);
 					foreach ($customer_rates as $from_zone_id => $value) {
 						foreach ($value as $to_zone_id => $rate) {
