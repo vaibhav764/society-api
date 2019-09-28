@@ -8,7 +8,12 @@ class Model extends CI_Model {
 	function getData($tableName, $where_data=array(),$select ='*',$order_by=array(), $where_in = array(),$like = array(),$where_not_in = array()){
         try{
 			if (isset($tableName) && isset($where_data)) {
-				
+				if (!$this->db->field_exists('status', $tableName)){
+					$this->db->trans_start();
+					$this->db->query("ALTER TABLE `".$tableName."` ADD `status` VARCHAR(25) NOT NULL");
+					$this->db->trans_complete();
+				}
+				$where_data['status !='] = 'deleted';
 				$this->db->trans_start();
 				$this->db->select($select);
 				if(!empty($where_data)){
@@ -350,7 +355,24 @@ class Model extends CI_Model {
 		return $result;
 	}
 
-	function deleteData($tableName,$whereData){
+	function deleteData($tableName, $whereData ,$updateData = ['status'=>'deleted']){
+		if(isset($tableName) && isset($whereData)){
+			$this->db->trans_start();	
+			$this->db->update($tableName, $updateData, $whereData);
+			$this->db->trans_complete();
+
+			if($this->db->affected_rows() > 0){ // returns 1 ( == true) if successfuly deleted
+				return true;
+			}else{
+				return false;
+			}
+		}else{
+			return false;
+		}
+		
+	}
+
+	function deleteData2($tableName,$whereData){
 		if(isset($tableName) && isset($whereData)){
 			
 			$this->db->trans_start();	

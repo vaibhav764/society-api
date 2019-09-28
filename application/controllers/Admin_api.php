@@ -72,6 +72,51 @@ class Admin_api extends CI_Controller {
 			echo json_encode($response);
 		}
 
+	/********************************** Change Password *****************************************/
+
+		function change_password(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if(!$validate){
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			//  	echo json_encode($response);
+			//  	return;
+			// }
+			if ($_SERVER["REQUEST_METHOD"] != "POST") {
+				$response['message'] = 'No direct script is allowed.';
+				$response['code'] = 204;
+				echo json_encode($response);
+			 	return;
+			}
+			if ($_POST['new_password'] != $_POST['confirm_password']){
+				$response['message'] = 'Password mismatch';
+				$response['code'] = 201;
+				echo json_encode($response);
+			 	return;
+			}
+			$isExistEmail = $this->model->isExist('login','email',$_POST['email']);
+			if(!$isExistEmail){
+				$response['message'] = 'Email incorrect';
+				$response['code'] = 201;
+				echo json_encode($response);
+				return;
+			}
+			$isExist = $this->model->getData('login',['email'=>$_POST['email'],'password'=>encyrpt_password($_POST['old_password'])] );
+			if(empty($isExist)){
+				$response['message'] = 'Password incorrect';
+				$response['code'] = 201;
+				echo json_encode($response);
+				return;
+			}
+			$this->model->updateData('login',['password'=>encyrpt_password($_POST['new_password'])],['email'=>$_POST['email']]);
+			$response['message'] = 'success';
+			$response['code'] = 200;
+			$response['status'] = true;
+			echo json_encode($response);
+		}
+
+	/********************************** Forgot Password *****************************************/
 		function forgot_password(){
 			$response = array('code' => -1, 'status' => false, 'message' => '');
 			// $validate = validateToken();
@@ -159,6 +204,8 @@ class Admin_api extends CI_Controller {
 			echo json_encode($response);
 		}
 
+	/********************************** Reset Password *****************************************/
+
 		function reset_password(){
 			$response = array('code' => -1, 'status' => false, 'message' => '');
 			// $validate = validateToken();
@@ -177,7 +224,7 @@ class Admin_api extends CI_Controller {
 							$response['status'] = true;
 						}
 						else{
-							$response['message'] = 'failure';
+							$response['message'] = 'Email or password is incorrect';
 							$response['code'] = 203;
 						}
 					}
