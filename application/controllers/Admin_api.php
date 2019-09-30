@@ -480,6 +480,16 @@ class Admin_api extends CI_Controller {
 							unset($_POST['select']);
 						}
 						$company = $this->model->getData('company',['created_by'=>$_POST['created_by']],$select);
+						if(!empty($company))
+					{
+						foreach ($company as $key => $value) {
+
+							$company[$key]['country_name']=$this->model->getValue('countries','name',['id'=>$value['country_id']]);
+							$company[$key]['city_name']=$this->model->getValue('cities','city',['id'=>$value['city_id']]);
+							$company[$key]['state_name']=$this->model->getValue('states','name',['id'=>$value['state_id']]);
+						}
+					}
+
 						$response['next_id'] = $this->model->generate_next_id('company','autoid','com','3');
 						$response['companies'] = $company;
 						$response['message'] = 'success';
