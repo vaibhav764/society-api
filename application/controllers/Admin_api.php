@@ -16,59 +16,66 @@ class Admin_api extends CI_Controller {
 	/********************************** Admin Login *****************************************/
 		function sign_in(){
 			$response = array('code' => -1, 'status' => false, 'message' => '');
-			// $validate = validateToken();
-			// if($validate){
-				if ($_SERVER["REQUEST_METHOD"] == "POST"){
-					if (empty($_POST['email']) || empty($_POST['password'])){
-						$response['message'] = 'Please fill required fields';
-						$response['code'] = 201;
-					}
-					else{
-						$select = '*';
-						if(!empty($_POST['select']) && isset($_POST['select'])){
-							$select = $_POST['select'];
-							unset($_POST['select']);
-						}
-						$admin = $this->model->getData('login',['email'=>$_POST['email'],'password'=>encyrpt_password($_POST['password'])],$select);
-						if(!empty($admin)){
-							$_POST['timestamp'] = now();
-							$token = generateToken($_POST);
+			if ($_SERVER["REQUEST_METHOD"] != "POST") {
+				$response['message'] = 'Invalid Request';
+				$response['code'] = 204;
+				echo json_encode($response);
+				return;
+			}
+			if (empty($_POST['email'])){
+				$response['message'] = 'Email Required';
+				$response['code'] = 201;
+				echo json_encode($response);
+				return;
+			}
+			if (empty($_POST['password'])){
+				$response['message'] = 'Password Required';
+				$response['code'] = 201;
+				echo json_encode($response);
+				return;
+			}
+			$isExistEmail = $this->model->isExist('login','email',$_POST['email']);
+			if(!$isExistEmail){
+				$response['message'] = 'Incorrect Email';
+				$response['code'] = 201;
+				echo json_encode($response);
+				return;
+			}
+			$select = '*';
+			if(!empty($_POST['select']) && isset($_POST['select'])){
+				$select = $_POST['select'];
+				unset($_POST['select']);
+			}
 
-							$agent = get_agent();
-							$session_id = encyrpt_password($admin[0]['id'].'-'.$agent);
-							
+			$admin = $this->model->getData('login',['email'=>$_POST['email'],'password'=>encyrpt_password($_POST['password'])]);
+			if(empty($admin)){
+				$response['message'] = 'Incorrect Password';
+				$response['code'] = 201;
+				echo json_encode($response);
+				return;
+			}
 
-				            $sessions = array('session_id' => $session_id, 'token' => $token,'logged_in'=>true,'created_by'=>$admin[0]['id'],'agent'=>$agent);
-							$isExist = $this->model->isExist('ci_sessions','session_id',$session_id);
-							if($isExist){
-								$this->model->updateData('ci_sessions',$sessions,['session_id'=>$session_id]);
-							}
-							else{
-								$this->model->insertData('ci_sessions',$sessions);
-							}
-							
-							$response['$token'] = $token;
-							$response['data'] = $admin[0];
-							$response['session_id'] = $session_id;
-							$response['message'] = 'success';
-							$response['code'] = 200;
-							$response['status'] = true;
-						}
-						else{
-							$response['message'] = 'Username or password is incorrect';
-							$response['code'] = 203;
-						}
-					}
-				}
-				else {
-					$response['message'] = 'No direct script is allowed.';
-					$response['code'] = 204;
-				}
-			// }
-			// else{
-			// 	$response['message'] = 'Authentication required';
-			// 	$response['code'] = 203;
-			// } 
+			$_POST['timestamp'] = now();
+			$token = generateToken($_POST);
+
+			$agent = get_agent();
+			$session_id = encyrpt_password($admin[0]['id'].'-'.$agent);
+
+            $sessions = array('session_id' => $session_id, 'token' => $token,'logged_in'=>true,'created_by'=>$admin[0]['id'],'agent'=>$agent);
+			$isExist = $this->model->isExist('ci_sessions','session_id',$session_id);
+			if($isExist){
+				$this->model->updateData('ci_sessions',$sessions,['session_id'=>$session_id]);
+			}
+			else{
+				$this->model->insertData('ci_sessions',$sessions);
+			}
+			
+			$response['token'] = $token;
+			$response['data'] = $admin[0];
+			$response['session_id'] = $session_id;
+			$response['message'] = 'success';
+			$response['code'] = 200;
+			$response['status'] = true;
 			echo json_encode($response);
 		}
 	/********************************** Change Password *****************************************/
@@ -83,7 +90,7 @@ class Admin_api extends CI_Controller {
 			//  	return;
 			// }
 			if ($_SERVER["REQUEST_METHOD"] != "POST") {
-				$response['message'] = 'No direct script is allowed.';
+				$response['message'] = 'Invalid Request';
 				$response['code'] = 204;
 				echo json_encode($response);
 				return;
@@ -114,50 +121,6 @@ class Admin_api extends CI_Controller {
 			$response['status'] = true;
 			echo json_encode($response);
 		} 
-
-	/********************************** Change Password *****************************************/
-
-		function change_password(){
-			$response = array('code' => -1, 'status' => false, 'message' => '');
-			// $validate = validateToken();
-			// if(!$validate){
-			// 	$response['message'] = 'Authentication required';
-			// 	$response['code'] = 203;
-			//  	echo json_encode($response);
-			//  	return;
-			// }
-			if ($_SERVER["REQUEST_METHOD"] != "POST") {
-				$response['message'] = 'No direct script is allowed.';
-				$response['code'] = 204;
-				echo json_encode($response);
-			 	return;
-			}
-			if ($_POST['new_password'] != $_POST['confirm_password']){
-				$response['message'] = 'Password mismatch';
-				$response['code'] = 201;
-				echo json_encode($response);
-			 	return;
-			}
-			$isExistEmail = $this->model->isExist('login','email',$_POST['email']);
-			if(!$isExistEmail){
-				$response['message'] = 'Email incorrect';
-				$response['code'] = 201;
-				echo json_encode($response);
-				return;
-			}
-			$isExist = $this->model->getData('login',['email'=>$_POST['email'],'password'=>encyrpt_password($_POST['old_password'])] );
-			if(empty($isExist)){
-				$response['message'] = 'Password incorrect';
-				$response['code'] = 201;
-				echo json_encode($response);
-				return;
-			}
-			$this->model->updateData('login',['password'=>encyrpt_password($_POST['new_password'])],['email'=>$_POST['email']]);
-			$response['message'] = 'success';
-			$response['code'] = 200;
-			$response['status'] = true;
-			echo json_encode($response);
-		}
 
 	/********************************** Forgot Password *****************************************/
 		function forgot_password(){
@@ -193,7 +156,7 @@ class Admin_api extends CI_Controller {
 					}
 				}
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -236,7 +199,7 @@ class Admin_api extends CI_Controller {
 					}
 				}
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -273,7 +236,7 @@ class Admin_api extends CI_Controller {
 					}
 				}
 				else{
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -303,7 +266,7 @@ class Admin_api extends CI_Controller {
 					$response['status'] = true;
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -333,7 +296,7 @@ class Admin_api extends CI_Controller {
 					$response['status'] = true;
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -370,7 +333,7 @@ class Admin_api extends CI_Controller {
 					$response['status'] = true;
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -400,7 +363,7 @@ class Admin_api extends CI_Controller {
 					$response['status'] = true;
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -438,7 +401,7 @@ class Admin_api extends CI_Controller {
 					$response['status'] = true;
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -499,7 +462,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -535,7 +498,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -575,7 +538,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -612,7 +575,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -646,7 +609,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -667,7 +630,7 @@ class Admin_api extends CI_Controller {
 			//  	return;
 			// }
 			if ($_SERVER["REQUEST_METHOD"] != "POST") {
-				$response['message'] = 'No direct script is allowed.';
+				$response['message'] = 'Invalid Request';
 				$response['code'] = 204;
 				echo json_encode($response);
 				return;
@@ -695,7 +658,7 @@ class Admin_api extends CI_Controller {
 			//  	return;
 			// }
 			if ($_SERVER["REQUEST_METHOD"] != "POST") {
-				$response['message'] = 'No direct script is allowed.';
+				$response['message'] = 'Invalid Request';
 				$response['code'] = 204;
 				echo json_encode($response);
 			 	return;
@@ -732,7 +695,7 @@ class Admin_api extends CI_Controller {
 			//  	return;
 			// }
 			if ($_SERVER["REQUEST_METHOD"] != "POST") {
-				$response['message'] = 'No direct script is allowed.';
+				$response['message'] = 'Invalid Request';
 				$response['code'] = 204;
 				echo json_encode($response);
 			 	return;
@@ -818,7 +781,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -854,7 +817,7 @@ class Admin_api extends CI_Controller {
 					$response['status'] = true;
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -888,7 +851,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -921,7 +884,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -955,7 +918,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -988,7 +951,7 @@ class Admin_api extends CI_Controller {
 					
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -1048,7 +1011,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -1113,7 +1076,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -1142,7 +1105,7 @@ class Admin_api extends CI_Controller {
 					$response['status'] = true;
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -1164,7 +1127,7 @@ class Admin_api extends CI_Controller {
 			//  	return;
 			// }
 			if ($_SERVER["REQUEST_METHOD"] != "POST") {
-				$response['message'] = 'No direct script is allowed.';
+				$response['message'] = 'Invalid Request';
 				$response['code'] = 204;
 				echo json_encode($response);
 				 return;
@@ -1172,30 +1135,38 @@ class Admin_api extends CI_Controller {
 			$isExist = $this->model->isExist('customer','email',$_POST['email']);
 			$isExist2 = $this->model->isExist('login','email',$_POST['email']);
 			if($isExist || $isExist2){
-				$response['message'] = 'Email exists';
+				$response['message'] = 'Email Exist';
 				$response['code'] = 201;
 				echo json_encode($response);
-				 return;
+				return;
 			}
 			$customer_contacts = json_decode($_POST['customer_contacts'],true);
 			unset($_POST['customer_contacts']);
 			$customer_id = $this->model->insertData('customer',$_POST);
-			if(!empty($customer_id)){
+			if(empty($customer_id)){
+				$response['message'] = 'System Error';
+				$response['code'] = 201;
+				echo json_encode($response);
+				return;
+			}
+			if(!empty($customer_contacts)){
 				foreach ($customer_contacts as $key => $value) {
 					$value['customer_id'] = $customer_id;
 					$this->model->insertData('customer_contacts',$value);
 				}
-				$customer = [];
-				$customer['fk_id'] = $customer_id;
-				$customer['username'] = $_POST['name'];
-				$customer['phone'] = $_POST['contact'];
-				$customer['email'] = $_POST['email'];
-				$customer['usertype'] = 'customer';
-				$customer['status'] = 1;
-				$customer['created_by'] = $_POST['created_by'];
-				$this->model->insertData('login',$customer);
 			}
-			$response['message'] = 'success';
+			
+			$customer = [];
+			$customer['fk_id'] = $customer_id;
+			$customer['username'] = $_POST['name'];
+			$customer['phone'] = $_POST['contact'];
+			$customer['email'] = $_POST['email'];
+			$customer['usertype'] = 'customer';
+			$customer['status'] = 1;
+			$customer['created_by'] = $_POST['created_by'];
+			$this->model->insertData('login',$customer);
+
+			$response['message'] = 'Customer Added';
 			$response['code'] = 200;
 			$response['status'] = true;
 			echo json_encode($response);
@@ -1218,10 +1189,17 @@ class Admin_api extends CI_Controller {
 						unset($_POST['select']);
 					}
 					$customer = $this->model->getData('customer',$_POST,$select);
-					if(!empty($customer) && !empty($customer[0]['id'])){
+					if(!empty($customer)){
 						foreach ($customer as $key => $value) {
-							$customer[$key]['customer_type'] = $this->model->getValue('customer_types','type',['id'=>$value['type_id']]);
-							$customer[$key]['contacts'] = $this->model->getData('customer_contacts',['customer_id'=>$value['id']],$select2);
+							if($select != '*'){
+								$select = explode(',', $select);
+								if(!in_array('contacts', $select)){
+									break;
+								}
+							}
+							if(!empty($value['id'])){
+								$customer[$key]['contacts'] = $this->model->getData('customer_contacts',['customer_id'=>$value['id']],$select2);
+							}
 						}
 					}
 					$response['next_id'] = $this->model->generate_next_id('customer','autoid','cust','3');
@@ -1231,7 +1209,7 @@ class Admin_api extends CI_Controller {
 					$response['status'] = true;
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -1275,7 +1253,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -1289,101 +1267,98 @@ class Admin_api extends CI_Controller {
 		function update_customer(){
 			$response = array('code' => -1, 'status' => false, 'message' => '');
 			// $validate = validateToken();
-			// if($validate){
-				if ($_SERVER["REQUEST_METHOD"] == "POST"){
-					if (empty($_POST['id'])){
-						$response['message'] = 'Customer id is required';
-						$response['code'] = 201;
-					}
-					else if (empty($_POST['name'])){
-						$response['message'] = 'Please fill required fields';
-						$response['code'] = 201;
-					}
-					else{
-						$v_customer_contacts = $_POST['customer_contacts'];
-						unset($_POST['customer_contacts']);
-						$customer = $this->model->updateData('customer',$_POST,['id'=>$_POST['id']]);
-
-						if(!empty($v_customer_contacts)) {
-							$v_ids = array_column($v_customer_contacts, 'id');
-						}
-						else{
-							$v_ids = [];
-						}
-						$db_customer_contacts = $this->model->getData('customer_contacts',['customer_id'=>$_POST['id']]);
-						if(!empty($db_customer_contacts)){
-							$db_ids = array_column($db_customer_contacts, 'id');
-						}
-						else{
-							$db_ids = [];
-						}
-						if(!empty($v_customer_contacts)){
-							foreach ($v_customer_contacts as $key => $value) {
-								if(!in_array($value['id'], $db_ids)) {
-									//insert
-									$value['customer_id'] = $_POST['id'];
-									$this->model->insertData('customer_contacts',$value);
-								}
-								else{
-									//update
-									$value['customer_id'] = $_POST['id'];
-									$this->model->updateData('customer_contacts',$value,['id'=>$value['id']]);
-
-								}
-							}
-						}
-						if(!empty($db_customer_contacts)){
-							foreach ($db_customer_contacts as $key => $value){
-								if(!in_array($value['id'], $v_ids)){
-									$this->model->deleteData('customer_contacts',['id'=>$value['id']]);
-								}
-							}
-						}
-
-						$response['message'] = 'success';
-						$response['code'] = 200;
-						$response['status'] = true;
-					}
-				} 
-				else {
-					$response['message'] = 'No direct script is allowed.';
-					$response['code'] = 204;
-				}
-			// }
-			// else{
+			// if(!$validate){
 			// 	$response['message'] = 'Authentication required';
 			// 	$response['code'] = 203;
-			// } 
+			//  	echo json_encode($response);
+			//  	return;
+			// }
+			if ($_SERVER["REQUEST_METHOD"] != "POST") {
+				$response['message'] = 'Invalid Request';
+				$response['code'] = 204;
+				echo json_encode($response);
+				return;
+			}
+			if (empty($_POST['id'])){
+				$response['message'] = 'Wrong Parameters';
+				$response['code'] = 201;
+				echo json_encode($response);
+				return;
+			}
+			$_POST['customer_contacts'] = json_decode($_POST['customer_contacts'],true);
+			$v_customer_contacts = $_POST['customer_contacts'];
+			unset($_POST['customer_contacts']);
+			$customer = $this->model->updateData('customer',$_POST,['id'=>$_POST['id']]);
+
+			if(!empty($v_customer_contacts)) {
+				$v_ids = array_column($v_customer_contacts, 'id');
+			}
+			else{
+				$v_ids = [];
+			}
+			$db_customer_contacts = $this->model->getData('customer_contacts',['customer_id'=>$_POST['id']]);
+			if(!empty($db_customer_contacts)){
+				$db_ids = array_column($db_customer_contacts, 'id');
+			}
+			else{
+				$db_ids = [];
+			}
+			if(!empty($v_customer_contacts)){
+				foreach ($v_customer_contacts as $key => $value) {
+					if(!in_array($value['id'], $db_ids)) {
+						//insert
+						$value['customer_id'] = $_POST['id'];
+						$this->model->insertData('customer_contacts',$value);
+					}
+					else{
+						//update
+						$value['customer_id'] = $_POST['id'];
+						$this->model->updateData('customer_contacts',$value,['id'=>$value['id']]);
+
+					}
+				}
+			}
+			if(!empty($db_customer_contacts)){
+				foreach ($db_customer_contacts as $key => $value){
+					if(!in_array($value['id'], $v_ids)){
+						$this->model->deleteData('customer_contacts',['id'=>$value['id']]);
+					}
+				}
+			}
+
+			$response['message'] = 'Customer Updated';
+			$response['code'] = 200;
+			$response['status'] = true;
 			echo json_encode($response);
 		}
 
 		function delete_customer(){
 			$response = array('code' => -1, 'status' => false, 'message' => '');
-			$validate = validateToken();
-			if($validate){
-				if ($_SERVER["REQUEST_METHOD"] == "POST"){
-					if (empty($_POST['id'])){
-						$response['message'] = 'Customer id is required';
-						$response['code'] = 201;
-					}
-					else{
-						$customer = $this->model->deleteData('customer',['id'=>$_POST['id']]);
-						$customer = $this->model->deleteData('customer_contacts',['customer_id'=>$_POST['id']]);
-						$customer = $this->model->deleteData('login',['fk_id'=>$_POST['id'],'usertype'=>'customer']);
-						$response['message'] = 'success';
-						$response['code'] = 200;
-						$response['status'] = true;
-					}
-				} 
-				else {
-					$response['message'] = 'No direct script is allowed.';
-					$response['code'] = 204;
-				}
+			// $validate = validateToken();
+			// if(!$validate){
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			//  	echo json_encode($response);
+			//  	return;
+			// }
+			if ($_SERVER["REQUEST_METHOD"] != "POST") {
+				$response['message'] = 'Invalid Request';
+				$response['code'] = 204;
+				echo json_encode($response);
+				return;
 			}
-			else{
-				$response['message'] = 'Authentication required';
-				$response['code'] = 203;
-			} 
+			if (empty($_POST['id'])){
+				$response['message'] = 'Wrong Parameters';
+				$response['code'] = 201;
+				echo json_encode($response);
+				return;
+			}
+			$this->model->deleteData('customer',['id'=>$_POST['id']]);
+			// $customer = $this->model->deleteData('customer_contacts',['customer_id'=>$_POST['id']]);
+			$this->model->deleteData('login',['fk_id'=>$_POST['id'],'usertype'=>'customer']);
+			$response['message'] = 'Customer Deleted';
+			$response['code'] = 200;
+			$response['status'] = true;
 			echo json_encode($response);
 		}
 
@@ -1405,7 +1380,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -1466,7 +1441,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -1494,7 +1469,7 @@ class Admin_api extends CI_Controller {
 					$response['status'] = true;
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -1543,7 +1518,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -1581,7 +1556,7 @@ class Admin_api extends CI_Controller {
 					$response['status'] = true;
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -1615,7 +1590,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -1644,7 +1619,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -1673,7 +1648,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -1736,7 +1711,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -1764,7 +1739,7 @@ class Admin_api extends CI_Controller {
 					$response['status'] = true;
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -1812,7 +1787,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -1852,7 +1827,7 @@ class Admin_api extends CI_Controller {
 					$response['status'] = true;
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -1886,7 +1861,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -1915,7 +1890,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -1944,7 +1919,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -1981,7 +1956,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -2009,7 +1984,7 @@ class Admin_api extends CI_Controller {
 					$response['status'] = true;
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -2043,7 +2018,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -2072,7 +2047,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -2100,7 +2075,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -2141,7 +2116,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -2167,8 +2142,9 @@ class Admin_api extends CI_Controller {
 					if(!empty($zones))
 					{
 						foreach ($zones as $key => $value) {
-							
-							$zones[$key]['transport_name']=$this->model->getValue('transport_type','type',['id'=>$value['transport_type_id']]);
+							if(!empty($value['transport_type_id'])){
+								$zones[$key]['transport_name']=$this->model->getValue('transport_type','type',['id'=>$value['transport_type_id']]);	
+							}
 						}
 					}
 					$response['zone'] = $zones;
@@ -2177,7 +2153,7 @@ class Admin_api extends CI_Controller {
 					$response['status'] = true;
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -2217,7 +2193,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -2251,7 +2227,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -2279,7 +2255,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -2316,7 +2292,7 @@ class Admin_api extends CI_Controller {
 		// 			}
 		// 		} 
 		// 		else {
-		// 			$response['message'] = 'No direct script is allowed.';
+		// 			$response['message'] = 'Invalid Request';
 		// 			$response['code'] = 204;
 		// 		}
 		// 	}
@@ -2345,7 +2321,7 @@ class Admin_api extends CI_Controller {
 		// 			}
 		// 		} 
 		// 		else {
-		// 			$response['message'] = 'No direct script is allowed.';
+		// 			$response['message'] = 'Invalid Request';
 		// 			$response['code'] = 204;
 		// 		}
 		// 	}
@@ -2378,7 +2354,7 @@ class Admin_api extends CI_Controller {
 		// 			}
 		// 		} 
 		// 		else {
-		// 			$response['message'] = 'No direct script is allowed.';
+		// 			$response['message'] = 'Invalid Request';
 		// 			$response['code'] = 204;
 		// 		}
 		// 	}
@@ -2407,7 +2383,7 @@ class Admin_api extends CI_Controller {
 		// 			}
 		// 		} 
 		// 		else {
-		// 			$response['message'] = 'No direct script is allowed.';
+		// 			$response['message'] = 'Invalid Request';
 		// 			$response['code'] = 204;
 		// 		}
 		// 	}
@@ -2439,7 +2415,7 @@ class Admin_api extends CI_Controller {
 		// 			}
 		// 		} 
 		// 		else {
-		// 			$response['message'] = 'No direct script is allowed.';
+		// 			$response['message'] = 'Invalid Request';
 		// 			$response['code'] = 204;
 		// 		}
 		// 	}
@@ -2467,7 +2443,7 @@ class Admin_api extends CI_Controller {
 		// 			}
 		// 		} 
 		// 		else {
-		// 			$response['message'] = 'No direct script is allowed.';
+		// 			$response['message'] = 'Invalid Request';
 		// 			$response['code'] = 204;
 		// 		}
 		// 	}
@@ -2504,7 +2480,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -2538,7 +2514,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -2572,7 +2548,7 @@ class Admin_api extends CI_Controller {
 					}
 				// } 
 				// else {
-				// 	$response['message'] = 'No direct script is allowed.';
+				// 	$response['message'] = 'Invalid Request';
 				// 	$response['code'] = 204;
 				// }
 			}
@@ -2604,7 +2580,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -2632,7 +2608,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -2668,7 +2644,7 @@ class Admin_api extends CI_Controller {
 		// 			}
 		// 		} 
 		// 		else {
-		// 			$response['message'] = 'No direct script is allowed.';
+		// 			$response['message'] = 'Invalid Request';
 		// 			$response['code'] = 204;
 		// 		}
 		// 	// }
@@ -2702,7 +2678,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -2731,7 +2707,7 @@ class Admin_api extends CI_Controller {
 		// 			}
 		// 		} 
 		// 		else {
-		// 			$response['message'] = 'No direct script is allowed.';
+		// 			$response['message'] = 'Invalid Request';
 		// 			$response['code'] = 204;
 		// 		}
 		// 	}
@@ -2763,7 +2739,7 @@ class Admin_api extends CI_Controller {
 		// 			}
 		// 		} 
 		// 		else {
-		// 			$response['message'] = 'No direct script is allowed.';
+		// 			$response['message'] = 'Invalid Request';
 		// 			$response['code'] = 204;
 		// 		}
 		// 	}
@@ -2791,7 +2767,7 @@ class Admin_api extends CI_Controller {
 		// 			}
 		// 		} 
 		// 		else {
-		// 			$response['message'] = 'No direct script is allowed.';
+		// 			$response['message'] = 'Invalid Request';
 		// 			$response['code'] = 204;
 		// 		}
 		// 	}
@@ -2854,7 +2830,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -2895,7 +2871,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -2929,7 +2905,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -2970,7 +2946,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -3004,7 +2980,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			}
@@ -3026,7 +3002,7 @@ class Admin_api extends CI_Controller {
 			//  	return;
 			// }
 			if ($_SERVER["REQUEST_METHOD"] != "POST") {
-				$response['message'] = 'No direct script is allowed.';
+				$response['message'] = 'Invalid Request';
 				$response['code'] = 204;
 				echo json_encode($response);
 			 	return;
@@ -3037,40 +3013,50 @@ class Admin_api extends CI_Controller {
 			// 	echo json_encode($response);
 	 		// 		return;
 			// }
-			$rate = array($_POST['from_zone_id']=>[$_POST['to_zone_id']=>$_POST['rate']]);
-			if($_POST['customer_type'] == 'global'){
-				$rates = $this->model->getValue('global_rates','rates',['company_id'=>$_POST['company_id'],'transport_type_id'=>$_POST['transport_type_id'],'mode_id'=>$_POST['mode_id'],'kg_or_box'=>$_POST['kg_or_box'],'transport_mode'=>$_POST['transport_mode'],'delivery_type'=>$_POST['delivery_type']]);
-
+			$insert = $_POST;
+			unset($insert['rate']);
+			unset($insert['from_zone_id']);
+			unset($insert['to_zone_id']);
+			unset($insert['customer_type']);
+			if(strtolower($_POST['customer_type']) == 'normal'){
+				unset($insert['customer_id']);
+				$rates = $this->model->getValue('global_rates','rates',['company_id'=>$_POST['company_id'],'transport_type'=>$_POST['transport_type'],'mode'=>$_POST['mode'],'kg_or_box'=>$_POST['kg_or_box'],'transport_mode'=>$_POST['transport_mode'],'delivery_type'=>$_POST['delivery_type']]);
 				if(!empty($rates)){
 					$rates = unserialize($rates);
 					$rates[$_POST['from_zone_id']][$_POST['to_zone_id']] = $_POST['rate'];
-					$_POST['rates'] = serialize($rates);
-					$this->model->updateData('global_rates',$_POST,['company_id'=>$_POST['company_id'],'transport_type_id'=>$_POST['transport_type_id'],'mode_id'=>$_POST['mode_id'],'kg_or_box'=>$_POST['kg_or_box'],'transport_mode'=>$_POST['transport_mode'],'delivery_type'=>$_POST['delivery_type']]);
+					$insert['rates'] = serialize($rates);
+					$this->model->updateData('global_rates',$insert,['company_id'=>$_POST['company_id'],'transport_type'=>$_POST['transport_type'],'mode'=>$_POST['mode'],'kg_or_box'=>$_POST['kg_or_box'],'transport_mode'=>$_POST['transport_mode'],'delivery_type'=>$_POST['delivery_type']]);
 				}
 				else{
-					$_POST['rates'] = serialize($rate);
-					$this->model->insertData('global_rates',$_POST);
+					$rate = array($_POST['from_zone_id']=>[$_POST['to_zone_id']=>$_POST['rate']]);
+					$insert['rates'] = serialize($rate);
+					$this->model->insertData('global_rates',$insert);
 				}
+				$response['message'] = 'Rates Updated';
+				$response['code'] = 200;
+				$response['status'] = true;
+				echo json_encode($response);
+				return;
 			}
 			if(!empty($_POST['customer_id'])){
-				if($_POST['customer_type'] == '11'){
-					$rates = $this->model->getValue('customer_rates','rates',['customer_id'=>$_POST['customer_id'],'created_by'=>$_POST['created_by'],'transport_type_id'=>$_POST['transport_type_id'],'mode_id'=>$_POST['mode_id'],'kg_or_box'=>$_POST['kg_or_box'],'transport_mode'=>$_POST['transport_mode'],'delivery_type'=>$_POST['delivery_type']]);
-					if(!empty($rates)){
-						$rates = unserialize($rates);
-						$rates[$_POST['from_zone_id']][$_POST['to_zone_id']] = $_POST['rate'];
-						$_POST['rates'] = serialize($rates);
-						$this->model->updateData('customer_rates',$_POST,['customer_id'=>$_POST['customer_id'],'created_by'=>$_POST['created_by'],'transport_type_id'=>$_POST['transport_type_id'],'mode_id'=>$_POST['mode_id'],'kg_or_box'=>$_POST['kg_or_box'],'transport_mode'=>$_POST['transport_mode'],'delivery_type'=>$_POST['delivery_type']]);
-					}
-					else{
-						$_POST['rates'] = serialize($_POST['rate']);
-						$this->model->insertData('customer_rates',$_POST);
-					}
+				$rates = $this->model->getValue('customer_rates','rates',['company_id'=>$_POST['company_id'],'customer_id'=>$_POST['customer_id'],'transport_type'=>$_POST['transport_type'],'mode'=>$_POST['mode'],'kg_or_box'=>$_POST['kg_or_box'],'transport_mode'=>$_POST['transport_mode'],'delivery_type'=>$_POST['delivery_type']]);
+				if(!empty($rates)){
+					$rates = unserialize($rates);
+					$rates[$_POST['from_zone_id']][$_POST['to_zone_id']] = $_POST['rate'];
+					$insert['rates'] = serialize($rates);
+					$this->model->updateData('customer_rates',$insert,['company_id'=>$_POST['company_id'],'customer_id'=>$_POST['customer_id'],'transport_type'=>$_POST['transport_type'],'mode'=>$_POST['mode'],'kg_or_box'=>$_POST['kg_or_box'],'transport_mode'=>$_POST['transport_mode'],'delivery_type'=>$_POST['delivery_type']]);
 				}
+				else{
+					$rate = array($_POST['from_zone_id']=>[$_POST['to_zone_id']=>$_POST['rate']]);
+					$insert['rates'] = serialize($rate);
+					$this->model->insertData('customer_rates',$insert);
+				}
+				$response['message'] = 'Rates Updated';
+				$response['code'] = 200;
+				$response['status'] = true;
+				echo json_encode($response);
+				return;
 			}
-			$response['message'] = 'success';
-			$response['code'] = 200;
-			$response['status'] = true;
-			echo json_encode($response);
 		}
 
 		function get_rates(){
@@ -3083,21 +3069,21 @@ class Admin_api extends CI_Controller {
 			//  	return;
 			// }
 			if ($_SERVER["REQUEST_METHOD"] != "POST") {
-				$response['message'] = 'No direct script is allowed.';
+				$response['message'] = 'Invalid Request';
 				$response['code'] = 204;
 				echo json_encode($response);
 			 	return;
 			}
-			$rates = $this->model->getData('global_rates',['created_by'=>$_POST['created_by'],'transport_type_id'=>$_POST['transport_type_id'],'mode_id'=>$_POST['mode_id'],'kg_or_box'=>$_POST['kg_or_box'],'transport_mode'=>$_POST['transport_mode'],'delivery_type'=>$_POST['delivery_type']],'rates')[0]['rates'];
+			$rates = $this->model->getData('global_rates',['company_id'=>$_POST['company_id'],'transport_type'=>$_POST['transport_type'],'mode'=>$_POST['mode'],'kg_or_box'=>$_POST['kg_or_box'],'transport_mode'=>$_POST['transport_mode'],'delivery_type'=>$_POST['delivery_type']],'rates')[0]['rates'];
 			if(!empty($rates)){
 				if($_POST['customer_type'] == 'prime'){
 					if(empty($_POST['customer_id'])){
-						$response['message'] = 'Invalid';
+						$response['message'] = 'Wrong Parameters';
 						$response['code'] = 204;
 						echo json_encode($response);
 						return;
 					}
-					$customer_rates = $this->model->getData('customer_rates',['customer_id'=>$_POST['customer_id'],'created_by'=>$_POST['created_by'],'transport_type_id'=>$_POST['transport_type_id'],'mode_id'=>$_POST['mode_id'],'from_zone_id'=>$from_zone,'to_zone_id'=>$to_zone,'kg_or_box'=>$_POST['kg_or_box'],'transport_mode'=>$_POST['transport_mode'],'delivery_type'=>$_POST['delivery_type']],'rates')[0]['rates'];
+					$customer_rates = $this->model->getData('customer_rates',['customer_id'=>$_POST['customer_id'],'company_id'=>$_POST['company_id'],'transport_type'=>$_POST['transport_type'],'mode'=>$_POST['mode'],'kg_or_box'=>$_POST['kg_or_box'],'transport_mode'=>$_POST['transport_mode'],'delivery_type'=>$_POST['delivery_type']],'rates')[0]['rates'];
 					$customer_rates = unserialize($customer_rates);
 					foreach ($customer_rates as $from_zone_id => $value) {
 						foreach ($value as $to_zone_id => $rate) {
@@ -3145,7 +3131,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -3179,7 +3165,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			}
@@ -3276,7 +3262,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -3315,7 +3301,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -3343,7 +3329,7 @@ class Admin_api extends CI_Controller {
 					$response['status'] = true;
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -3377,7 +3363,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -3406,7 +3392,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -3434,7 +3420,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -3471,7 +3457,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -3499,7 +3485,7 @@ class Admin_api extends CI_Controller {
 					$response['status'] = true;
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -3533,7 +3519,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -3562,7 +3548,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -3590,7 +3576,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -3627,7 +3613,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -3655,7 +3641,7 @@ class Admin_api extends CI_Controller {
 					$response['status'] = true;
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -3689,7 +3675,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -3718,7 +3704,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -3746,7 +3732,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -3783,7 +3769,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -3811,7 +3797,7 @@ class Admin_api extends CI_Controller {
 					$response['status'] = true;
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -3845,7 +3831,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -3874,7 +3860,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -3902,7 +3888,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
@@ -3938,7 +3924,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			}
@@ -3985,7 +3971,7 @@ class Admin_api extends CI_Controller {
 					}
 				} 
 				else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 			// }
