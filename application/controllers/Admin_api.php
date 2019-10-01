@@ -807,6 +807,7 @@ class Admin_api extends CI_Controller {
 					{
 						foreach ($branches as $key => $value) {
 							
+							$branches[$key]['company_name']=$this->model->getValue('company','name',['id'=>$value['company_id']]);
 							$branches[$key]['city_name']=$this->model->getValue('cities','city',['id'=>$value['city_id']]);
 							$branches[$key]['state_name']=$this->model->getValue('states','name',['id'=>$value['state_id']]);
 						}
