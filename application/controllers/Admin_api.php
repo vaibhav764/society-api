@@ -351,7 +351,7 @@ class Admin_api extends CI_Controller {
 			// $validate = validateToken();
 			// if($validate){
 				if ($_SERVER["REQUEST_METHOD"] == "POST"){
-					$select = 'id,city';
+					$select = '*';
 					if(!empty($_POST['select']) && isset($_POST['select'])){
 						$select = $_POST['select'];
 						unset($_POST['select']);
@@ -2150,14 +2150,7 @@ class Admin_api extends CI_Controller {
 						unset($_POST['select']);
 					}
 					$zones = $this->model->getData('zone',$_POST,$select);
-					if(!empty($zones))
-					{
-						foreach ($zones as $key => $value) {
-							if(!empty($value['transport_type_id'])){
-								$zones[$key]['transport_name']=$this->model->getValue('transport_type','type',['id'=>$value['transport_type_id']]);	
-							}
-						}
-					}
+					if(empty($zones)) $zones = [];
 					$response['zone'] = $zones;
 					$response['message'] = 'success';
 					$response['code'] = 200;
@@ -3087,6 +3080,7 @@ class Admin_api extends CI_Controller {
 			}
 			$rates = $this->model->getData('global_rates',['company_id'=>$_POST['company_id'],'transport_type'=>$_POST['transport_type'],'mode'=>$_POST['mode'],'kg_or_box'=>$_POST['kg_or_box'],'transport_mode'=>$_POST['transport_mode'],'delivery_type'=>$_POST['delivery_type']],'rates')[0]['rates'];
 			if(!empty($rates)){
+				$rates = unserialize($rates);
 				if($_POST['customer_type'] == 'prime'){
 					if(empty($_POST['customer_id'])){
 						$response['message'] = 'Wrong Parameters';
@@ -3096,7 +3090,8 @@ class Admin_api extends CI_Controller {
 					}
 					$customer_rates = $this->model->getData('customer_rates',['customer_id'=>$_POST['customer_id'],'company_id'=>$_POST['company_id'],'transport_type'=>$_POST['transport_type'],'mode'=>$_POST['mode'],'kg_or_box'=>$_POST['kg_or_box'],'transport_mode'=>$_POST['transport_mode'],'delivery_type'=>$_POST['delivery_type']],'rates')[0]['rates'];
 					$customer_rates = unserialize($customer_rates);
-					foreach ($customer_rates as $from_zone_id => $value) {
+					if(empty($customer_rates)) $customer_rates = [];
+					foreach($customer_rates as $from_zone_id => $value){
 						foreach ($value as $to_zone_id => $rate) {
 							if(!empty($customer_rates[$from_zone_id][$to_zone_id])){
 								$rates[$from_zone_id][$to_zone_id] = $rate;
@@ -3104,6 +3099,9 @@ class Admin_api extends CI_Controller {
 						}
 					}
 				}
+			}
+			else{
+				$rates = [];
 			}
 			$response['rates'] = $rates;
 			$response['message'] = 'success';
