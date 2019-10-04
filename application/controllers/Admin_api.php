@@ -356,7 +356,7 @@ class Admin_api extends CI_Controller {
 						$select = $_POST['select'];
 						unset($_POST['select']);
 					}
-					$cities = $this->model->getData('cities',[],$select);
+					$cities = $this->model->getData('cities',$_POST,$select);
 					$response['cities'] = $cities;
 					$response['message'] = 'success';
 					$response['code'] = 200;
@@ -1191,27 +1191,27 @@ class Admin_api extends CI_Controller {
 				if ($_SERVER["REQUEST_METHOD"] == "POST"){
 					$select = '*';
 					$select2 = '*';
+					$contacts = '0';
 					if(!empty($_POST['select']) && isset($_POST['select'])) {
-						if(!empty($_POST['select']['contacts']) && isset($_POST['select']['contacts'])) {
-							$select2 = $_POST['select']['contacts'];
-							unset($_POST['select']['contacts']);
-						}
 						$select = $_POST['select'];
 						unset($_POST['select']);
+					}
+					if(!empty($_POST['contacts']) && isset($_POST['contacts'])) {
+						$contacts = $_POST['contacts'];
+						unset($_POST['contacts']);
 					}
 					$customer = $this->model->getData('customer',$_POST,$select);
 					if(!empty($customer)){
 						foreach ($customer as $key => $value) {
-							if($select != '*'){
-								$select = explode(',', $select);
-								if(!in_array('contacts', $select)){
-									break;
+							if($contacts == '1'){
+								if(!empty($value['id'])){
+									$customer[$key]['contacts'] = $this->model->getData('customer_contacts',['customer_id'=>$value['id']],$select2);
 								}
 							}
-							if(!empty($value['id'])){
-								$customer[$key]['contacts'] = $this->model->getData('customer_contacts',['customer_id'=>$value['id']],$select2);
-							}
 						}
+					}
+					else{
+						$customer = [];
 					}
 					$response['next_id'] = $this->model->generate_next_id('customer','autoid','cust','3');
 					$response['customer'] = $customer;
@@ -1237,7 +1237,7 @@ class Admin_api extends CI_Controller {
 			// if($validate){
 				if ($_SERVER["REQUEST_METHOD"] == "POST"){
 					if (empty($_POST['id'])){
-						$response['message'] = 'Customer id is required';
+						$response['message'] = 'Wrong Parameters';
 						$response['code'] = 201;
 					}
 					else{
@@ -1272,6 +1272,36 @@ class Admin_api extends CI_Controller {
 			// 	$response['message'] = 'Authentication required';
 			// 	$response['code'] = 203;
 			// } 
+			echo json_encode($response);
+		}
+
+
+		function getCustomerContacts(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if(!$validate){
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			//  	echo json_encode($response);
+			//  	return;
+			// }
+			if ($_SERVER["REQUEST_METHOD"] != "POST") {
+				$response['message'] = 'No direct script is allowed.';
+				$response['code'] = 204;
+				echo json_encode($response);
+				return;
+			}
+			$select = '*';
+			if(!empty($_POST['select']) && isset($_POST['select'])) {
+				$select = $_POST['select'];
+				unset($_POST['select']);
+			}
+			$contacts = $this->model->getData('customer_contacts',$_POST,$select);
+			if(empty($contacts)) $contacts = [];
+			$response['contacts'] = $contacts;
+			$response['message'] = 'success';
+			$response['code'] = 200;
+			$response['status'] = true;
 			echo json_encode($response);
 		}
 
