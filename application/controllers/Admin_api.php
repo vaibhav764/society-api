@@ -423,7 +423,7 @@ class Admin_api extends CI_Controller {
 						$response['message'] = 'Admin id is required';
 						$response['code'] = 201;
 					}
-					else if (empty($_POST['name'])){
+					else if (empty($_POST['name']) && empty($_POST['email']) && empty($_POST['contact'])){
 						$response['message'] = 'Please fill required fields';
 						$response['code'] = 201;
 					}
@@ -447,9 +447,9 @@ class Admin_api extends CI_Controller {
 								
 								$login = [];
 								$login['fk_id'] = $company_id;
-								$login['username'] = $_POST['contact_prsn_name'];
-								$login['phone'] = $_POST['prsn_contact'];
-								$login['email'] = $_POST['prsn_email'];
+								$login['username'] = $_POST['name'];
+								$login['phone'] = $_POST['contact'];
+								$login['email'] = $_POST['email'];
 								$login['usertype'] = 'company';
 								$login['status'] = 1;
 								$login['created_by'] = $_POST['created_by'];
@@ -478,18 +478,18 @@ class Admin_api extends CI_Controller {
 			// $validate = validateToken();
 			// if($validate){
 				if ($_SERVER["REQUEST_METHOD"] == "POST"){
-					$id = $this->model->getValue('login','id',['id'=>$_POST['created_by'],'usertype'=>'admin']);
-					if (empty($id)) {
-						$response['message'] = 'Admin id is required';
-						$response['code'] = 201;
-					}
-					else{
+					// $id = $this->model->getValue('login','id',['id'=>$_POST['created_by']]);
+					// if (empty($id)) {
+					// 	$response['message'] = 'Admin id is required';
+					// 	$response['code'] = 201;
+					// }
+					// if{
 						$select = '*';
 						if(!empty($_POST['select']) && isset($_POST['select'])){
 							$select = $_POST['select'];
 							unset($_POST['select']);
 						}
-						$company = $this->model->getData('company',['created_by'=>$_POST['created_by']],$select);
+						$company = $this->model->getData('company',$_POST,$select);
 						if(!empty($company))
 					{
 						foreach ($company as $key => $value) {
@@ -505,7 +505,7 @@ class Admin_api extends CI_Controller {
 						$response['message'] = 'success';
 						$response['code'] = 200;
 						$response['status'] = true;
-					}
+					// }
 				} 
 				else {
 					$response['message'] = 'Invalid Request';
@@ -812,7 +812,7 @@ class Admin_api extends CI_Controller {
 						$select = $_POST['select'];
 						unset($_POST['select']);
 					}
-					$branches = $this->model->getData('branch',['created_by'=>$_POST['created_by']],$select);
+					$branches = $this->model->getData('branch',$_POST,$select);
 					if(!empty($branches))
 					{
 						foreach ($branches as $key => $value) {
@@ -1503,7 +1503,7 @@ class Admin_api extends CI_Controller {
 						$select = $_POST['select'];
 						unset($_POST['select']);
 					}
-					$designations = $this->model->getData('designation',['created_by'=>$_POST['created_by']],$select);
+					$designations = $this->model->getData('designation',$_POST,$select);
 					$response['designations'] = $designations;
 					$response['message'] = 'success';
 					$response['code'] = 200;
@@ -1580,11 +1580,12 @@ class Admin_api extends CI_Controller {
 						$select = $_POST['select'];
 						unset($_POST['select']);
 					}
-					$employees = $this->model->getData('employee',['created_by'=>$_POST['created_by']],$select);
+					$employees = $this->model->getData('employee',$_POST,$select);
 					if(!empty($employees))
 					{
 						foreach ($employees as $key => $value) {
-							
+
+							$employees[$key]['company_name']=$this->model->getValue('company','name',['id'=>$value['company_id']]);
 							$employees[$key]['city_name']=$this->model->getValue('cities','city',['id'=>$value['city_id']]);
 							$employees[$key]['state_name']=$this->model->getValue('states','name',['id'=>$value['state_id']]);
 							$employees[$key]['designation']=$this->model->getValue('designation','designation',['id'=>$value['designation_id']]);
@@ -2018,7 +2019,15 @@ class Admin_api extends CI_Controller {
 						$select = $_POST['select'];
 						unset($_POST['select']);
 					}
-					$vehicles = $this->model->getData('vehicle',['created_by'=>$_POST['created_by']],$select);
+					$vehicles = $this->model->getData('vehicle',$_POST,$select);
+					if(!empty($vehicles))
+					{
+						foreach ($vehicles as $key => $value) {
+
+							$vehicles[$key]['company_name']=$this->model->getValue('company','name',['id'=>$value['company_id']]);
+							
+						}
+					}
 					$response['vehicles'] = $vehicles;
 					$response['message'] = 'success';
 					$response['code'] = 200;
