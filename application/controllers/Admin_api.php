@@ -1275,6 +1275,84 @@ class Admin_api extends CI_Controller {
 			echo json_encode($response);
 		}
 
+		function addCustomerContact(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if(!$validate){
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			//  	echo json_encode($response);
+			//  	return;
+			// }
+			if ($_SERVER["REQUEST_METHOD"] != "POST") {
+				$response['message'] = 'Invalid request';
+				$response['code'] = 204;
+				echo json_encode($response);
+				return;
+			}
+			$this->model->insertData('customer_contacts',$_POST);
+			$response['contacts'] = $contacts;
+			$response['message'] = 'success';
+			$response['code'] = 200;
+			$response['status'] = true;
+			echo json_encode($response);
+		}
+
+		function updateCustomerContact(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if(!$validate){
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			//  	echo json_encode($response);
+			//  	return;
+			// }
+			if ($_SERVER["REQUEST_METHOD"] != "POST") {
+				$response['message'] = 'Invalid Request';
+				$response['code'] = 204;
+				echo json_encode($response);
+				return;
+			}
+			if (empty($_POST["id"])) {
+				$response['message'] = 'Wrong Parameters';
+				$response['code'] = 201;
+				echo json_encode($response);
+				return;
+			}
+			$this->model->updateData('customer_contacts',$_POST,['id'=>$_POST['id']]);
+			$response['message'] = 'success';
+			$response['code'] = 200;
+			$response['status'] = true;
+			echo json_encode($response);
+		}
+
+		function deleteCustomerContact(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['id'])){
+						$response['message'] = 'Zone id is required';
+						$response['code'] = 201;
+					}
+					else{
+						$zone = $this->model->deleteData('customer_contacts',['id'=>$_POST['id']]);
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				} 
+				else {
+					$response['message'] = 'Invalid Request';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
 
 		function getCustomerContacts(){
 			$response = array('code' => -1, 'status' => false, 'message' => '');
@@ -1297,6 +1375,13 @@ class Admin_api extends CI_Controller {
 				unset($_POST['select']);
 			}
 			$contacts = $this->model->getData('customer_contacts',$_POST,$select);
+			if(!empty($contacts)){
+				foreach ($contacts as $key => $value) {
+
+					$contacts[$key]['customer_name']=$this->model->getValue('customer','name',['id'=>$value['customer_id']]);
+					$contacts[$key]['city_name']=$this->model->getValue('cities','city',['id'=>$value['city_id']]);
+				}
+			}
 			if(empty($contacts)) $contacts = [];
 			$response['contacts'] = $contacts;
 			$response['message'] = 'success';
