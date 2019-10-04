@@ -3291,6 +3291,45 @@ class Admin_api extends CI_Controller {
 			echo json_encode($response);
 		}
 
+		function ship_history(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if(!$validate){
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			//  	echo json_encode($response);
+			//  	return;
+			// }
+			if ($_SERVER["REQUEST_METHOD"] != "POST") {
+				$response['message'] = 'Invalid Request';
+				$response['code'] = 204;
+				echo json_encode($response);
+				return;
+			}
+			$select = '*';
+			if(!empty($_POST['select']) && isset($_POST['select'])) {
+				$select = $_POST['select'];
+				unset($_POST['select']);
+			}
+			$ship_history = $this->model->getData('ship',$_POST,$select);
+			if(!empty($ship_history)){
+				foreach ($ship_history as $key => $value) {
+					if(!empty($value['id'])){
+						$ship_history[$key]['ship_dimensions'] = $this->model->getData('ship_dimensions',['ship_id'=>$value['id']]);
+						$ship_history[$key]['ship_payment'] = $this->model->getData('ship_payment',['ship_id'=>$value['id']]);	
+					}
+				}
+			}
+			else{
+				$ship_history = [];
+			}
+			$response['ship_history'] = $ship_history;
+			$response['message'] = 'success';
+			$response['code'] = 200;
+			$response['status'] = true;
+			echo json_encode($response);
+		}
+
 
 
 	/********************************** Delivery boys *****************************************/
