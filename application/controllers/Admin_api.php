@@ -1151,7 +1151,10 @@ class Admin_api extends CI_Controller {
 				echo json_encode($response);
 				return;
 			}
-			$customer_contacts = json_decode($_POST['customer_contacts'],true);
+			$customer_contacts = [];
+			if(!empty($_POST['customer_contacts'])){
+				$customer_contacts = json_decode($_POST['customer_contacts'],true);
+			}
 			unset($_POST['customer_contacts']);
 			$customer_id = $this->model->insertData('customer',$_POST);
 			if(empty($customer_id)){
@@ -1382,8 +1385,12 @@ class Admin_api extends CI_Controller {
 				echo json_encode($response);
 				return;
 			}
-			$_POST['customer_contacts'] = json_decode($_POST['customer_contacts'],true);
-			$v_customer_contacts = $_POST['customer_contacts'];
+			$v_customer_contacts = [];
+			if(!empty($_POST['customer_contacts'])){
+				$_POST['customer_contacts'] = json_decode($_POST['customer_contacts'],true);
+				$v_customer_contacts = $_POST['customer_contacts'];
+			}
+			
 			unset($_POST['customer_contacts']);
 			$customer = $this->model->updateData('customer',$_POST,['id'=>$_POST['id']]);
 
