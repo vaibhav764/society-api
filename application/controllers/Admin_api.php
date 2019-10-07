@@ -743,6 +743,11 @@ class Admin_api extends CI_Controller {
 					$transport_types = $this->model->getData('transport_type',[],'id,type',[],['id'=>$ids]);
 					$response['transport_types'] = $transport_types;
 				}
+				if($fieldName == 'vendor_types'){
+					$ids = explode(',', $ids);
+					$vendor_types = $this->model->getData('vendor_types',[],'id,type',[],['id'=>$ids]);
+					$response['vendor_types'] = $vendor_types;
+				}
 			}
 			
 			$response['message'] = 'success';
@@ -911,12 +916,7 @@ class Admin_api extends CI_Controller {
 			// $validate = validateToken();
 			// if($validate){
 				if ($_SERVER["REQUEST_METHOD"] == "POST"){
-					$id = $this->model->getValue('login','id',['id'=>$_POST['created_by'],'usertype'=>'company']);
-					if (empty($id)) {
-						$response['message'] = 'Admin id is required';
-						$response['code'] = 201;
-					}
-					else if (empty($_POST['id'])){
+					if (empty($_POST['id'])){
 						$response['message'] = 'Company id is required';
 						$response['code'] = 201;
 					}
@@ -1935,7 +1935,7 @@ class Admin_api extends CI_Controller {
 						$select = $_POST['select'];
 						unset($_POST['select']);
 					}
-					$vendors = $this->model->getData('vendor',['created_by'=>$_POST['created_by']],$select);
+					$vendors = $this->model->getData('vendor',$_POST,$select);
 					if(!empty($vendors))
 					{
 						foreach ($vendors as $key => $value) {
@@ -1947,7 +1947,7 @@ class Admin_api extends CI_Controller {
 
 						}
 					}
-					$response['next_id'] = $this->model->generate_next_id('vendor','autoid','ven','3');
+					$response['next_id'] = $this->model->generate_next_id('vendor','autoid','ven',3);
 					$response['vendors'] = $vendors;
 					$response['message'] = 'success';
 					$response['code'] = 200;
@@ -2230,7 +2230,7 @@ class Admin_api extends CI_Controller {
 			// $validate = validateToken();
 			// if($validate){
 				if ($_SERVER["REQUEST_METHOD"] == "POST"){
-					if (empty($_POST['transport_type_id']) || empty($_POST['zone_code']) || empty($_POST['zone'])){
+					if (empty($_POST['transport_type']) || empty($_POST['zone_code']) || empty($_POST['zone'])){
 						$response['message'] = 'Please fill required fields';
 						$response['code'] = 201;
 					}
@@ -2341,7 +2341,7 @@ class Admin_api extends CI_Controller {
 						$response['message'] = 'Zone id is required';
 						$response['code'] = 201;
 					}
-					else if (empty($_POST['transport_type_id']) || empty($_POST['zone_code']) || empty($_POST['zone'])){
+					else if (empty($_POST['transport_type']) || empty($_POST['zone_code']) || empty($_POST['zone'])){
 						$response['message'] = 'Please fill required fields';
 						$response['code'] = 201;
 					}
