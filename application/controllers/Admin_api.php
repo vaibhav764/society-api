@@ -674,7 +674,7 @@ class Admin_api extends CI_Controller {
 			 	return;
 			}
 			if (empty($_POST['company_id'])){
-				$response['message'] = 'Invalid request';
+				$response['message'] = 'Invalid Request';
 				$response['code'] = 201;
 				echo json_encode($response);
 			 	return;
@@ -1275,6 +1275,27 @@ class Admin_api extends CI_Controller {
 			echo json_encode($response);
 		}
 
+		function addCustomerContact(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if(!$validate){
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			//  	echo json_encode($response);
+			//  	return;
+			// }
+			if ($_SERVER["REQUEST_METHOD"] != "POST") {
+				$response['message'] = 'Invalid Request';
+				$response['code'] = 204;
+				echo json_encode($response);
+				return;
+			}
+			$this->model->insertData('customer_contacts',$_POST);
+			$response['message'] = 'success';
+			$response['code'] = 200;
+			$response['status'] = true;
+			echo json_encode($response);
+		}
 
 		function getCustomerContacts(){
 			$response = array('code' => -1, 'status' => false, 'message' => '');
@@ -1286,7 +1307,7 @@ class Admin_api extends CI_Controller {
 			//  	return;
 			// }
 			if ($_SERVER["REQUEST_METHOD"] != "POST") {
-				$response['message'] = 'No direct script is allowed.';
+				$response['message'] = 'Invalid Request';
 				$response['code'] = 204;
 				echo json_encode($response);
 				return;
@@ -1299,6 +1320,34 @@ class Admin_api extends CI_Controller {
 			$contacts = $this->model->getData('customer_contacts',$_POST,$select);
 			if(empty($contacts)) $contacts = [];
 			$response['contacts'] = $contacts;
+			$response['message'] = 'success';
+			$response['code'] = 200;
+			$response['status'] = true;
+			echo json_encode($response);
+		}
+
+		function updateCustomerContact(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if(!$validate){
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			//  	echo json_encode($response);
+			//  	return;
+			// }
+			if ($_SERVER["REQUEST_METHOD"] != "POST") {
+				$response['message'] = 'Invalid Request';
+				$response['code'] = 204;
+				echo json_encode($response);
+				return;
+			}
+			if (empty($_POST["id"])) {
+				$response['message'] = 'Wrong Parameters';
+				$response['code'] = 201;
+				echo json_encode($response);
+				return;
+			}
+			$this->model->updateData('customer_contacts',$_POST,['id'=>$_POST['id']]);
 			$response['message'] = 'success';
 			$response['code'] = 200;
 			$response['status'] = true;
