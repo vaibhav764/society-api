@@ -4053,35 +4053,29 @@ class Admin_api extends CI_Controller {
 
 		function get_documents(){
 			$response = array('code' => -1, 'status' => false, 'message' => '');
-			$validate = validateToken();
-			if($validate){
+			// $validate = validateToken();
+			// if($validate){
 				if ($_SERVER["REQUEST_METHOD"] == "POST"){
-					if (empty($_POST['created_by'])){
-						$response['message'] = 'Created_by is required';
-						$response['code'] = 201;
+					$select = '*';
+					if(!empty($_POST['select']) && isset($_POST['select'])) {
+						$select = $_POST['select'];
+						unset($_POST['select']);
 					}
-					else{
-						$select = '*';
-						if(!empty($_POST['select']) && isset($_POST['select'])) {
-							$select = $_POST['select'];
-							unset($_POST['select']);
-						}
-						$documents = $this->model->getData('document',['created_by'=>$_POST['created_by']],$select);
-						$response['documents'] = $documents;
-						$response['message'] = 'success';
-						$response['code'] = 200;
-						$response['status'] = true;
-					}
+					$documents = $this->model->getData('documents',$_POST,$select);
+					$response['documents'] = $documents;
+					$response['message'] = 'success';
+					$response['code'] = 200;
+					$response['status'] = true;
 				} 
 				else {
 					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
-			}
-			else{
-				$response['message'] = 'Authentication required';
-				$response['code'] = 203;
-			} 
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
 			echo json_encode($response);
 		}
 
@@ -4090,35 +4084,30 @@ class Admin_api extends CI_Controller {
 			// $validate = validateToken();
 			// if($validate){
 				if ($_SERVER["REQUEST_METHOD"] == "POST"){
-					if (empty($_POST['created_by'])) {
-						$response['message'] = 'Created_by is required';
-						$response['code'] = 201;
-					}
-					else{
-						$documents = $this->model->getData('document',[],'id');
-						if(!empty($documents)){
-							$db_ids = array_column($documents, 'id');
-							if(!empty($db_ids)){
-								foreach ($db_ids as $key => $id) {
-									if(!in_array($id, $_POST['doc_ids'])){
-										$this->model->deleteData('document',['id'=>$id]);
-									}
+	
+					$documents = $this->model->getData('document',[],'id');
+					if(!empty($documents)){
+						$db_ids = array_column($documents, 'id');
+						if(!empty($db_ids)){
+							foreach ($db_ids as $key => $id) {
+								if(!in_array($id, $_POST['doc_ids'])){
+									$this->model->deleteData('document',['id'=>$id]);
 								}
 							}
 						}
-						
-						foreach ($_POST['docs'] as $key => $name) {
-							$isExist = $this->model->getValue('document','name',['created_by'=>$_POST['created_by'],'name'=>$name]);
-							if(empty($isExist)){
-								$this->model->insertData('document',['created_by'=>$_POST['created_by'],'name'=>$name]);
-							}
-						}
-						
-						
-						$response['message'] = 'success';
-						$response['code'] = 200;
-						$response['status'] = true;
 					}
+					
+					foreach ($_POST['docs'] as $key => $name) {
+						$isExist = $this->model->getValue('document','name',['created_by'=>$_POST['created_by'],'name'=>$name]);
+						if(empty($isExist)){
+							$this->model->insertData('document',['created_by'=>$_POST['created_by'],'name'=>$name]);
+						}
+					}
+					
+					
+					$response['message'] = 'Documents Updated';
+					$response['code'] = 200;
+					$response['status'] = true;
 				} 
 				else {
 					$response['message'] = 'Invalid Request';
