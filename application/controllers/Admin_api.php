@@ -1323,9 +1323,12 @@ class Admin_api extends CI_Controller {
 			$contacts = $this->model->getData('customer_contacts',$_POST,$select);
 			if(!empty($contacts)){
 				foreach ($contacts as $key => $value) {
-
-					$contacts[$key]['customer_name']=$this->model->getValue('customer','name',['id'=>$value['customer_id']]);
-					$contacts[$key]['city_name']=$this->model->getValue('cities','city',['id'=>$value['city_id']]);
+					if(!empty($value['customer_id'])){
+						$contacts[$key]['customer_name']=$this->model->getValue('customer','name',['id'=>$value['customer_id']]);
+					}
+					if(!empty($value['city_id'])){
+						$contacts[$key]['city_name']=$this->model->getValue('cities','city',['id'=>$value['city_id']]);	
+					}
 				}
 			}
 			if(empty($contacts)) $contacts = [];
