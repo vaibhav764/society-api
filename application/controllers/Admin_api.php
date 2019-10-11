@@ -652,7 +652,7 @@ class Admin_api extends CI_Controller {
 			else{
 				$this->model->insertData('company_setting',$_POST);
 			}			
-			$response['message'] = 'success';
+			$response['message'] = 'Setting Saved';
 			$response['code'] = 200;
 			$response['status'] = true;
 			echo json_encode($response);
@@ -747,6 +747,14 @@ class Admin_api extends CI_Controller {
 					$ids = explode(',', $ids);
 					$vendor_types = $this->model->getData('vendor_types',[],'id,type',[],['id'=>$ids]);
 					$response['vendor_types'] = $vendor_types;
+				}
+				if($fieldName == 'volumetric_weight'){
+					$volumetric_weight = $ids;
+					$response['volumetric_weight'] = json_decode($volumetric_weight,true);
+				}
+				if($fieldName == 'cft'){
+					$cft = $ids;
+					$response['cft'] = json_decode($cft,true);
 				}
 			}
 			
@@ -1257,6 +1265,12 @@ class Admin_api extends CI_Controller {
 						$customer = $this->model->getData('customer',$_POST,$select);
 						if(!empty($customer)){
 							foreach ($customer as $key => $value) {
+								if(!empty($value['volumetric_weight'])){
+									$customer[$key]['volumetric_weight'] = json_decode($value['volumetric_weight'],true);
+								}
+								if(!empty($value['cft'])){
+									$customer[$key]['cft'] = json_decode($value['cft'],true);
+								}
 								$customer[$key]['contacts'] = $this->model->getData('customer_contacts',['customer_id'=>$value['id']],$select2);
 							}
 						}
@@ -2769,22 +2783,16 @@ class Admin_api extends CI_Controller {
 			// $validate = validateToken();
 			// if($validate){
 				if ($_SERVER["REQUEST_METHOD"] == "POST"){
-					if (empty($_POST['created_by'])){
-						$response['message'] = 'Created_by is required';
-						$response['code'] = 201;
+					$select = '*';
+					if(!empty($_POST['select']) && isset($_POST['select'])) {
+						$select = $_POST['select'];
+						unset($_POST['select']);
 					}
-					else{
-						$select = '*';
-						if(!empty($_POST['select']) && isset($_POST['select'])) {
-							$select = $_POST['select'];
-							unset($_POST['select']);
-						}
-						$mode = $this->model->getData('mode',['created_by'=>$_POST['created_by']],$select);
-						$response['mode'] = $mode;
-						$response['message'] = 'success';
-						$response['code'] = 200;
-						$response['status'] = true;
-					}
+					$mode = $this->model->getData('mode',$_POST,$select);
+					$response['mode'] = $mode;
+					$response['message'] = 'success';
+					$response['code'] = 200;
+					$response['status'] = true;
 				} 
 				else {
 					$response['message'] = 'Invalid Request';
