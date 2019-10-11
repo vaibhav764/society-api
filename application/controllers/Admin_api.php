@@ -4801,6 +4801,7 @@ class Admin_api extends CI_Controller {
 				}
 				echo json_encode($response);
 		}
+
 		function get_order_status_by_awbno(){
 			$response = array('code' => -1, 'status' => false, 'message' => '');
 			
@@ -4821,6 +4822,198 @@ class Admin_api extends CI_Controller {
 					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
+			echo json_encode($response);
+		}
+
+		function get_all_status_master(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					$select = '*';
+					if(!empty($_POST['select']) && isset($_POST['select'])) {
+						$select = $_POST['select'];
+						unset($_POST['select']);
+					}
+					$status_master = $this->model->getData('tbl_status_master',$_POST,$select);
+					// echo"<pre>";
+					// print_r($status_master);die;
+					$response['status_master'] = $status_master;
+					$response['message'] = 'success';
+					$response['code'] = 200;
+					$response['status'] = true;
+				} 
+				else {
+					$response['message'] = 'Invalid Request';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		public function add_map_barcode(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			if ($_SERVER["REQUEST_METHOD"] == "POST") {
+
+				
+				$awb_no['AWBno']=$this->input->post('awb_no');
+				// $o_id=$this->input->post('o_id');
+				$o_id = $this->model->getData('tbl_order_booking',$awb_no,'id');
+
+				$awb_no=$awb_no['AWBno'];
+				$barcode_no = json_decode($_POST['barcode_no'],true);
+				$date = date('d/m/Y');
+
+				// echo"<pre>";
+				// print_r($awb_no);die;
+			
+				if (empty($awb_no)) {
+					$response['message'] = 'Awb No is required.';
+					$response['code'] = 201;
+				} else if (empty($barcode_no)) {
+					$response['message'] = 'Barcode is required.';
+					$response['code'] = 201;
+				} 
+				// else if (empty($o_id)) {
+				// 	$response['message'] = 'Id is required.';
+				// 	$response['code'] = 201;
+				// }                     
+				else
+				{
+					$order_data=$this->Adminapi_Model->get_scan_count($o_id,$awb_no);
+					$status_name="Pickup Scan";
+					$status_details=$this->Adminapi_Model->get_status_info($status_name);
+					if($order_data['is_submit'])
+					{
+						$response['message']="Already Scanning completed";
+						$response['is_submit']=true;
+						$response['code'] = 201;
+												
+					}
+					else
+					{
+
+							$data =array(
+								'o_id'=>$o_id,
+								'awb_no'=>$awb_no,
+								'barcode_no'=>$barcode_no,
+								'total_order'=>$order_data['total_order'],
+								'scan_count'=>$order_data['scan_count']+1,
+								'pickup_date'=>$date
+							);
+						
+							$response1 = $this->Adminapi_Model->check_data($barcode_no);
+							if($response1['status']==0)
+							{
+
+								$response = $this->Adminapi_Model->common_data_ins('map_barcode',$data);
+
+								$order_data_latest=$this->Adminapi_Model->get_scan_count($o_id,$awb_no);
+								$location=$this->Adminapi_Model->get_pickup_scan_location($awb_no);
+							
+								if($order_data_latest['is_submit']==true)
+								{
+									if($order_data_latest['total_order']==$order_data_latest['scan_count'])
+									{
+										if($order_data_latest['total_order']==1)
+										{
+											// $date = date('d/m/Y');
+										$pickupscan_status=array(
+											'fk_oid'=>$location['id'],
+											'fk_userid'=>$location['fk_id'],
+											'awb_no'=>$awb_no,
+											'order_status'=>$status_details['id'],
+											'status_description'=>"Pickup Scanning",
+											'order_location'=>$location['pickup_city'],
+											'expected_date'=>$date,
+											'total_order'=>$order_data_latest['total_order'],
+											'scan_count'=>$order_data_latest['scan_count']
+										);  
+										$response = $this->Adminapi_Model->common_data_ins('tbl_order_status',$pickupscan_status);
+											$response['message1']="Scanning completed";
+											$response['status']=true;
+											$response['code'] = 200;
+											$response['message']="success";
+											$response['scanning_count']=$order_data_latest['scan_count'];
+											$response['total_count']=$order_data_latest['total_order'];
+											$response['is_submit']=$order_data_latest['is_submit'];
+										
+										}
+										else
+										{
+											$update=array(
+											'status_description'=>"Pickup Scanning Completed",
+											'scan_count'=>$order_data_latest['scan_count']
+											);
+											$this->db->update('tbl_order_status',$update,array('fk_oid'=>$o_id));
+											$response['message1']="Scanning completed";
+												$response['status']=true;
+												$response['code'] = 200;
+												$response['message']="success";
+												$response['scanning_count']=$order_data_latest['scan_count'];
+												$response['total_count']=$order_data_latest['total_order'];
+												$response['is_submit']=$order_data_latest['is_submit'];
+										}
+									}
+								}
+								else
+								{
+								
+									$this->db->select('*');
+									$this->db->from('tbl_order_status');
+									$this->db->where('fk_oid',$o_id);
+									$query=$this->db->get();
+									if ($query->num_rows() > 0) 
+									{
+										$update=array(
+											//'total_order'=>$order_data_latest['total_order'],
+											'scan_count'=>$order_data_latest['scan_count']
+										);
+										$this->db->update('tbl_order_status',$update,array('fk_oid'=>$o_id));
+									}
+									else
+									{
+											$date = date('d/m/Y');
+											$pickupscan_status=array(
+													'fk_oid'=>$location['id'],
+													'fk_userid'=>$location['fk_id'],
+													'awb_no'=>$awb_no,
+													'order_status'=>$status_details['id'],
+													'status_description'=>"Pickup Scanning",
+													'order_location'=>$location['pickup_city'],
+													'expected_date'=>$date,
+													'total_order'=>$order_data_latest['total_order'],
+													'scan_count'=>$order_data_latest['scan_count']
+										);  
+										$response = $this->Adminapi_Model->common_data_ins('tbl_order_status',$pickupscan_status);
+									}                                        
+										$response['status']=true;
+										$response['code'] = 200;
+										$response['message']="success";
+										$response['scanning_count']=$order_data_latest['scan_count'];
+										$response['total_count']=$order_data_latest['total_order'];
+										$response['is_submit']=$order_data_latest['is_submit'];
+								}                          
+							
+							}
+							else
+							{
+								$response['code'] = 201;
+								$response['message']="Barcode Already exist";
+							}
+					
+					}
+				}
+			}
+			else
+			{
+				$response['message'] = 'No direct script is allowed.';
+				$response['code'] = 204;
+			}
 			echo json_encode($response);
 		}
 
