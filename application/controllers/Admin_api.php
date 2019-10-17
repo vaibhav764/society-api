@@ -146,7 +146,7 @@ class Admin_api extends CI_Controller {
 						if(!empty($login) || !empty($login2)){
 							$otp = get_random_number(6);
 							$this->model->updateData('login',['otp'=>$otp],['id'=>$login_data['id']]);
-							// sendEmail('nerkar.piyush16@gmail.com',$login_data['email'],'otp','otp is'.$otp);
+							sendEmail('piyush.nerkar@softonauts.com',$login_data['email'],'otp','otp is'.$otp);
 							$response['message'] = 'success';
 							$response['code'] = 200;
 							$response['status'] = true;
@@ -368,7 +368,7 @@ class Admin_api extends CI_Controller {
 					else{
 						foreach ($cities as $key => $value) {
 							if(!empty($value['state_id'])){
-								$cities[$key]['country_id'] = $this->model->getValue('states','name',['id'=>$_POST['country_id']]);
+								$cities[$key]['country_id'] = $this->model->getValue('states','country_id',['id'=>$value['state_id']]);
 							}
 						}
 					}
@@ -459,16 +459,24 @@ class Admin_api extends CI_Controller {
 						else{
 							$company_id = $this->model->insertData('company',$_POST);
 							if(!empty($company_id)){
-								
+								$password = generateRandomString(8);
 								$login = [];
 								$login['fk_id'] = $company_id;
 								$login['username'] = $_POST['name'];
 								$login['phone'] = $_POST['contact'];
 								$login['email'] = $_POST['email'];
+								$login['password'] = encyrpt_password($password);
 								$login['usertype'] = 'company';
 								$login['status'] = 1;
 								$login['created_by'] = $_POST['created_by'];
 								$this->model->insertData('login',$login);
+
+								$email_txt = $_POST['name'].'Thank you for Registration with us.';
+				                $txt = " Your new password is : " . $password . "";
+				                $email_data = array('email_txt' => $email_txt, 'txt' => $txt);
+				                $subject = "Your password";
+				                $message = $this->load->view('Email-template', $email_data, true);
+								sendEmail('piyush.nerkar@softonauts.com',$login_data['email'],$subject,$message);
 							}
 							$response['message'] = 'success';
 							$response['code'] = 200;
@@ -1029,7 +1037,9 @@ class Admin_api extends CI_Controller {
 								else{
 									$isExist = $this->model->getValue('transport_type','type',['created_by'=>$_POST['created_by'],'type'=>trim($type)]);
 									if(empty($isExist)){
-										$this->model->insertData('transport_type',['created_by'=>$_POST['created_by'],'type'=>$type]);
+										if(!empty($type)){
+											$this->model->insertData('transport_type',['created_by'=>$_POST['created_by'],'type'=>$type]);
+										}
 									}
 									else{
 										$response['message'] = 'Already Exist';
@@ -1092,7 +1102,9 @@ class Admin_api extends CI_Controller {
 								else{
 									$isExist = $this->model->getValue('customer_types','type',['created_by'=>$_POST['created_by'],'type'=>$type]);
 									if(empty($isExist)){
-										$this->model->insertData('customer_types',['created_by'=>$_POST['created_by'],'type'=>trim($type)]);
+										if(!empty($type)){
+											$this->model->insertData('customer_types',['created_by'=>$_POST['created_by'],'type'=>trim($type)]);
+										}
 									}
 									else{
 										$response['message'] = 'Already Exist';
@@ -1219,7 +1231,7 @@ class Admin_api extends CI_Controller {
 			//  	return;
 			// }
 			if ($_SERVER["REQUEST_METHOD"] != "POST") {
-				$response['message'] = 'No direct script is allowed.';
+				$response['message'] = 'Invalid Request';
 				$response['code'] = 204;
 				echo json_encode($response);
 				return;
@@ -1281,7 +1293,7 @@ class Admin_api extends CI_Controller {
 			//  	return;
 			// }
 			if ($_SERVER["REQUEST_METHOD"] != "POST") {
-				$response['message'] = 'No direct script is allowed.';
+				$response['message'] = 'Invalid Request';
 				$response['code'] = 204;
 				echo json_encode($response);
 				return;
@@ -1610,7 +1622,9 @@ class Admin_api extends CI_Controller {
 								else{
 									$isExist = $this->model->getValue('designation','designation',['created_by'=>$_POST['created_by'],'designation'=>$designation]);
 									if(empty($isExist)){
-										$this->model->insertData('designation',['created_by'=>$_POST['created_by'],'designation'=>$designation]);
+										if(!empty($designation)){
+											$this->model->insertData('designation',['created_by'=>$_POST['created_by'],'designation'=>$designation]);
+										}
 									}
 									else{
 										$response['message'] = 'Already Exist';
@@ -1879,7 +1893,9 @@ class Admin_api extends CI_Controller {
 								else{
 									$isExist = $this->model->getValue('vendor_types','type',['created_by'=>$_POST['created_by'],'type'=>$type]);
 									if(empty($isExist)){
-										$this->model->insertData('vendor_types',['created_by'=>$_POST['created_by'],'type'=>trim($type)]);
+										if(!empty($type)){
+											$this->model->insertData('vendor_types',['created_by'=>$_POST['created_by'],'type'=>trim($type)]);
+										}
 									}
 									else{
 										$response['message'] = 'Already Exist';
@@ -2995,7 +3011,9 @@ class Admin_api extends CI_Controller {
 								else{
 									$isExist = $this->model->getValue('mode','mode_name',['created_by'=>$_POST['created_by'],'mode_name'=>$mode_name]);
 									if(empty($isExist)){
-										$this->model->insertData('mode',['created_by'=>$_POST['created_by'],'mode_name'=>trim($mode_name)]);
+										if(!empty($mode_name)){
+											$this->model->insertData('mode',['created_by'=>$_POST['created_by'],'mode_name'=>trim($mode_name)]);
+										}
 									}
 									else{
 										$response['message'] = 'Already Exist';
@@ -3374,109 +3392,92 @@ class Admin_api extends CI_Controller {
 			//  	return;
 			// }
 			if ($_SERVER["REQUEST_METHOD"] != "POST") {
-				$response['message'] = 'No direct script is allowed.';
+				$response['message'] = 'Invalid Request';
 				$response['code'] = 204;
 				echo json_encode($response);
 				return;
 			}
-			if (empty($_POST['shipper_cust_id'])) {
-				$response['message'] = 'Please fill required fields';
-				$response['code'] = 201;
+			if (empty($_POST["shipping_charges"]) || $_POST["shipping_charges"] < 1) {
+				$response['message'] = 'Incorrect Order';
+				$response['code'] = 204;
 				echo json_encode($response);
 				return;
 			}
-
-			$response = array('code' => -1, 'status' => false, 'message' => '');
-			// $validate = validateToken();
-			// if($validate){
-				if ($_SERVER["REQUEST_METHOD"] == "POST"){
-					if (empty($_POST['shipper_cust_id'])) {
-						$response['message'] = 'Please fill required fields';
-						$response['code'] = 201;
-					}
-					else{
-						// if($_POST['no_of_packages'] > 1){
-						
-						// }
-						// $from_zone_id = $this->model->getData('zone',[],'id',[],[],['cities'=>$_POST['shipper_city_id']])[0]['id'];
-						// $to_zone_id = $this->model->getData('zone',[],'id',[],[],['cities'=>$_POST['consinee_city_id']])[0]['id'];
-						// $current_date = date('Y-m-d');
-						// $is_prime = $this->model->getValue('customer','prime_member',['end_date >'=>$current_date,'id'=>$_POST['shipper_cust_id']]);
-						
-						// if(!empty($is_prime)){
-						// 	$where = [];
-						// 	$where['cust_id'] = $_POST['shipper_cust_id'];
-						// 	$where['transport_type_id'] = $_POST['transport_type_id'];
-						// 	$where['mode_id'] = $_POST['mode_id'];
-						// 	$where['from_zone_id'] = $from_zone_id;
-						// 	$where['to_zone_id'] = $to_zone_id;
-						// 	$rate = $this->model->getValue('customer_rates','rate',$where);
-						// }
-						// else{
-						// 	$where = [];
-						// 	$where['transport_type_id'] = $_POST['transport_type_id'];
-						// 	$where['mode_id'] = $_POST['mode_id'];
-						// 	$where['from_zone_id'] = $from_zone_id;
-						// 	$where['to_zone_id'] = $to_zone_id;
-						// 	$rate = $this->model->getValue('global_rates','rate',$where);
-						// }
-						// $total_kg = 0;
-						// if(!empty($_POST['ship_dimensions'])){
-						// 	foreach ($_POST['ship_dimensions'] as $key => $value) {
-						// 		$total_kg = $value['weight'] * $value['qty'];
-						// 	}
-						// }
-						// $shipping_charges = $total_kg * $rate;
-
-						// $mode_name = $this->model->getValue('mode','mode_name',['id'=>$_POST['mode_id']]);
-						// $mode_name = strtolower($mode_name);
-
-						// $_POST['shipping_charges'] = $shipping_charges;
-
-						// if($mode_name == 'ftl'){
-						// 	$_POST['shipping_charges'] = $_POST['ftl_charges'] + $_POST['load_unload_charges'];
-						// }
-
-						// $payment_type = strtolower($_POST['ship_payment']['payment_type']);
-						// if($payment_type == 'cod'){
-						// 	$_POST['shipping_charges'] = $_POST['ship_payment']['cash_charges'];
-						// }
-
-						// $shiper_insurance_charges = $this->model->getValue('customer','insurance_charges',['id'=>$_POST['shipper_id'] ]);
-						// $shiper_fuel_charges = $this->model->getValue('customer','fuel_charges',['id'=>$_POST['shipper_id'] ]);
-						// $_POST['insurance_charges'] = $_POST['total_invoice_value'] * $shiper_insurance_charges;
-						// $_POST['fuel_charges'] = ($total_kg * $rate * $shiper_fuel_charges)/100;
-						// echo '<pre>'; print_r($mode_name); exit;
-
-						$ship_dimensions = $_POST['ship_dimensions'];
-						$ship_payment = $_POST['ship_payment'];
-						unset($_POST['ship_dimensions']);
-						unset($_POST['ship_payment']);
-						$ship_id = $this->model->insertData('ship',$_POST);
-						if(!empty($ship_dimensions)) {
-							foreach ($ship_dimensions as $key => $ship_dimension) {
-								$ship_dimension['ship_id'] = $ship_id;
-								$ship_dimension['dimensions'] = $ship_dimension['L'].'*'.$ship_dimension['W'].'*'.$ship_dimension['H'];
-								$this->model->insertData('ship_dimensions',$ship_dimension);
-							}
-						}
-						$ship_payment['ship_id'] = $ship_id;
-						$this->model->insertData('ship_payment',$ship_payment);
-
-						$response['message'] = 'success';
-						$response['code'] = 200;
-						$response['status'] = true;
-					}
-				} 
-				else {
-					$response['message'] = 'Invalid Request';
-					$response['code'] = 204;
-				}
+			// if($_POST['no_of_packages'] > 1){
+			
+			// }
+			// $from_zone_id = $this->model->getData('zone',[],'id',[],[],['cities'=>$_POST['shipper_city_id']])[0]['id'];
+			// $to_zone_id = $this->model->getData('zone',[],'id',[],[],['cities'=>$_POST['consinee_city_id']])[0]['id'];
+			// $current_date = date('Y-m-d');
+			// $is_prime = $this->model->getValue('customer','prime_member',['end_date >'=>$current_date,'id'=>$_POST['shipper_cust_id']]);
+			
+			// if(!empty($is_prime)){
+			// 	$where = [];
+			// 	$where['cust_id'] = $_POST['shipper_cust_id'];
+			// 	$where['transport_type_id'] = $_POST['transport_type_id'];
+			// 	$where['mode_id'] = $_POST['mode_id'];
+			// 	$where['from_zone_id'] = $from_zone_id;
+			// 	$where['to_zone_id'] = $to_zone_id;
+			// 	$rate = $this->model->getValue('customer_rates','rate',$where);
 			// }
 			// else{
-			// 	$response['message'] = 'Authentication required';
-			// 	$response['code'] = 203;
-			// } 
+			// 	$where = [];
+			// 	$where['transport_type_id'] = $_POST['transport_type_id'];
+			// 	$where['mode_id'] = $_POST['mode_id'];
+			// 	$where['from_zone_id'] = $from_zone_id;
+			// 	$where['to_zone_id'] = $to_zone_id;
+			// 	$rate = $this->model->getValue('global_rates','rate',$where);
+			// }
+			// $total_kg = 0;
+			// if(!empty($_POST['ship_dimensions'])){
+			// 	foreach ($_POST['ship_dimensions'] as $key => $value) {
+			// 		$total_kg = $value['weight'] * $value['qty'];
+			// 	}
+			// }
+			// $shipping_charges = $total_kg * $rate;
+
+			// $mode_name = $this->model->getValue('mode','mode_name',['id'=>$_POST['mode_id']]);
+			// $mode_name = strtolower($mode_name);
+
+			// $_POST['shipping_charges'] = $shipping_charges;
+
+			// if($mode_name == 'ftl'){
+			// 	$_POST['shipping_charges'] = $_POST['ftl_charges'] + $_POST['load_unload_charges'];
+			// }
+
+			// $payment_type = strtolower($_POST['ship_payment']['payment_type']);
+			// if($payment_type == 'cod'){
+			// 	$_POST['shipping_charges'] = $_POST['ship_payment']['cash_charges'];
+			// }
+
+			// $shiper_insurance_charges = $this->model->getValue('customer','insurance_charges',['id'=>$_POST['shipper_id'] ]);
+			// $shiper_fuel_charges = $this->model->getValue('customer','fuel_charges',['id'=>$_POST['shipper_id'] ]);
+			// $_POST['insurance_charges'] = $_POST['total_invoice_value'] * $shiper_insurance_charges;
+			// $_POST['fuel_charges'] = ($total_kg * $rate * $shiper_fuel_charges)/100;
+			// echo '<pre>'; print_r($mode_name); exit;
+
+			$shipper = json_decode($_POST['shipper'],true);
+			$recepient = json_decode($_POST['recepient'],true);
+			$ship_dimensions = json_decode($_POST['dimensions'],true);
+			// $ship_payment = $_POST['ship_payment'];
+			unset($_POST['shipper']);
+			unset($_POST['recepient']);
+			unset($_POST['dimensions']);
+			// unset($_POST['ship_payment']);
+			$ship_id = $this->model->insertData('ship',$_POST);
+			if(!empty($ship_dimensions)) {
+				foreach ($ship_dimensions as $key => $ship_dimension){
+					$ship_dimension['ship_id'] = $ship_id;
+					// $ship_dimension['dimensions'] = $ship_dimension['length'].'*'.$ship_dimension['width'].'*'.$ship_dimension['height'];
+					$this->model->insertData('ship_dimensions',$ship_dimension);
+				}
+			}
+			// $ship_payment['ship_id'] = $ship_id;
+			// $this->model->insertData('ship_payment',$ship_payment);
+
+			$response['message'] = 'success';
+			$response['code'] = 200;
+			$response['status'] = true;
 			echo json_encode($response);
 		}
 
@@ -3593,6 +3594,57 @@ class Admin_api extends CI_Controller {
 			$response['status'] = true;
 	    	echo json_encode($response);
 		}
+
+		// function getShipCharges(){
+		// 	$response = array('code' => -1, 'status' => false, 'message' => '');
+		// 	// $validate = validateToken();
+		// 	// if(!$validate){
+		// 	// 	$response['message'] = 'Authentication required';
+		// 	// 	$response['code'] = 203;
+		// 	//  	echo json_encode($response);
+		// 	//  	return;
+		// 	// }
+		// 	if ($_SERVER["REQUEST_METHOD"] != "POST") {
+		// 		$response['message'] = 'Invalid Request';
+		// 		$response['code'] = 204;
+		// 		echo json_encode($response);
+		// 		return;
+		// 	}
+		// 	$rate = [];
+		// 	if(($_POST['bill_to'] == 'sender' || $_POST['bill_to'] != 'recepient' || $_POST['bill_to'] != 'third_party') && !empty($_POST['sender_id'])) {
+	 //    		$customer_type = $this->model->getValue('customer','type',['id'=>$_POST['sender_id']]);
+	 //    		$customer_type = strtolower($customer_type);
+	 //    		$customer_id = $_POST['sender_id'];
+	 //    	}
+	 //    	else if($_POST['bill_to'] == 'recepient' && !empty($_POST['recepient_id'])){
+	 //    		$customer_type = $this->model->getValue('customer','type',['id'=>$_POST['recepient_id']]);
+	 //    		$customer_type = strtolower($customer_type);
+	 //    		$customer_id = $_POST['recepient_id'];
+	 //    	}
+
+	 //    	$rates = '';
+	 //    	if($customer_type == 'prime'){
+	 //    		$start_date = $this->model->getValue('customer','start_date',['id'=>$_POST['sender_id']]);
+	 //    		$end_date = $this->model->getValue('customer','end_date',['id'=>$_POST['sender_id']]);
+	 //    		$current_date = date('d/m/Y');
+	 //    		if($current_date >= $start_date && $current_date <= $end_date){
+	 //    			$rates = $this->model->getValue('customer_rates','rates',$rate);
+	 //    		}
+	 //    		else{
+	 //    			$rates = $this->model->getValue('global_rates','rates',$rate);
+	 //    		}
+	 //    	}
+	 //    	else if($customer_type == 'normal'){
+	 //    		$rates = $this->model->getValue('global_rates','rates',$rate);
+	 //    	}
+	 //    	$rates = unserialize($rates);
+	 //    	$rate = $rates[$from_zone_id][$to_zone_id];
+	 //    	$response['rate'] = $rate;
+	 //    	$response['message'] = 'success';
+		// 	$response['code'] = 200;
+		// 	$response['status'] = true;
+	 //    	echo json_encode($response);
+		// }
 
 		function getCityZoneId(){
 			$response = array('code' => -1, 'status' => false, 'message' => '');
@@ -4473,7 +4525,7 @@ class Admin_api extends CI_Controller {
 			}
 			else
 			{
-				$response['message'] = 'No direct script is allowed.';
+				$response['message'] = 'Invalid Request';
 				$response['code'] = 204;
 			}
 			echo json_encode($response);
@@ -4738,7 +4790,7 @@ class Admin_api extends CI_Controller {
 				}
 				else 
 				{
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 				echo json_encode($response);
@@ -5000,7 +5052,7 @@ class Admin_api extends CI_Controller {
 					}
 					} 
 				} else {
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 				echo json_encode($response);
@@ -5305,7 +5357,7 @@ class Admin_api extends CI_Controller {
 				}
 				else
 				{
-					$response['message'] = 'No direct script is allowed.';
+					$response['message'] = 'Invalid Request';
 					$response['code'] = 204;
 				}
 				echo json_encode($response);
@@ -5579,7 +5631,7 @@ class Admin_api extends CI_Controller {
 			}
 			else 
 			{
-				$response['message'] = 'No direct script is allowed.';
+				$response['message'] = 'Invalid Request';
 				$response['code'] = 204;
 			}
 			echo json_encode($response);
@@ -5848,7 +5900,7 @@ class Admin_api extends CI_Controller {
 			} 
 			else 
 			{
-				$response['message'] = 'No direct script is allowed.';
+				$response['message'] = 'Invalid Request';
 				$response['code'] = 204;
 			}
 			echo json_encode($response);

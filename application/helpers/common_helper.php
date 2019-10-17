@@ -788,18 +788,17 @@ function sendEmail($from,$to,$subject,$message,$attach=''){
     mail($to,$subject,$message,$headers);
 }
 
-function sendSMS($message,$mobile_no){
-    $message = urlencode($message);
-    $url = "https://api.textlocal.in/send/?username=piyush.nerkar@microlan.in&hash=Krishna@123&sender=Microlan&numbers=91".$mobile_no."&message=".$message.".";
-    /*$url = "http://sms2biz.microlan.in/sendSMS?username=dtfarm&message=".$smssubject."&sendername=DTFARM&smstype=TRANS&numbers=".$mobile_no."&apikey=510ba168-561a-4afc-8925-eeb3e8aa9b59";*/
+function sendSMS($mobile_no,$message){
+    // $message = urlencode($message);
+    // $url = "https://api.textlocal.in/send/?username=piyush.nerkar@microlan.in&hash=Krishna@123&sender=Microlan&numbers=91".$mobile_no."&message=".$message.".";
 
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-    $output = curl_exec($ch);
-    $info = curl_getinfo($ch);
-    curl_close($ch);
+    // $ch = curl_init();
+    // curl_setopt($ch, CURLOPT_URL, $url);
+    // curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    // curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+    // $output = curl_exec($ch);
+    // $info = curl_getinfo($ch);
+    // curl_close($ch);
 }
 /****************************** JWT ***********************************************/
     
