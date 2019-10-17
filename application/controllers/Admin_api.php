@@ -1014,7 +1014,7 @@ class Admin_api extends CI_Controller {
 							if(!empty($db_ids)){
 								foreach ($db_ids as $key => $id) {
 									if(!in_array($id, $_POST['type_ids'])){
-										$this->model->deleteData('transport_type',['id'=>$id]);
+										$this->model->deleteData2('transport_type',['id'=>$id]);
 									}
 								}
 							}
@@ -1077,7 +1077,7 @@ class Admin_api extends CI_Controller {
 							if(!empty($db_ids)){
 								foreach ($db_ids as $key => $id) {
 									if(!in_array($id, $_POST['type_ids'])){
-										$this->model->deleteData('customer_types',['id'=>$id]);
+										$this->model->deleteData2('customer_types',['id'=>$id]);
 									}
 								}
 							}
@@ -1864,7 +1864,7 @@ class Admin_api extends CI_Controller {
 							if(!empty($db_ids)){
 								foreach ($db_ids as $key => $id) {
 									if(!in_array($id, $_POST['type_ids'])){
-										$this->model->deleteData('vendor_types',['id'=>$id]);
+										$this->model->deleteData2('vendor_types',['id'=>$id]);
 									}
 								}
 							}
@@ -2977,7 +2977,7 @@ class Admin_api extends CI_Controller {
 							if(!empty($db_ids)){
 								foreach ($db_ids as $key => $id) {
 									if(!in_array($id, $_POST['mode_ids'])){
-										$this->model->deleteData('mode',['id'=>$id]);
+										$this->model->deleteData2('mode',['id'=>$id]);
 									}
 								}
 							}
