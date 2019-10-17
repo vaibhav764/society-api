@@ -357,6 +357,19 @@ class Admin_api extends CI_Controller {
 						unset($_POST['select']);
 					}
 					$cities = $this->model->getData('cities',$_POST,$select);
+					if(empty($cities)){
+						$response['message'] = 'No Data';
+						$response['code'] = 201;
+						echo json_encode($response);
+						return;	
+					}
+					else{
+						foreach ($cities as $key => $value) {
+							if(!empty($value['state_id'])){
+								$cities[$key]['country_id'] = $this->model->getValue('states','name',['id'=>$_POST['country_id']]);
+							}
+						}
+					}
 					$response['cities'] = $cities;
 					$response['message'] = 'success';
 					$response['code'] = 200;
@@ -1196,49 +1209,98 @@ class Admin_api extends CI_Controller {
 
 		function get_all_customers(){
 			$response = array('code' => -1, 'status' => false, 'message' => '');
-			// print_r($_POST);die; 
 			// $validate = validateToken();
-			// if($validate){
-				if ($_SERVER["REQUEST_METHOD"] == "POST"){
-					$select = '*';
-					$select2 = '*';
-					$contacts = '0';
-					if(!empty($_POST['select']) && isset($_POST['select'])) {
-						$select = $_POST['select'];
-						unset($_POST['select']);
-					}
-					if(!empty($_POST['contacts']) && isset($_POST['contacts'])) {
-						$contacts = $_POST['contacts'];
-						unset($_POST['contacts']);
-					}
-					$customer = $this->model->getData('customer',$_POST,$select);
-					if(!empty($customer)){
-						foreach ($customer as $key => $value) {
-							if($contacts == '1'){
-								if(!empty($value['id'])){
-									$customer[$key]['contacts'] = $this->model->getData('customer_contacts',['customer_id'=>$value['id']],$select2);
-								}
-							}
-						}
-					}
-					else{
-						$customer = [];
-					}
-					$response['next_id'] = $this->model->generate_next_id('customer','autoid','cust','3');
-					$response['customer'] = $customer;
-					$response['message'] = 'success';
-					$response['code'] = 200;
-					$response['status'] = true;
-				} 
-				else {
-					$response['message'] = 'Invalid Request';
-					$response['code'] = 204;
-				}
-			// }
-			// else{
+			// if(!$validate){
 			// 	$response['message'] = 'Authentication required';
 			// 	$response['code'] = 203;
-			// } 
+			//  	echo json_encode($response);
+			//  	return;
+			// }
+			if ($_SERVER["REQUEST_METHOD"] != "POST") {
+				$response['message'] = 'No direct script is allowed.';
+				$response['code'] = 204;
+				echo json_encode($response);
+				return;
+			}
+			$select = '*';
+			$select2 = '*';
+			$contacts = '0';
+			if(!empty($_POST['select']) && isset($_POST['select'])) {
+				$select = $_POST['select'];
+				unset($_POST['select']);
+			}
+			if(!empty($_POST['select2']) && isset($_POST['select2'])) {
+				$select2 = $_POST['select2'];
+				unset($_POST['select2']);
+			}
+			if(!empty($_POST['contacts']) && isset($_POST['contacts'])) {
+				$contacts = $_POST['contacts'];
+				unset($_POST['contacts']);
+			}
+			$customer = $this->model->getData('customer',$_POST,$select);
+			if(empty($customer)){
+				$response['message'] = 'No Data';
+				$response['code'] = 201;
+				echo json_encode($response);
+				return;	
+			}
+			foreach ($customer as $key => $value) {
+				if($contacts == '1'){
+					if(!empty($value['id'])){
+						$customer[$key]['contacts'] = $this->model->getData('customer_contacts',['customer_id'=>$value['id']],$select2);
+					}
+				}
+				if(!empty($value['mapped_customers'])){
+					$customer[$key]['mapped_customers'] = explode(',', $value['mapped_customers']);
+				}
+				if(!empty($value['volumetric_weight'])){
+					$customer[$key]['volumetric_weight'] = json_decode($value['volumetric_weight'],true);
+				}
+				if(!empty($value['cft'])){
+					$customer[$key]['cft'] = json_decode($value['cft'],true);
+				}
+			}
+			
+			$response['next_id'] = $this->model->generate_next_id('customer','autoid','cust','3');
+			$response['customer'] = $customer;
+			$response['message'] = 'success';
+			$response['code'] = 200;
+			$response['status'] = true;
+			echo json_encode($response);
+		}
+
+		function getMappedCustomers(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if(!$validate){
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			//  	echo json_encode($response);
+			//  	return;
+			// }
+			if ($_SERVER["REQUEST_METHOD"] != "POST") {
+				$response['message'] = 'No direct script is allowed.';
+				$response['code'] = 204;
+				echo json_encode($response);
+				return;
+			}
+			$mapped_customers = $this->model->getValue('customer','mapped_customers',$_POST);
+			if(empty($mapped_customers)){
+				$response['message'] = 'No Data';
+				$response['code'] = 200;
+				echo json_encode($response);
+				return;	
+			}
+			$mapped_customers = explode(',', $mapped_customers);
+			$mapped_customers2 = [];
+			foreach ($mapped_customers as $key => $customer_id) {
+				$mapped_customers2[$key]['id'] = $customer_id;
+				$mapped_customers2[$key]['name'] = $this->model->getValue('customer','name',['id'=>$customer_id]);
+			}
+			$response['data'] = $mapped_customers2;
+			$response['message'] = 'success';
+			$response['code'] = 200;
+			$response['status'] = true;
 			echo json_encode($response);
 		}
 
@@ -2336,10 +2398,10 @@ class Admin_api extends CI_Controller {
 						$response['message'] = 'Zone id is required';
 						$response['code'] = 201;
 					}
-					else if (empty($_POST['transport_type']) || empty($_POST['zone_code']) || empty($_POST['zone'])){
-						$response['message'] = 'Please fill required fields';
-						$response['code'] = 201;
-					}
+					// else if (empty($_POST['transport_type']) || empty($_POST['zone_code']) || empty($_POST['zone'])){
+					// 	$response['message'] = 'Please fill required fields';
+					// 	$response['code'] = 201;
+					// }
 					else{
 						// $_POST['cities'] = implode(',', $_POST['cities']);
 						// $_POST['countries'] = implode(',', $_POST['countries']);
@@ -3191,7 +3253,7 @@ class Admin_api extends CI_Controller {
 				echo json_encode($response);
 			 	return;
 			}
-			$rates = $this->model->getData('global_rates',['company_id'=>$_POST['company_id'],'transport_type'=>$_POST['transport_type'],'mode'=>$_POST['mode'],'kg_or_box'=>$_POST['kg_or_box'],'transport_mode'=>$_POST['transport_mode'],'delivery_type'=>$_POST['delivery_type']],'rates')[0]['rates'];
+			$rates = $this->model->getData('global_rates',['company_id'=>$_POST['company_id'],'transport_type'=>$_POST['transport_type'],'transport_speed'=>$_POST['transport_speed'],'kg_or_box'=>$_POST['kg_or_box'],'transport_mode'=>$_POST['transport_mode'],'delivery_type'=>$_POST['delivery_type']],'rates')[0]['rates'];
 			if(!empty($rates)){
 				$rates = unserialize($rates);
 				if($_POST['customer_type'] == 'prime'){
@@ -3201,7 +3263,7 @@ class Admin_api extends CI_Controller {
 						echo json_encode($response);
 						return;
 					}
-					$customer_rates = $this->model->getData('customer_rates',['customer_id'=>$_POST['customer_id'],'company_id'=>$_POST['company_id'],'transport_type'=>$_POST['transport_type'],'mode'=>$_POST['mode'],'kg_or_box'=>$_POST['kg_or_box'],'transport_mode'=>$_POST['transport_mode'],'delivery_type'=>$_POST['delivery_type']],'rates')[0]['rates'];
+					$customer_rates = $this->model->getData('customer_rates',['customer_id'=>$_POST['customer_id'],'company_id'=>$_POST['company_id'],'transport_type'=>$_POST['transport_type'],'transport_speed'=>$_POST['transport_speed'],'kg_or_box'=>$_POST['kg_or_box'],'transport_mode'=>$_POST['transport_mode'],'delivery_type'=>$_POST['delivery_type']],'rates')[0]['rates'];
 					$customer_rates = unserialize($customer_rates);
 					if(empty($customer_rates)) $customer_rates = [];
 					foreach($customer_rates as $from_zone_id => $value){
@@ -3300,7 +3362,28 @@ class Admin_api extends CI_Controller {
 	
 	/********************************** Ship(Order) *****************************************/
 
-		function ship(){
+		function placeOrder(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if(!$validate){
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			//  	echo json_encode($response);
+			//  	return;
+			// }
+			if ($_SERVER["REQUEST_METHOD"] != "POST") {
+				$response['message'] = 'No direct script is allowed.';
+				$response['code'] = 204;
+				echo json_encode($response);
+				return;
+			}
+			if (empty($_POST['shipper_cust_id'])) {
+				$response['message'] = 'Please fill required fields';
+				$response['code'] = 201;
+				echo json_encode($response);
+				return;
+			}
+
 			$response = array('code' => -1, 'status' => false, 'message' => '');
 			// $validate = validateToken();
 			// if($validate){
@@ -3313,54 +3396,54 @@ class Admin_api extends CI_Controller {
 						// if($_POST['no_of_packages'] > 1){
 						
 						// }
-						$from_zone_id = $this->model->getData('zone',[],'id',[],[],['cities'=>$_POST['shipper_city_id']])[0]['id'];
-						$to_zone_id = $this->model->getData('zone',[],'id',[],[],['cities'=>$_POST['consinee_city_id']])[0]['id'];
-						$current_date = date('Y-m-d');
-						$is_prime = $this->model->getValue('customer','prime_member',['end_date >'=>$current_date,'id'=>$_POST['shipper_cust_id']]);
+						// $from_zone_id = $this->model->getData('zone',[],'id',[],[],['cities'=>$_POST['shipper_city_id']])[0]['id'];
+						// $to_zone_id = $this->model->getData('zone',[],'id',[],[],['cities'=>$_POST['consinee_city_id']])[0]['id'];
+						// $current_date = date('Y-m-d');
+						// $is_prime = $this->model->getValue('customer','prime_member',['end_date >'=>$current_date,'id'=>$_POST['shipper_cust_id']]);
 						
-						if(!empty($is_prime)){
-							$where = [];
-							$where['cust_id'] = $_POST['shipper_cust_id'];
-							$where['transport_type_id'] = $_POST['transport_type_id'];
-							$where['mode_id'] = $_POST['mode_id'];
-							$where['from_zone_id'] = $from_zone_id;
-							$where['to_zone_id'] = $to_zone_id;
-							$rate = $this->model->getValue('customer_rates','rate',$where);
-						}
-						else{
-							$where = [];
-							$where['transport_type_id'] = $_POST['transport_type_id'];
-							$where['mode_id'] = $_POST['mode_id'];
-							$where['from_zone_id'] = $from_zone_id;
-							$where['to_zone_id'] = $to_zone_id;
-							$rate = $this->model->getValue('global_rates','rate',$where);
-						}
-						$total_kg = 0;
-						if(!empty($_POST['ship_dimensions'])){
-							foreach ($_POST['ship_dimensions'] as $key => $value) {
-								$total_kg = $value['weight'] * $value['qty'];
-							}
-						}
-						$shipping_charges = $total_kg * $rate;
+						// if(!empty($is_prime)){
+						// 	$where = [];
+						// 	$where['cust_id'] = $_POST['shipper_cust_id'];
+						// 	$where['transport_type_id'] = $_POST['transport_type_id'];
+						// 	$where['mode_id'] = $_POST['mode_id'];
+						// 	$where['from_zone_id'] = $from_zone_id;
+						// 	$where['to_zone_id'] = $to_zone_id;
+						// 	$rate = $this->model->getValue('customer_rates','rate',$where);
+						// }
+						// else{
+						// 	$where = [];
+						// 	$where['transport_type_id'] = $_POST['transport_type_id'];
+						// 	$where['mode_id'] = $_POST['mode_id'];
+						// 	$where['from_zone_id'] = $from_zone_id;
+						// 	$where['to_zone_id'] = $to_zone_id;
+						// 	$rate = $this->model->getValue('global_rates','rate',$where);
+						// }
+						// $total_kg = 0;
+						// if(!empty($_POST['ship_dimensions'])){
+						// 	foreach ($_POST['ship_dimensions'] as $key => $value) {
+						// 		$total_kg = $value['weight'] * $value['qty'];
+						// 	}
+						// }
+						// $shipping_charges = $total_kg * $rate;
 
-						$mode_name = $this->model->getValue('mode','mode_name',['id'=>$_POST['mode_id']]);
-						$mode_name = strtolower($mode_name);
+						// $mode_name = $this->model->getValue('mode','mode_name',['id'=>$_POST['mode_id']]);
+						// $mode_name = strtolower($mode_name);
 
-						$_POST['shipping_charges'] = $shipping_charges;
+						// $_POST['shipping_charges'] = $shipping_charges;
 
-						if($mode_name == 'ftl'){
-							$_POST['shipping_charges'] = $_POST['ftl_charges'] + $_POST['load_unload_charges'];
-						}
+						// if($mode_name == 'ftl'){
+						// 	$_POST['shipping_charges'] = $_POST['ftl_charges'] + $_POST['load_unload_charges'];
+						// }
 
-						$payment_type = strtolower($_POST['ship_payment']['payment_type']);
-						if($payment_type == 'cod'){
-							$_POST['shipping_charges'] = $_POST['ship_payment']['cash_charges'];
-						}
+						// $payment_type = strtolower($_POST['ship_payment']['payment_type']);
+						// if($payment_type == 'cod'){
+						// 	$_POST['shipping_charges'] = $_POST['ship_payment']['cash_charges'];
+						// }
 
-						$shiper_insurance_charges = $this->model->getValue('customer','insurance_charges',['id'=>$_POST['shipper_cust_id'] ]);
-						$shiper_fuel_charges = $this->model->getValue('customer','fuel_charges',['id'=>$_POST['shipper_cust_id'] ]);
-						$_POST['insurance_charges'] = $_POST['invoice_value'] * $shiper_insurance_charges;
-						$_POST['fuel_charges'] = ($total_kg * $rate * $shiper_fuel_charges)/100;
+						// $shiper_insurance_charges = $this->model->getValue('customer','insurance_charges',['id'=>$_POST['shipper_id'] ]);
+						// $shiper_fuel_charges = $this->model->getValue('customer','fuel_charges',['id'=>$_POST['shipper_id'] ]);
+						// $_POST['insurance_charges'] = $_POST['total_invoice_value'] * $shiper_insurance_charges;
+						// $_POST['fuel_charges'] = ($total_kg * $rate * $shiper_fuel_charges)/100;
 						// echo '<pre>'; print_r($mode_name); exit;
 
 						$ship_dimensions = $_POST['ship_dimensions'];
@@ -3434,7 +3517,116 @@ class Admin_api extends CI_Controller {
 			echo json_encode($response);
 		}
 
+		function getShipCharges(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if(!$validate){
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			//  	echo json_encode($response);
+			//  	return;
+			// }
+			if ($_SERVER["REQUEST_METHOD"] != "POST") {
+				$response['message'] = 'Invalid Request';
+				$response['code'] = 204;
+				echo json_encode($response);
+				return;
+			}
+			$rate = [];
+			if(($_POST['bill_to'] == 'sender' || $_POST['bill_to'] != 'recepient' || $_POST['bill_to'] != 'third_party') && !empty($_POST['sender_id'])) {
+	    		$customer_type = $this->model->getValue('customer','type',['id'=>$_POST['sender_id']]);
+	    		$customer_type = strtolower($customer_type);
+	    		$customer_id = $_POST['sender_id'];
+	    	}
+	    	else if($_POST['bill_to'] == 'recepient' && !empty($_POST['recepient_id'])){
+	    		$customer_type = $this->model->getValue('customer','type',['id'=>$_POST['recepient_id']]);
+	    		$customer_type = strtolower($customer_type);
+	    		$customer_id = $_POST['recepient_id'];
+	    	}
+	    	$from_zone_id = $this->model->getSqlData('SELECT id FROM zone WHERE FIND_IN_SET('.$_POST['sender_city_id'].',cities) > 0');
+	    	if(!isset($from_zone_id[0])){
+	    		$response['message'] = 'From Pincode';
+				$response['code'] = 201;
+				$response['status'] = false;
+				echo json_encode($response);
+				return;
+	    	}
+	    	$from_zone_id = $from_zone_id[0]['id'];
+	    	$to_zone_id = $this->model->getSqlData('SELECT id FROM zone WHERE FIND_IN_SET('.$_POST['recepient_city_id'].',cities) > 0');
+	    	if(!isset($to_zone_id[0])){
+	    		$response['message'] = 'To Pincode';
+				$response['code'] = 201;
+				$response['status'] = false;
+				echo json_encode($response);
+				return;
+	    	}
+	    	$to_zone_id = $to_zone_id[0]['id'];
 
+	    	$rate['transport_type'] = $_POST['transport_type'];
+	    	$rate['transport_speed'] = $_POST['transport_speed'];
+	    	$rate['delivery_type'] = $_POST['delivery_type'];
+	    	$rate['transport_mode'] = $_POST['transport_mode'];
+	    	$rate['kg_or_box'] = $_POST['weight_unit'];
+
+	    	$rates = '';
+	    	if($customer_type == 'prime'){
+	    		$start_date = $this->model->getValue('customer','start_date',['id'=>$_POST['sender_id']]);
+	    		$end_date = $this->model->getValue('customer','end_date',['id'=>$_POST['sender_id']]);
+	    		$current_date = date('d/m/Y');
+	    		if($current_date >= $start_date && $current_date <= $end_date){
+	    			$rates = $this->model->getValue('customer_rates','rates',$rate);
+	    		}
+	    		else{
+	    			$rates = $this->model->getValue('global_rates','rates',$rate);
+	    		}
+	    	}
+	    	else if($customer_type == 'normal'){
+	    		$rates = $this->model->getValue('global_rates','rates',$rate);
+	    	}
+	    	$rates = unserialize($rates);
+	    	$rate = $rates[$from_zone_id][$to_zone_id];
+	    	$response['rate'] = $rate;
+	    	$response['message'] = 'success';
+			$response['code'] = 200;
+			$response['status'] = true;
+	    	echo json_encode($response);
+		}
+
+		function getCityZoneId(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if(!$validate){
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			//  	echo json_encode($response);
+			//  	return;
+			// }
+			if ($_SERVER["REQUEST_METHOD"] != "POST") {
+				$response['message'] = 'Invalid Request';
+				$response['code'] = 204;
+				echo json_encode($response);
+				return;
+			}
+			$select = '*';
+			if(!empty($_POST['select']) && isset($_POST['select'])) {
+				$select = $_POST['select'];
+				unset($_POST['select']);
+			}
+	    	$zone_id = $this->model->getSqlData('SELECT id FROM zone WHERE FIND_IN_SET('.$_POST['city_id'].',cities) > 0');
+	    	if(!isset($zone_id[0])){
+		    	$response['message'] = 'City Unavailable';
+				$response['code'] = 201;
+				$response['status'] = false;
+		    	echo json_encode($response);
+		    	return;
+	    	}
+			$zone_id = $zone_id[0]['id'];
+	    	$response['zone_id'] = $zone_id;
+	    	$response['message'] = 'success';
+			$response['code'] = 200;
+			$response['status'] = true;
+	    	echo json_encode($response);
+		}
 
 	/********************************** Delivery boys *****************************************/
 		function add_delivery_boy(){
@@ -4131,4 +4323,20 @@ class Admin_api extends CI_Controller {
 			// } 
 			echo json_encode($response);
 		}
+
+	function test($value='')
+	{
+		$cities = $this->model->getData('cities');
+		$pincodes = [];
+		foreach ($cities as $key => $value) {
+			if(in_array($value['pincode'], $pincodes)){
+				$this->model->deleteData('cities',['id'=>$value['id']]);
+			}
+			else{
+				$pincodes[] = $value['pincode'];
+			}
+		}
+		
+		echo 'success';
+	}
 }
