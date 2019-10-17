@@ -4856,6 +4856,7 @@ class Admin_api extends CI_Controller {
 			// } 
 			echo json_encode($response);
 		}
+
 	//***************************************manual Tracking****************************************/ 
 		function getNoBoxesByAWB(){
 			$response = array('code' => -1, 'status' => false, 'message' => '');
@@ -4885,6 +4886,33 @@ class Admin_api extends CI_Controller {
 			echo json_encode($response);
 		}
 		
+		function getBarcodeByAWB(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					$select = '*';
+					if(!empty($_POST['select']) && isset($_POST['select'])) {
+						$select = $_POST['select'];
+						unset($_POST['select']);
+					}
+					$barcodes = $this->model->getData('map_barcode',$_POST,$select);
+					$response['barcodes'] = $barcodes;
+					$response['message'] = 'success';
+					$response['code'] = 200;
+					$response['status'] = true;
+				} 
+				else {
+					$response['message'] = 'Invalid Request';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
 		function get_status(){
 			$response = array('code' => -1, 'status' => false, 'message' => '');
 			// $validate = validateToken();
@@ -4945,10 +4973,7 @@ class Admin_api extends CI_Controller {
 							}                     
 							else
 							{
-									// for($i=0; $i<count($barcode_no); $i++) {
 									$order_data=$this->Adminapi_Model->get_scan_count($o_id,$awb_no);
-									// echo"<pre>";
-									// print_r($order_data);die;
 									$status_name="Pickup Scan";
 									$status_details=$this->Adminapi_Model->get_status_info($status_name);
 									if($order_data['is_submit'])
@@ -4979,9 +5004,6 @@ class Admin_api extends CI_Controller {
 
 												$order_data_latest=$this->Adminapi_Model->get_scan_count($o_id,$awb_no);
 												$location=$this->Adminapi_Model->get_pickup_scan_location($awb_no);
-
-												// echo"<pre>";
-												// print_r($order_data_latest);die;
 
 												if($order_data_latest['is_submit']==true)
 												{
@@ -5094,8 +5116,6 @@ class Admin_api extends CI_Controller {
 			
 				$emp_id = $this->input->post('emp_id');
 				$barcode_no = json_decode($_POST['barcode_no'],true);
-				// echo"<pre>";
-				// print_r($barcode_no);die;
 				$type=$this->input->post('type');
 				$date = date('d/m/Y');
 				
@@ -5147,13 +5167,8 @@ class Admin_api extends CI_Controller {
 											'scan_count'=>$order_data['scan_count']+1,
 											'inscan_date'=>$date
 										);
-
-										// echo"<pre>";
-										// print_r($data1);die;   
 									
 										$response1 = $this->Adminapi_Model->check_data1($barcode_no[$i],$type);
-										// echo"<pre>";
-										// print_r($response1);die;  
 										if($response1['status']==0)
 										{
 												if($type=='Source')
@@ -5161,8 +5176,6 @@ class Admin_api extends CI_Controller {
 														$response = $this->Adminapi_Model->common_data_ins('source_inscan',$data1);
 														
 														$order_data_latest=$this->Adminapi_Model->get_inscan_count($awb_no);
-														// echo"<pre>";
-														// print_r($order_data_latest);die;  
 														if($order_data_latest['is_submit']==true)
 														{
 															if( $order_data_latest['total_order']==$order_data_latest['scan_count'])
@@ -5379,8 +5392,6 @@ class Admin_api extends CI_Controller {
 					$vehicle_no = $this->input->post('vehicle_id');
 					
 					$type=$this->input->post('type');
-					// $vehicle_no = '1';
-					// $type='Destination';
 					$date = date('d/m/Y');
 					for($i=0; $i<count($barcode_no); $i++) {
 					if (empty($emp_id)) {
@@ -5397,8 +5408,6 @@ class Admin_api extends CI_Controller {
 						$result=$this->Adminapi_Model->get_awbno_by_barcode_no($barcode_no[$i]);
 						
 						$data=$this->Adminapi_Model->get_details_on_vechile($vehicle_no);
-						// echo"<pre>";
-						// print_r($data);die;
 						$status_name="Shipment Forwarded to Destination";
 						$status_details=$this->Adminapi_Model->get_status_info($status_name);  
 						
@@ -5429,9 +5438,6 @@ class Admin_api extends CI_Controller {
 								'total_order'=>$order_data['total_order'],
 								'scan_count'=>$order_data['scan_count']+1
 							); 
-							// echo"<pre>";
-							// print_r($data1);die;
-							
 								   
 							$response1 = $this->Adminapi_Model->check_data2($barcode_no[$i],$type);
 							if($response1['status']==0)
