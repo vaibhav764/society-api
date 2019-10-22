@@ -1162,6 +1162,99 @@ class Admin_api extends CI_Controller {
 			echo json_encode($response);
 		}
 
+	/********************************** Status Types *****************************************/
+
+		function status_types(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			$_POST['types']  = json_decode($_POST['status_name'],true);
+			$_POST['type_ids']  = json_decode($_POST['type_ids'],true);
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['created_by']) || empty($_POST['types'])) {
+						$response['message'] = 'Created_by is required';
+						$response['code'] = 201;
+					}
+					else{
+						$tbl_status_masters = $this->model->getData('tbl_status_master',[],'id');
+						if(!empty($tbl_status_masters)){
+							$db_ids = array_column($tbl_status_masters, 'id');
+							if(!empty($db_ids)){
+								foreach ($db_ids as $key => $id) {
+									if(!in_array($id, $_POST['type_ids'])){
+										$this->model->deleteData2('tbl_status_master',['id'=>$id]);
+									}
+								}
+							}
+						}
+						
+						if(!empty($_POST['types'])){
+							foreach ($_POST['types'] as $key => $status_name) {
+								
+								if(isset($_POST['type_ids'][$key]) && !empty($_POST['type_ids'][$key])){
+									$this->model->updateData('tbl_status_master',['updated_by'=>$_POST['updated_by'],'status_name'=>trim($status_name)],['id'=>$_POST['type_ids'][$key]]);
+								}
+								else{
+									$isExist = $this->model->getValue('tbl_status_master','status_name',['created_by'=>$_POST['created_by'],'status_name'=>trim($status_name)]);
+									if(empty($isExist)){
+										if(!empty($status_name)){
+											$this->model->insertData('tbl_status_master',['created_by'=>$_POST['created_by'],'status_name'=>$status_name]);
+										}
+									}
+									else{
+										$response['message'] = 'Already Exist';
+										$response['code'] = 201;
+									}
+								}
+							}
+						}
+						
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				} 
+				else {
+					$response['message'] = 'Invalid Request';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function get_status_types(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// print_r($_POST);die;
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					$select = '*';
+					if(!empty($_POST['select']) && isset($_POST['select'])) {
+						$select = $_POST['select'];
+						unset($_POST['select']);
+					}
+					$status_types = $this->model->getData('tbl_status_master',$_POST,$select);
+					$response['status_types'] = $status_types;
+					$response['message'] = 'success';
+					$response['code'] = 200;
+					$response['status'] = true;
+				} 
+				else {
+					$response['message'] = 'Invalid Request';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}	
+
 	/********************************** Customer *****************************************/
 		function add_customer(){
 			$response = array('code' => -1, 'status' => false, 'message' => '');
@@ -5111,6 +5204,110 @@ class Admin_api extends CI_Controller {
 			echo json_encode($response);
 		}
 
+		public function pod_upload()
+		{
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			if ($_SERVER["REQUEST_METHOD"] == "POST")
+			{
+				$id  = $this->input->post('emp_id');
+				$awb_no  = $this->input->post('awb_no');  
+				
+					$status_name="Delivered Successfully";
+					$status_details=$this->Adminapi_Model->get_status_info($status_name); 
+					$data1=$this->Adminapi_Model->get_details_on_awb_no($awb_no);
+					$employee=$this->Adminapi_Model->get_employee_details($id);
+
+				if (empty($id)) {
+					$response['message'] = 'Id is required.';
+					$response['code'] = 201;
+				} else if(empty($awb_no)){
+					$response['message'] = 'Awb No is required.';
+					$response['code'] = 201;
+				}else if(empty($_FILES['pod']['name'][0])){
+					$response['message'] = 'POD image is required.';
+					$response['code'] = 201;
+				} 
+				else
+				{			
+					$this->load->library('upload');
+							$config['upload_path']          = 'uploads';
+							$config['allowed_types']        = 'gif|jpg|png|jpeg';
+							$config['max_size']             = 10000;
+							$config['max_width']            = 1024;
+							$config['max_height']           = 768;
+							$config['overwrite']            = true;
+							
+							$this->upload->initialize($config);
+							$this->load->library('upload', $config);
+							$this->upload->do_upload('pod');
+							$path=$this->upload->data('file_name');
+
+							$data=array(
+									'pod_upload'=>$path
+							);
+							$response = $this->Adminapi_Model->common_data_update('tbl_order_booking',$data,$awb_no,'AWBno');
+							
+								$date = date('d/m/Y');
+								$inscan_status=array(
+									'fk_oid'=>$data1['id'],
+									'fk_userid'=>$data1['fk_id'],
+									'awb_no'=>$awb_no,
+									'order_status'=>$status_details['id'],
+									'status_description'=>"Delivered Successfully",
+									'order_location'=>$employee['work_area_location'],
+									'expected_date'=>$date
+								);  
+								$response = $this->Adminapi_Model->common_data_ins('tbl_order_status',$inscan_status);
+
+							$pickup_name = $data1['pickup_name'];
+							$pickup_email = $data1['pickup_email'];
+							$pickup_contact = $data1['pickup_contact'];
+							$drop_name = $data1['drop_name'];
+							$drop_email = $data1['drop_email'];
+							$drop_contact = $data1['drop_contact'];
+							
+							// $email_txt=".$pickup_name.";
+							// $txt="Your Product is Delivered Successfully Thank You";
+							// $email_data = array(
+							//          'email_txt'=>$email_txt,
+							//          'txt'=>$txt
+							//         );
+							// $subject="Product Delivered";
+							// $message= $this->load->view('Email-template',$email_data,true);
+							// $this->send_email($pickup_email,$message,$subject);
+							// $smstext = "Your Product is Delivered Successfully, Thank you Apexworld Logistics Pvt Ltd.";
+							// $this->sendsms($pickup_contact,$smstext);
+
+							// if($drop_email!='')
+							// {
+							//         $email_txt=".$pickup_name.";
+							//         $txt="Your Product is Delivered Successfully Thank You";
+							//         $email_data = array(
+							//                  'email_txt'=>$email_txt,
+							//                  'txt'=>$txt
+							//                 );
+							//         $subject="Product Delivered";
+							//         $message= $this->load->view('Email-template',$email_data,true);
+							//         $this->send_email($drop_email,$message,$subject);
+							// }
+
+							// if($drop_contact!='')
+							// {
+							//      $smstext = "Your Product is Delivered Successfully, Thank you Apexworld Logistics Pvt Ltd.";
+							//     $this->sendsms($drop_contact,$smstext);
+							// }                           
+				}
+				
+			}
+			else
+			{
+				$response['message'] = 'No direct script is allowed.';
+				$response['code'] = 204;
+			}
+			echo json_encode($response);
+		}
+
+
 	//***************************************manual Tracking****************************************/ 
 		function getNoBoxesByAWB(){
 			$response = array('code' => -1, 'status' => false, 'message' => '');
@@ -5167,6 +5364,7 @@ class Admin_api extends CI_Controller {
 			// } 
 			echo json_encode($response);
 		}
+
 		function get_status(){
 			$response = array('code' => -1, 'status' => false, 'message' => '');
 			// $validate = validateToken();
@@ -5905,4 +6103,232 @@ class Admin_api extends CI_Controller {
 			}
 			echo json_encode($response);
 		}
+
+		public function pod_upload_manualy()
+		{
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			if ($_SERVER["REQUEST_METHOD"] == "POST")
+			{
+				$id  = $this->input->post('emp_id');
+				$awb_no  = $this->input->post('awb_no'); 
+				$pod  = $this->input->post('pod');  
+				
+					$status_name="Delivered Successfully";
+					$status_details=$this->Adminapi_Model->get_status_info($status_name); 
+					$data1=$this->Adminapi_Model->get_details_on_awb_no($awb_no);
+					$employee=$this->Adminapi_Model->get_employee_details($id);
+
+				if (empty($id)) {
+					$response['message'] = 'Id is required.';
+					$response['code'] = 201;
+				} else if(empty($awb_no)){
+					$response['message'] = 'Awb No is required.';
+					$response['code'] = 201;
+				}else if(empty($pod)){
+					$response['message'] = 'POD image is required.';
+					$response['code'] = 201;
+				} 
+				else
+				{			
+							// $this->load->library('upload');
+							// $config['upload_path']          = 'uploads';
+							// $config['allowed_types']        = 'gif|jpg|png|jpeg';
+							// $config['max_size']             = 10000;
+							// $config['max_width']            = 1024;
+							// $config['max_height']           = 768;
+							// $config['overwrite']            = true;
+							
+							// $this->upload->initialize($config);
+							// $this->load->library('upload', $config);
+							// $this->upload->do_upload('pod');
+							// $path=$this->upload->data('file_name');
+
+							// $data=array(
+							// 		'pod_upload'=>$path
+							// );
+							$response = $this->Adminapi_Model->common_data_update('tbl_order_booking',['pod_upload'=>$pod],$awb_no,'AWBno');
+							
+								$date = date('d/m/Y');
+								$inscan_status=array(
+									'fk_oid'=>$data1['id'],
+									'fk_userid'=>$data1['fk_id'],
+									'awb_no'=>$awb_no,
+									'order_status'=>$status_details['id'],
+									'status_description'=>"Delivered Successfully",
+									'order_location'=>$employee['work_area_location'],
+									'expected_date'=>$date
+								);  
+								$response = $this->Adminapi_Model->common_data_ins('tbl_order_status',$inscan_status);
+
+							$pickup_name = $data1['pickup_name'];
+							$pickup_email = $data1['pickup_email'];
+							$pickup_contact = $data1['pickup_contact'];
+							$drop_name = $data1['drop_name'];
+							$drop_email = $data1['drop_email'];
+							$drop_contact = $data1['drop_contact'];
+							
+							// $email_txt=".$pickup_name.";
+							// $txt="Your Product is Delivered Successfully Thank You";
+							// $email_data = array(
+							//          'email_txt'=>$email_txt,
+							//          'txt'=>$txt
+							//         );
+							// $subject="Product Delivered";
+							// $message= $this->load->view('Email-template',$email_data,true);
+							// $this->send_email($pickup_email,$message,$subject);
+							// $smstext = "Your Product is Delivered Successfully, Thank you Apexworld Logistics Pvt Ltd.";
+							// $this->sendsms($pickup_contact,$smstext);
+
+							// if($drop_email!='')
+							// {
+							//         $email_txt=".$pickup_name.";
+							//         $txt="Your Product is Delivered Successfully Thank You";
+							//         $email_data = array(
+							//                  'email_txt'=>$email_txt,
+							//                  'txt'=>$txt
+							//                 );
+							//         $subject="Product Delivered";
+							//         $message= $this->load->view('Email-template',$email_data,true);
+							//         $this->send_email($drop_email,$message,$subject);
+							// }
+
+							// if($drop_contact!='')
+							// {
+							//      $smstext = "Your Product is Delivered Successfully, Thank you Apexworld Logistics Pvt Ltd.";
+							//     $this->sendsms($drop_contact,$smstext);
+							// }                           
+				}
+				
+			}
+			else
+			{
+				$response['message'] = 'No direct script is allowed.';
+				$response['code'] = 204;
+			}
+			echo json_encode($response);
+		}
+	//***************************************Manifest Report****************************************/ 
+		function get_all_manifest(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					// if (empty($_POST['id'])){
+					// 	$response['message'] = 'Vehicle id is required';
+					// 	$response['code'] = 201;
+					// }
+					// else{
+						$select = '*';
+						if(!empty($_POST['select']) && isset($_POST['select'])) {
+							$select = $_POST['select'];
+							unset($_POST['select']);
+						}
+						$manifest_report = $this->model->getData('tbl_manifest_reports',$_POST,$select);
+						if(!empty($manifest_report))
+						{
+							foreach ($manifest_report as $key => $value) {
+
+								$manifest_report[$key]['vehicle_name']=$this->model->getValue('vehicle','name',['id'=>$value['vechile_id']]);
+								
+							}
+						}
+						$response['manifest_report'] = $manifest_report;
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					// }
+				} 
+				else {
+					$response['message'] = 'Invalid Request';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function get_manifest_details(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// echo"<pre>";
+			// print_r($_POST);die;
+			$id = $_POST['id'];
+			$city = $_POST['city'];
+			$vehicle = $_POST['vehicle'];
+			$date_from = $_POST['date_from'];
+			$date_to = $_POST['date_to'];
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['id'])){
+						$response['message'] = 'Driver id is required';
+						$response['code'] = 201;
+					}
+					else{
+						$select = '*';
+						if(!empty($_POST['select']) && isset($_POST['select'])) {
+							$select = $_POST['select'];
+							unset($_POST['select']);
+						}
+						$manifest = $this->model->get_manifest_details($city, $vehicle, $date_from, $date_to, $id);
+						$response['manifest'] = $manifest;
+						$response['message'] = 'success';
+						$response['code'] = 200;
+						$response['status'] = true;
+					}
+				} 
+				else {
+					$response['message'] = 'Invalid Request';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		function add_manifest_report(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// echo"<pre>";
+			// print_r($_POST);die;
+			// $validate = validateToken();
+			// if($validate){
+				if ($_SERVER["REQUEST_METHOD"] == "POST"){
+					if (empty($_POST['city'])){
+						$response['message'] = 'Please fill required fields';
+						$response['code'] = 201;
+					}
+					else{
+						$isExist = $this->model->isExist('tbl_manifest_reports','manifest_no',$_POST['manifest_no']);
+						// $isExist2 = $this->model->isExist('login','email',$_POST['prsn_email']);
+						if(!$isExist ){
+							$manifest_id = $this->model->insertData('tbl_manifest_reports',$_POST);
+							// echo"hi";die;
+							$response['message'] = 'success';
+							$response['code'] = 200;
+							$response['status'] = true;
+						}
+						else{
+							$response['message'] = 'Manifest Number is already exist';
+							$response['code'] = 201;
+						}
+					}
+				} 
+				else {
+					$response['message'] = 'Invalid Request';
+					$response['code'] = 204;
+				}
+			// }
+			// else{
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			// } 
+			echo json_encode($response);
+		}
+
+		
 	}

@@ -960,136 +960,137 @@ class Adminapi_Model extends CI_Model
                 return $response;
       }
       
-      public function get_inscan_count($awb_no)
-      {
-              $box_count=$this->get_total_order1($awb_no);
-              $query = $this->db->get_where('source_inscan',array('awb_no'=>$awb_no));
-              $count = $query->num_rows();
-              $response['total_order']=$box_count;
-              $response['scan_count']=$count;
-              if($count==$box_count)
-              {
-                  $response['is_submit']=true;
-              }
-              else
-              {
-                  $response['is_submit']=false;
-              }
-              return $response;
-      }
-      public function get_destination_count($awb_no)
-      {
-              $box_count=$this->get_total_order1($awb_no);
-              $query = $this->db->get_where('destination_inscan',array('awb_no'=>$awb_no));
-              $count = $query->num_rows();
-              $response['total_order']=$box_count;
-              $response['scan_count']=$count;
-              if($count==$box_count)
-              {
-                  $response['is_submit']=true;
-              }
-              else
-              {
-                  $response['is_submit']=false;
-              }
-              return $response;
-      }
+        public function get_inscan_count($awb_no)
+            {
+                    $box_count=$this->get_total_order1($awb_no);
+                    $query = $this->db->get_where('source_inscan',array('awb_no'=>$awb_no));
+                    $count = $query->num_rows();
+                    $response['total_order']=$box_count;
+                    $response['scan_count']=$count;
+                    if($count==$box_count)
+                    {
+                        $response['is_submit']=true;
+                    }
+                    else
+                    {
+                        $response['is_submit']=false;
+                    }
+                    return $response;
+            }
+            
+        public function get_destination_count($awb_no)
+            {
+                    $box_count=$this->get_total_order1($awb_no);
+                    $query = $this->db->get_where('destination_inscan',array('awb_no'=>$awb_no));
+                    $count = $query->num_rows();
+                    $response['total_order']=$box_count;
+                    $response['scan_count']=$count;
+                    if($count==$box_count)
+                    {
+                        $response['is_submit']=true;
+                    }
+                    else
+                    {
+                        $response['is_submit']=false;
+                    }
+                    return $response;
+            }
 
-      public function get_outscan_count($awb_no)
-      {
-              $box_count=$this->get_total_order1($awb_no);
-              $query = $this->db->get_where('source_outscan',array('awb_no'=>$awb_no));
-              $count = $query->num_rows();
-              $response['total_order']=$box_count;
-              $response['scan_count']=$count;
-              if($count==$box_count)
-              {
-                  $response['is_submit']=true;
-              }
-              else
-              {
-                  $response['is_submit']=false;
-              }
-              return $response;
-      }
+        public function get_outscan_count($awb_no)
+            {
+                    $box_count=$this->get_total_order1($awb_no);
+                    $query = $this->db->get_where('source_outscan',array('awb_no'=>$awb_no));
+                    $count = $query->num_rows();
+                    $response['total_order']=$box_count;
+                    $response['scan_count']=$count;
+                    if($count==$box_count)
+                    {
+                        $response['is_submit']=true;
+                    }
+                    else
+                    {
+                        $response['is_submit']=false;
+                    }
+                    return $response;
+            }
 
-      public function get_destination_outscan_count($awb_no)
-      {
-              $box_count=$this->get_total_order1($awb_no);
-              $query = $this->db->get_where('destination_outscan',array('awb_no'=>$awb_no));
-              $count = $query->num_rows();
-              $response['total_order']=$box_count;
-              $response['scan_count']=$count;
-              if($count==$box_count)
-              {
-                  $response['is_submit']=true;
-              }
-              else
-              {
-                  $response['is_submit']=false;
-              }
-              return $response;
-      }
+        public function get_destination_outscan_count($awb_no)
+            {
+                    $box_count=$this->get_total_order1($awb_no);
+                    $query = $this->db->get_where('destination_outscan',array('awb_no'=>$awb_no));
+                    $count = $query->num_rows();
+                    $response['total_order']=$box_count;
+                    $response['scan_count']=$count;
+                    if($count==$box_count)
+                    {
+                        $response['is_submit']=true;
+                    }
+                    else
+                    {
+                        $response['is_submit']=false;
+                    }
+                    return $response;
+            }
 
-      public function get_total_order1($awb_no)
-      {
-             
-              $this->db->select('order_box');
-              $this->db->from('tbl_order_booking');
-              $this->db->where('AWBno',$awb_no);
-              $query = $this->db->get();
-              $result = $query->row_array();
-              $result=$result['order_box'];           
-              return $result;
-      }
+        public function get_total_order1($awb_no)
+            {
+                    
+                    $this->db->select('order_box');
+                    $this->db->from('tbl_order_booking');
+                    $this->db->where('AWBno',$awb_no);
+                    $query = $this->db->get();
+                    $result = $query->row_array();
+                    $result=$result['order_box'];           
+                    return $result;
+            }
       
         public function get_vehicle()
-        {
-                $response = array();
-                $this->db->select('id,vcl_name');
-                $this->db->from('vehicle');       
-                $query = $this->db->get();
-                $result = $query->result_array();
-                
-                $response['status'] = 1;
-                $response['message'] = 'success';
-                $response['data'] = $result;
-                return $response;
-        }
+            {
+                    $response = array();
+                    $this->db->select('id,vcl_name');
+                    $this->db->from('vehicle');       
+                    $query = $this->db->get();
+                    $result = $query->result_array();
+                    
+                    $response['status'] = 1;
+                    $response['message'] = 'success';
+                    $response['data'] = $result;
+                    return $response;
+            }
         
          public function check_vechile_data($vcl_regno)
-         {
-                $response = array();
-                $query = $this->db->get_where('tbl_vehicle_master', array('vcl_regno'=>$vcl_regno));
-                if ($query->num_rows() > 0){
-                    $response['status'] = 1;
-                    $response['message'] = 'Already Exist';
-                    return $response;
-                }
-                else
-                {
-                    $response['status'] = 0;
-                    $response['message'] = 'new vehicle';
-                    return $response;
-                }
-           
-          }
+            {
+                    $response = array();
+                    $query = $this->db->get_where('tbl_vehicle_master', array('vcl_regno'=>$vcl_regno));
+                    if ($query->num_rows() > 0){
+                        $response['status'] = 1;
+                        $response['message'] = 'Already Exist';
+                        return $response;
+                    }
+                    else
+                    {
+                        $response['status'] = 0;
+                        $response['message'] = 'new vehicle';
+                        return $response;
+                    }
+            
+            }
         
           public function get_status_info($status_name)
-          {
-                $this->db->select('*');
-                $this->db->from('tbl_status_master');
-                $this->db->where("status_name",$status_name);
-                $query = $this->db->get();
-                $result = $query->row_array();
-                if($query->num_rows() >= 1) {                
-                    return $result;
-                   }
-                   else
-                   {
+            {
+                    $this->db->select('*');
+                    $this->db->from('tbl_status_master');
+                    $this->db->where("status_name",$status_name);
+                    $query = $this->db->get();
+                    $result = $query->row_array();
+                    if($query->num_rows() >= 1) {                
                         return $result;
-                   }   
-          }
+                    }
+                    else
+                    {
+                            return $result;
+                    }   
+            }
           
           public function check_AWB_No1($AWB_no)
             {
