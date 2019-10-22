@@ -105,7 +105,6 @@ class Model extends CI_Model {
 		}
 	}
 
-
 	function getDataLimit($tableName, $where_data, $limit='', $start=''){
 		//echo '<pre>'; print_r($where_data); 
 		//echo $tableName.' - '.$limit .' - '. $start;
@@ -477,6 +476,12 @@ class Model extends CI_Model {
     }
 
     function getValue($tablename,$fieldname,$where =array()){
+    	if (!$this->db->field_exists('status', $tablename)){
+    		$this->db->trans_start();
+    		$this->db->query("ALTER TABLE `".$tablename."` ADD `status` VARCHAR(25) NOT NULL");
+    		$this->db->trans_complete();
+    	}
+    	$where['status !='] = 'deleted';
     	$query = $this->db->select($fieldname)
     	->from($tablename)
     	->where($where)
