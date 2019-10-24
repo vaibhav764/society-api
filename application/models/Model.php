@@ -526,9 +526,9 @@ class Model extends CI_Model {
         $response = array();
         $this->db->select('source_outscan.*,source_outscan.created_at as outscan_date,GROUP_CONCAT(source_outscan.scan_count)scan_count,tbl_order_booking.*,tbl_order_booking.id as order_id, vehicle.*, vehicle.id as vehicle_id,company.id as company_id,company.name as company_name,company.address as c_address,city as c_city,company.pincode as c_pincode,company.email as c_email,company.contact as c_contact');
         $this->db->from('source_outscan');
-        $this->db->join('tbl_order_booking', 'source_outscan.awb_no=tbl_order_booking.AWBno', 'left');
-        $this->db->join('vehicle', 'source_outscan.vehicle_id=vehicle.id', 'left');
-        $this->db->join('company', 'tbl_order_booking.c_id=company.id', 'left');
+		$this->db->join('tbl_order_booking', 'source_outscan.awb_no=tbl_order_booking.AWBno', 'left');
+		$this->db->join('vehicle', 'source_outscan.vehicle_id=vehicle.id', 'left');
+		$this->db->join('company', 'tbl_order_booking.c_id=company.id', 'left');
         $this->db->where('source_outscan.city', $city);
         $this->db->where('source_outscan.vehicle_id', $vehicle);
         $this->db->where('source_outscan.date >=', $date_from);
