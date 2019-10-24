@@ -351,41 +351,73 @@ class Admin_api extends CI_Controller {
 		function get_cities(){
 			$response = array('code' => -1, 'status' => false, 'message' => '');
 			// $validate = validateToken();
-			// if($validate){
-				if ($_SERVER["REQUEST_METHOD"] == "POST"){
-					$select = '*';
-					if(!empty($_POST['select']) && isset($_POST['select'])){
-						$select = $_POST['select'];
-						unset($_POST['select']);
-					}
-					$cities = $this->model->getData('cities',$_POST,$select);
-					if(empty($cities)){
-						$response['message'] = 'No Data';
-						$response['code'] = 201;
-						echo json_encode($response);
-						return;	
-					}
-					else{
-						foreach ($cities as $key => $value) {
-							if(!empty($value['state_id'])){
-								$cities[$key]['country_id'] = $this->model->getValue('states','country_id',['id'=>$value['state_id']]);
-							}
-						}
-					}
-					$response['cities'] = $cities;
-					$response['message'] = 'success';
-					$response['code'] = 200;
-					$response['status'] = true;
-				} 
-				else {
-					$response['message'] = 'Invalid Request';
-					$response['code'] = 204;
-				}
-			// }
-			// else{
+			// if(!$validate){
 			// 	$response['message'] = 'Authentication required';
 			// 	$response['code'] = 203;
-			// } 
+			//  	echo json_encode($response);
+			//  	return;
+			// }
+			if ($_SERVER["REQUEST_METHOD"] != "POST") {
+				$response['message'] = 'Invalid Request';
+				$response['code'] = 204;
+				echo json_encode($response);
+				return;
+			}
+			$select = '*';
+			if(!empty($_POST['select']) && isset($_POST['select'])){
+				$select = $_POST['select'];
+				unset($_POST['select']);
+			}
+			$cities = $this->model->getData('cities',$_POST,$select);
+			if(empty($cities)){
+				$response['message'] = 'No Data';
+				$response['code'] = 201;
+				echo json_encode($response);
+				return;	
+			}
+			$response['cities'] = $cities;
+			$response['message'] = 'success';
+			$response['code'] = 200;
+			$response['status'] = true;
+			echo json_encode($response);
+		}
+
+		function get_cities2(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if(!$validate){
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			//  	echo json_encode($response);
+			//  	return;
+			// }
+			if ($_SERVER["REQUEST_METHOD"] != "POST") {
+				$response['message'] = 'Invalid Request';
+				$response['code'] = 204;
+				echo json_encode($response);
+				return;
+			}
+			$select = '*';
+			if(!empty($_POST['select']) && isset($_POST['select'])){
+				$select = $_POST['select'];
+				unset($_POST['select']);
+			}
+			$cities = $this->model->getData('cities',$_POST,$select);
+			if(empty($cities)){
+				$response['message'] = 'No Data';
+				$response['code'] = 201;
+				echo json_encode($response);
+				return;	
+			}
+			foreach ($cities as $key => $value) {
+				if(!empty($value['state_id'])){
+					$cities[$key]['country_id'] = $this->model->getValue('states','country_id',['id'=>$value['state_id']]);
+				}
+			}
+			$response['cities'] = $cities;
+			$response['message'] = 'success';
+			$response['code'] = 200;
+			$response['status'] = true;
 			echo json_encode($response);
 		}
 
@@ -499,46 +531,39 @@ class Admin_api extends CI_Controller {
 		function get_all_company(){
 			$response = array('code' => -1, 'status' => false, 'message' => '');
 			// $validate = validateToken();
-			// if($validate){
-				if ($_SERVER["REQUEST_METHOD"] == "POST"){
-					// $id = $this->model->getValue('login','id',['id'=>$_POST['created_by']]);
-					// if (empty($id)) {
-					// 	$response['message'] = 'Admin id is required';
-					// 	$response['code'] = 201;
-					// }
-					// if{
-						$select = '*';
-						if(!empty($_POST['select']) && isset($_POST['select'])){
-							$select = $_POST['select'];
-							unset($_POST['select']);
-						}
-						$company = $this->model->getData('company',$_POST,$select);
-						if(!empty($company))
-					{
-						foreach ($company as $key => $value) {
-
-							$company[$key]['country_name']=$this->model->getValue('countries','name',['id'=>$value['country_id']]);
-							$company[$key]['city_name']=$this->model->getValue('cities','city',['id'=>$value['city_id']]);
-							$company[$key]['state_name']=$this->model->getValue('states','name',['id'=>$value['state_id']]);
-						}
-					}
-
-						$response['next_id'] = $this->model->generate_next_id('company','autoid','com','3');
-						$response['companies'] = $company;
-						$response['message'] = 'success';
-						$response['code'] = 200;
-						$response['status'] = true;
-					// }
-				} 
-				else {
-					$response['message'] = 'Invalid Request';
-					$response['code'] = 204;
-				}
-			// }
-			// else{
+			// if(!$validate){
 			// 	$response['message'] = 'Authentication required';
 			// 	$response['code'] = 203;
-			// } 
+			//  	echo json_encode($response);
+			//  	return;
+			// }
+			if ($_SERVER["REQUEST_METHOD"] != "POST") {
+				$response['message'] = 'Invalid Request';
+				$response['code'] = 204;
+				echo json_encode($response);
+				return;
+			}
+			$select = '*';
+			if(!empty($_POST['select']) && isset($_POST['select'])){
+				$select = $_POST['select'];
+				unset($_POST['select']);
+			}
+			$company = $this->model->getData('company',$_POST,$select);
+			if(!empty($company))
+			{
+				foreach ($company as $key => $value) {
+
+					$company[$key]['country_name']=$this->model->getValue('countries','name',['id'=>$value['country_id']]);
+					$company[$key]['city_name']=$this->model->getValue('cities','city',['id'=>$value['city_id']]);
+					$company[$key]['state_name']=$this->model->getValue('states','name',['id'=>$value['state_id']]);
+				}
+			}
+
+			$response['next_id'] = $this->model->generate_next_id('company','autoid','com','3');
+			$response['companies'] = $company;
+			$response['message'] = 'success';
+			$response['code'] = 200;
+			$response['status'] = true;
 			echo json_encode($response);
 		}
 
@@ -1346,6 +1371,8 @@ class Admin_api extends CI_Controller {
 			}
 			$customer = $this->model->getData('customer',$_POST,$select);
 			if(empty($customer)){
+				$response['next_id'] = $this->model->generate_next_id('customer','autoid','cust','3');
+				$response['customer'] = [];
 				$response['message'] = 'No Data';
 				$response['code'] = 201;
 				echo json_encode($response);
@@ -1458,95 +1485,6 @@ class Admin_api extends CI_Controller {
 			// 	$response['message'] = 'Authentication required';
 			// 	$response['code'] = 203;
 			// } 
-			echo json_encode($response);
-		}
-
-		function addCustomerContact(){
-			$response = array('code' => -1, 'status' => false, 'message' => '');
-			// $validate = validateToken();
-			// if(!$validate){
-			// 	$response['message'] = 'Authentication required';
-			// 	$response['code'] = 203;
-			//  	echo json_encode($response);
-			//  	return;
-			// }
-			if ($_SERVER["REQUEST_METHOD"] != "POST") {
-				$response['message'] = 'Invalid Request';
-				$response['code'] = 204;
-				echo json_encode($response);
-				return;
-			}
-			$this->model->insertData('customer_contacts',$_POST);
-			$response['message'] = 'success';
-			$response['code'] = 200;
-			$response['status'] = true;
-			echo json_encode($response);
-		}
-
-		function getCustomerContacts(){
-			$response = array('code' => -1, 'status' => false, 'message' => '');
-			// $validate = validateToken();
-			// if(!$validate){
-			// 	$response['message'] = 'Authentication required';
-			// 	$response['code'] = 203;
-			//  	echo json_encode($response);
-			//  	return;
-			// }
-			if ($_SERVER["REQUEST_METHOD"] != "POST") {
-				$response['message'] = 'Invalid Request';
-				$response['code'] = 204;
-				echo json_encode($response);
-				return;
-			}
-			$select = '*';
-			if(!empty($_POST['select']) && isset($_POST['select'])) {
-				$select = $_POST['select'];
-				unset($_POST['select']);
-			}
-			$contacts = $this->model->getData('customer_contacts',$_POST,$select);
-			if(!empty($contacts)){
-				foreach ($contacts as $key => $value) {
-					if(!empty($value['customer_id'])){
-						$contacts[$key]['customer_name']=$this->model->getValue('customer','name',['id'=>$value['customer_id']]);
-					}
-					if(!empty($value['city_id'])){
-						$contacts[$key]['city_name']=$this->model->getValue('cities','city',['id'=>$value['city_id']]);	
-					}
-				}
-			}
-			if(empty($contacts)) $contacts = [];
-			$response['contacts'] = $contacts;
-			$response['message'] = 'success';
-			$response['code'] = 200;
-			$response['status'] = true;
-			echo json_encode($response);
-		}
-
-		function updateCustomerContact(){
-			$response = array('code' => -1, 'status' => false, 'message' => '');
-			// $validate = validateToken();
-			// if(!$validate){
-			// 	$response['message'] = 'Authentication required';
-			// 	$response['code'] = 203;
-			//  	echo json_encode($response);
-			//  	return;
-			// }
-			if ($_SERVER["REQUEST_METHOD"] != "POST") {
-				$response['message'] = 'Invalid Request';
-				$response['code'] = 204;
-				echo json_encode($response);
-				return;
-			}
-			if (empty($_POST["id"])) {
-				$response['message'] = 'Wrong Parameters';
-				$response['code'] = 201;
-				echo json_encode($response);
-				return;
-			}
-			$this->model->updateData('customer_contacts',$_POST,['id'=>$_POST['id']]);
-			$response['message'] = 'success';
-			$response['code'] = 200;
-			$response['status'] = true;
 			echo json_encode($response);
 		}
 
@@ -1681,6 +1619,144 @@ class Admin_api extends CI_Controller {
 			echo json_encode($response);
 		}
 
+		function addCustomerContact(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if(!$validate){
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			//  	echo json_encode($response);
+			//  	return;
+			// }
+			if ($_SERVER["REQUEST_METHOD"] != "POST") {
+				$response['message'] = 'Invalid Request';
+				$response['code'] = 204;
+				echo json_encode($response);
+				return;
+			}
+			if(empty($_POST['customer_id']) || empty($_POST['type']) || empty($_POST['name'])|| empty($_POST['contact'])|| empty($_POST['address1']) || empty($_POST['pincode']) || empty($_POST['country_id']) || empty($_POST['state_id']) || empty($_POST['city_id']) ){
+				$response['message'] = 'Wrong Parameters';
+				$response['code'] = 201;
+				echo json_encode($response);
+				return;
+			}
+			$customer_name = $this->model->getValue('customer','name',['id'=> $_POST['customer_id']]);
+			$_POST['city'] = !empty($_POST['city']) ? $_POST['city'] : '';
+			$_POST['customer_name'] = $customer_name.'('.$_POST['city'].')';
+			$this->model->insertData('customer_contacts',$_POST);
+			$response['message'] = 'success';
+			$response['code'] = 200;
+			$response['status'] = true;
+			echo json_encode($response);
+		}
+
+		function getCustomerContacts(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if(!$validate){
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			//  	echo json_encode($response);
+			//  	return;
+			// }
+			if ($_SERVER["REQUEST_METHOD"] != "POST") {
+				$response['message'] = 'Invalid Request';
+				$response['code'] = 204;
+				echo json_encode($response);
+				return;
+			}
+			$select = '*';
+			if(!empty($_POST['select']) && isset($_POST['select'])) {
+				$select = $_POST['select'];
+				unset($_POST['select']);
+			}
+			$_POST = empty($_POST) ? [] : $_POST;
+			$contacts = $this->model->getData('customer_contacts',$_POST,$select);
+			if(!empty($contacts)){
+				foreach ($contacts as $key => $value) {
+					$contacts[$key]['city_name'] = '';
+					$contacts[$key]['state_name'] = '';
+					$contacts[$key]['country_name'] = '';
+					if(!empty($value['city_id'])){
+						$contacts[$key]['city_name']=$this->model->getValue('cities','city',['id'=>$value['city_id']]);	
+					}
+					if(!empty($value['state_id'])){
+						$contacts[$key]['state_name']=$this->model->getValue('states','name',['id'=>$value['state_id']]);	
+					}
+					if(!empty($value['country_id'])){
+						$contacts[$key]['country_name']=$this->model->getValue('countries','name',['id'=>$value['country_id']]);	
+					}
+				}
+			}
+			if(empty($contacts)) $contacts = [];
+			$response['contacts'] = $contacts;
+			$response['message'] = 'success';
+			$response['code'] = 200;
+			$response['status'] = true;
+			echo json_encode($response);
+		}
+
+		function updateCustomerContact(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if(!$validate){
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			//  	echo json_encode($response);
+			//  	return;
+			// }
+			if ($_SERVER["REQUEST_METHOD"] != "POST") {
+				$response['message'] = 'Invalid Request';
+				$response['code'] = 204;
+				echo json_encode($response);
+				return;
+			}
+			if (empty($_POST["id"])) {
+				$response['message'] = 'Wrong Parameters';
+				$response['code'] = 201;
+				echo json_encode($response);
+				return;
+			}
+			if(empty($_POST['customer_id']) || empty($_POST['type']) || empty($_POST['name'])|| empty($_POST['contact'])|| empty($_POST['address1']) || empty($_POST['pincode']) || empty($_POST['country_id']) || empty($_POST['state_id']) || empty($_POST['city_id']) ){
+				$response['message'] = 'Wrong Parameters';
+				$response['code'] = 201;
+				echo json_encode($response);
+				return;
+			}
+			$this->model->updateData('customer_contacts',$_POST,['id'=>$_POST['id']]);
+			$response['message'] = 'Address Updated';
+			$response['code'] = 200;
+			$response['status'] = true;
+			echo json_encode($response);
+		}
+
+		function deleteCustomerContact(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if(!$validate){
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			//  	echo json_encode($response);
+			//  	return;
+			// }
+			if ($_SERVER["REQUEST_METHOD"] != "POST") {
+				$response['message'] = 'Invalid Request';
+				$response['code'] = 204;
+				echo json_encode($response);
+				return;
+			}
+			if (empty($_POST["id"])) {
+				$response['message'] = 'Wrong Parameters';
+				$response['code'] = 201;
+				echo json_encode($response);
+				return;
+			}
+			$this->model->deleteData('customer_contacts',['id'=>$_POST['id']]);
+			$response['message'] = 'Address Deleted';
+			$response['code'] = 200;
+			$response['status'] = true;
+			echo json_encode($response);
+		}
 	/********************************** Designation *****************************************/
 		function designations(){
 			$response = array('code' => -1, 'status' => false, 'message' => '');
@@ -3638,11 +3714,13 @@ class Admin_api extends CI_Controller {
 	    	else{
 	    		$rates = [];
 	    	}
+			$is_prime = false;
 	    	if($customer_type == 'prime'){
 	    		$start_date = $this->model->getValue('customer','start_date',['id'=>$customer_id]);
 	    		$end_date = $this->model->getValue('customer','end_date',['id'=>$customer_id]);
 	    		$current_date = date('d/m/Y');
 	    		if(strtotime($current_date) <= strtotime($end_date)){
+	    			$is_prime = true;
 	    			$rate['customer_id'] = $customer_id;
 	    			$customer_rates = $this->model->getValue('customer_rates','rates',$rate);
 	    			$customer_rates = unserialize($customer_rates);
@@ -3657,15 +3735,23 @@ class Admin_api extends CI_Controller {
 	    			}
 	    		}
 	    	}
-	    	$from_zone_id = $this->model->getSqlData('SELECT id FROM zone WHERE FIND_IN_SET('.$_POST['sender_city_id'].',cities) > 0');
-	    	if(!isset($from_zone_id[0])){
+	    	$from_zones = $this->model->getSqlData('SELECT id,zone_type,customer_id FROM zone WHERE FIND_IN_SET('.$_POST['sender_city_id'].',cities) > 0');
+	    	if(empty($from_zones)){
 	    		$response['message'] = 'Incorrect Pincode';
 				$response['code'] = 201;
 				$response['status'] = false;
 				echo json_encode($response);
 				return;
 	    	}
-	    	$from_zone_id = $from_zone_id[0]['id'];
+	    	$from_zone_id = $from_zones[0]['id'];
+	    	if(($_POST['bill_to'] == 'sender' || $_POST['bill_to'] != 'recepient' || $_POST['bill_to'] != 'third_party') && !empty($_POST['sender_id'])){ 
+	    		foreach ($from_zones as $key => $value) {
+	    			if($is_prime && $value['zone_type'] == 'customized' && $value['customer_id'] == $customer_id){
+	    				$from_zone_id = $value['id'];
+	    			}
+	    		}
+	    	}
+	    	
 	    	$to_zone_id = $this->model->getSqlData('SELECT id FROM zone WHERE FIND_IN_SET('.$_POST['recepient_city_id'].',cities) > 0');
 	    	if(!isset($to_zone_id[0])){
 	    		$response['message'] = 'Incorrect Pincode';
@@ -3675,8 +3761,13 @@ class Admin_api extends CI_Controller {
 				return;
 	    	}
 	    	$to_zone_id = $to_zone_id[0]['id'];
-	    	
-	    	
+	    	if($_POST['bill_to'] == 'recepient'){
+	    		foreach ($from_zones as $key => $value) {
+	    			if($is_prime && $value['zone_type'] == 'customized' && $value['customer_id'] == $customer_id){
+	    				$to_zone_id = $value['id'];
+	    			}
+	    		}
+	    	}
 	    	
 	    	$rate = isset($rates[$from_zone_id][$to_zone_id]) ? $rates[$from_zone_id][$to_zone_id] : '';
 	    	$response['rate'] = $rate;
@@ -6332,6 +6423,7 @@ class Admin_api extends CI_Controller {
 			// } 
 			echo json_encode($response);
 		}
+
 
 		
 	}
