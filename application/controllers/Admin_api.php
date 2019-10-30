@@ -1082,6 +1082,13 @@ class Admin_api extends CI_Controller {
 					}
 					else{
 						$types = $this->model->getData('customer_types',[],'id');
+						// $count = count($types);
+						// // echo"<pre>";
+						// // print_r($count);die;
+						// // print_r($types);die;
+						// if($count > 1){
+							
+						// }
 						if(!empty($types)){
 							$db_ids = array_column($types, 'id');
 							if(!empty($db_ids)){
@@ -2029,7 +2036,7 @@ class Admin_api extends CI_Controller {
 						$select = $_POST['select'];
 						unset($_POST['select']);
 					}
-					$vendor_types = $this->model->getData('vendor_types',['created_by'=>$_POST['created_by']],$select);
+					$vendor_types = $this->model->getData('vendor_types',$_POST,$select);
 					$response['vendor_types'] = $vendor_types;
 					$response['message'] = 'success';
 					$response['code'] = 200;
