@@ -426,23 +426,23 @@ class Admin_api extends CI_Controller {
 			// $validate = validateToken();
 			// if($validate){
 				if ($_SERVER["REQUEST_METHOD"] == "POST"){
-					$select = 'id,city';
+					$select = 'id,city,pincode';
 					if(!empty($_POST['select']) && isset($_POST['select'])){
 						$select = $_POST['select'];
 						unset($_POST['select']);
 					}
 					$cities = $this->model->getData('cities',['state_id'=>$_POST['state_id']],$select);
-					
+					$pro_select_box = '';
 					if(count($cities)>0)
 					{
-						$pro_select_box = '';
 						$pro_select_box .= '<option value="">Select City</option>';
 						foreach ($cities as $cities) {
-							$pro_select_box .='<option value="'.$cities['id'].'">'.$cities['city'].'</option>';
+							$pro_select_box .='<option value="'.$cities['id'].'">'.$cities['city'].'('.$cities['pincode'].')</option>';
 						}
 					}
 
 					$response['cities'] = $pro_select_box;
+					$response['cities2'] = $cities;
 					$response['message'] = 'success';
 					$response['code'] = 200;
 					$response['status'] = true;
@@ -1336,7 +1336,7 @@ class Admin_api extends CI_Controller {
 					$this->model->insertData('customer_contacts',$value);
 				}
 			}
-			
+			$password = generateRandomString(8);
 			$customer = [];
 			$customer['fk_id'] = $customer_id;
 			$customer['username'] = $_POST['name'];
@@ -1345,7 +1345,15 @@ class Admin_api extends CI_Controller {
 			$customer['usertype'] = 'customer';
 			$customer['status'] = 1;
 			$customer['created_by'] = $_POST['created_by'];
+			$customer['password'] = encyrpt_password($password);
 			$this->model->insertData('login',$customer);
+
+			$email_txt = $_POST['name'].'Thank you for Registration with us.';
+            $txt = " Your new password is : " . $password . "";
+            $email_data = array('email_txt' => $email_txt, 'txt' => $txt);
+            $subject = "Your password";
+            $message = $this->load->view('Email-template', $email_data, true);
+			sendEmail('piyush.nerkar@softonauts.com',$login['email'],$subject,$message);
 
 			$response['message'] = 'Customer Added';
 			$response['code'] = 200;
@@ -3651,6 +3659,7 @@ class Admin_api extends CI_Controller {
 				}
 			}
 			
+			$response['ship_id'] = $ship_id;
 			$response['message'] = 'Order Placed';
 			$response['code'] = 200;
 			$response['status'] = true;
@@ -3734,8 +3743,6 @@ class Admin_api extends CI_Controller {
 	    	$rate['delivery_type'] = $_POST['delivery_type'];
 	    	$rate['transport_mode'] = $_POST['transport_mode'];
 	    	$rate['kg_or_box'] = $_POST['weight_unit'];
-	    	$response['rate---'] = $rate;
-
 	    	$rates = $this->model->getValue('global_rates','rates',$rate);
 	    	if(!empty($rates)){
 	    		$rates = unserialize($rates);
@@ -3757,17 +3764,10 @@ class Admin_api extends CI_Controller {
 	    			foreach($customer_rates as $key => $value){
 	    				foreach ($value as $key2 => $value2) {
 	    					if(!empty($customer_rates[$key][$key2])){
-	    						if(isset($rates[$key][$key2])) {
-	    							$rates[$key][$key2] = $value2;
-	    						}
-	    						else{
-	    							$rates[$key][$key2] = $value2;
-	    						}
-	    						
+	    						$rates[$key][$key2] = $value2;
 	    					}
 	    				}
 	    			}
-	    			$rates = $customer_rates;
 	    		}
 	    	}
 	    	$from_zones = $this->model->getSqlData('SELECT id,zone_type,customer_id,zone FROM zone WHERE FIND_IN_SET('.$_POST['sender_city_id'].',cities) > 0');
@@ -3779,13 +3779,13 @@ class Admin_api extends CI_Controller {
 				return;
 	    	}
 	    	$from_zone_id = $from_zones[0]['id'];
-	    	// if(($_POST['bill_to'] == 'sender' || $_POST['bill_to'] != 'recepient' || $_POST['bill_to'] != 'third_party') && !empty($_POST['sender_id'])){ 
-	    	// 	foreach ($from_zones as $key => $value) {
-	    	// 		if($is_prime && $value['zone_type'] == 'customized' && $value['customer_id'] == $customer_id){
-	    	// 			$from_zone_id = $value['id'];
-	    	// 		}
-	    	// 	}
-	    	// }
+	    	if(($_POST['bill_to'] == 'sender' || $_POST['bill_to'] != 'recepient' || $_POST['bill_to'] != 'third_party') && !empty($_POST['sender_id'])){ 
+	    		foreach ($from_zones as $key => $value) {
+	    			if($is_prime && $value['zone_type'] == 'customized' && $value['customer_id'] == $customer_id){
+	    				$from_zone_id = $value['id'];
+	    			}
+	    		}
+	    	}
 	    	
 	    	$to_zones = $this->model->getSqlData('SELECT id,zone_type,customer_id,zone FROM zone WHERE FIND_IN_SET('.$_POST['recepient_city_id'].',cities) > 0');
 	    	if(empty($to_zones)){
@@ -3796,19 +3796,16 @@ class Admin_api extends CI_Controller {
 				return;
 	    	}
 	    	$to_zone_id = $to_zones[0]['id'];
-	    	// if($_POST['bill_to'] == 'recepient'){
-	    	// 	foreach ($from_zones as $key => $value) {
-	    	// 		if($is_prime && $value['zone_type'] == 'customized' && $value['customer_id'] == $customer_id){
-	    	// 			$to_zone_id = $value['id'];
-	    	// 		}
-	    	// 	}
-	    	// }
+	    	if($_POST['bill_to'] == 'recepient'){
+	    		foreach ($to_zones as $key => $value) {
+	    			if($is_prime && $value['zone_type'] == 'customized' && $value['customer_id'] == $customer_id){
+	    				$to_zone_id = $value['id'];
+	    			}
+	    		}
+	    	}
 	    	
 	    	$rate = isset($rates[$from_zone_id][$to_zone_id]) ? $rates[$from_zone_id][$to_zone_id] : '';
-	    	$response['from_zone'] = $from_zones[0]['zone'];
-	    	$response['to_zone'] = $to_zones[0]['zone'];
 	    	$response['rate'] = $rate;
-	    	$response['rates'] = $rates;
 	    	$response['message'] = 'success';
 			$response['code'] = 200;
 			$response['status'] = true;
@@ -3902,6 +3899,54 @@ class Admin_api extends CI_Controller {
 			$response['status'] = true;
 	    	echo json_encode($response);
 		}
+
+		function generateInvoice() {
+			// $response = array('code' => -1, 'status' => false, 'message' => '');
+			// // $validate = validateToken();
+			// // if(!$validate){
+			// // 	$response['message'] = 'Authentication required';
+			// // 	$response['code'] = 203;
+			// //  	echo json_encode($response);
+			// //  	return;
+			// // }
+			// if ($_SERVER["REQUEST_METHOD"] != "POST") {
+			// 	$response['message'] = 'Invalid Request';
+			// 	$response['code'] = 204;
+			// 	echo json_encode($response);
+			// 	return;
+			// }
+			// $pickup_city, $drop_city, $grand_total, $pickup_address, $drop_address, $shipping_mode, $pickup_email, $drop_email = '')
+			// $select = 'company_id,shipper_contact,recepient_contact,total_actual_weight,total_charge_weight,no_of_boxes,transport_mode,total_invoice_value,e_way_bill_no';
+			$ship = $this->model->getData('ship',['id'=>$_POST['id']])[0];
+			$logo  = $this->model->getValue('company','logo',['id'=>$ship['company_id']]);
+			$company_name  = $this->model->getValue('company','name',['id'=>$ship['company_id']]);
+			$ship['logo'] = $logo;
+			$ship['company_name'] = $company_name;
+			$post = [];
+			// $select = 'id,name,contacts,city,email,address1,address2,pincode,country_id,state_id,city_id';
+			$post['id'] = $ship['company_id'];
+			$company = $this->model->getData('company',$post)[0];
+			if(!empty($company)){
+				$company['city'] = $this->model->getValue('cities','city',['id'=>$company['city_id']]);
+				$company['state'] = $this->model->getValue('states','name',['id'=>$company['state_id']]);
+			}
+			$post['id'] = $ship['shipper_contact'];
+			$shipper = $this->model->getData('customer_contacts',$post)[0];
+			$post['id'] = $ship['recepient_contact'];
+			$recepient = $this->model->getData('customer_contacts',$post)[0];
+			$file_name = $_POST['id'] . "_" . mt_rand(100000, 999999) . "_" . "air_way";
+        	$this->db->update('ship', array('airway_file_name' => $file_name . ".pdf"), array('id' => $_POST['id']));
+
+			$response['ship'] = $ship;
+			$response['shipper'] = $shipper;
+			$response['recepient'] = $recepient;
+			$response['company'] = $company;
+			$response['file_name'] = $file_name;
+			$response['message'] = 'success';
+			$response['code'] = 200;
+			$response['status'] = true;
+	        echo json_encode($response);
+	    }
 
 	/********************************** Delivery boys *****************************************/
 		function add_delivery_boy(){
