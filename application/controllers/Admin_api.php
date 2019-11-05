@@ -1323,6 +1323,8 @@ class Admin_api extends CI_Controller {
 				$customer_contacts = json_decode($_POST['customer_contacts'],true);
 			}
 			unset($_POST['customer_contacts']);
+			$_POST['autoid'] = $this->model->generate_next_id('customer','autoid','cust','3');
+
 			$customer_id = $this->model->insertData('customer',$_POST);
 			if(empty($customer_id)){
 				$response['message'] = 'System Error';
@@ -3449,7 +3451,73 @@ class Admin_api extends CI_Controller {
 				return;
 			}
 		}
+		function saveAllRates(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if(!$validate){
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			//  	echo json_encode($response);
+			//  	return;
+			// }
+			if ($_SERVER["REQUEST_METHOD"] != "POST") {
+				$response['message'] = 'Invalid Request';
+				$response['code'] = 204;
+				echo json_encode($response);
+			 	return;
+			}
+			// if (empty($_POST['customer_type']) || empty($_POST['company_id']) || empty($_POST['kg_or_box']) || empty($_POST['transport_type_id']) || empty($_POST['mode_id']) || empty($_POST['global_rates'])  ) {
+			// 	$response['message'] = 'Less Parameters';
+			// 	$response['code'] = 201;
+			// 	echo json_encode($response);
+	 		// 		return;
+			// }
+			$insert = $_POST;
+			unset($insert['customer_type']);
 
+			if(strtolower($_POST['customer_type']) == 'normal'){
+				unset($insert['customer_id']);
+				$rates = $this->model->getValue('global_rates','rates',['company_id'=>$_POST['company_id'],'transport_type'=>$_POST['transport_type'],'transport_speed'=>$_POST['transport_speed'],'kg_or_box'=>$_POST['kg_or_box'],'transport_mode'=>$_POST['transport_mode'],'delivery_type'=>$_POST['delivery_type']]);
+				if(!empty($rates)){
+					$this->model->updateData('global_rates',$insert,['company_id'=>$_POST['company_id'],'transport_type'=>$_POST['transport_type'],'transport_speed'=>$_POST['transport_speed'],'kg_or_box'=>$_POST['kg_or_box'],'transport_mode'=>$_POST['transport_mode'],'delivery_type'=>$_POST['delivery_type']]);
+				}
+				else{
+					$this->model->insertData('global_rates',$insert);
+				}
+				$response['message'] = 'Rates Updated';
+				$response['code'] = 200;
+				$response['status'] = true;
+				echo json_encode($response);
+				return;
+			}
+			if(strtolower($_POST['customer_type']) == 'prime' && !empty($_POST['customer_id'])){
+				$rates = $this->model->getData('customer_rates',['company_id'=>$_POST['company_id'],'customer_id'=>$_POST['customer_id'],'transport_type'=>$_POST['transport_type'],'transport_speed'=>$_POST['transport_speed'],'kg_or_box'=>$_POST['kg_or_box'],'transport_mode'=>$_POST['transport_mode'],'delivery_type'=>$_POST['delivery_type']],'id,rates');
+				if(!empty($rates)){
+					// $rates = unserialize($rates);
+					// $p_rates = unserialize($_POST['rates']);
+					// if(!empty($p_rates)){
+					// 	foreach ($p_rates as $from_zone_id => $value) {
+					// 		if(!empty($value)){
+					// 			foreach ($value as $to_zone_id => $rate) {
+					// 				$rates[$from_zone_id][$to_zone_id] = $rate;
+					// 			}
+					// 		}
+					// 	}
+					// }
+					// $insert['rates'] = unserialize($_POST['rates']);
+					$this->model->updateData('customer_rates',['rates'=>$insert['rates']],['id'=>$rates[0]['id']]);
+				}
+				else{
+					$this->model->insertData('customer_rates',$insert);
+				}
+				$response['message'] = 'Rates Updated';
+				$response['code'] = 200;
+				$response['status'] = true;
+				echo json_encode($response);
+				return;
+			}
+			echo json_encode($response);
+		}
 		function get_rates(){
 			$response = array('code' => -1, 'status' => false, 'message' => '');
 			// $validate = validateToken();
@@ -3468,35 +3536,46 @@ class Admin_api extends CI_Controller {
 			$rates = $this->model->getData('global_rates',['company_id'=>$_POST['company_id'],'transport_type'=>$_POST['transport_type'],'transport_speed'=>$_POST['transport_speed'],'kg_or_box'=>$_POST['kg_or_box'],'transport_mode'=>$_POST['transport_mode'],'delivery_type'=>$_POST['delivery_type']],'rates')[0]['rates'];
 			if(!empty($rates)){
 				$rates = unserialize($rates);
-				if($_POST['customer_type'] == 'prime'){
-					if(empty($_POST['customer_id'])){
-						$response['message'] = 'Wrong Parameters';
-						$response['code'] = 204;
-						echo json_encode($response);
-						return;
-					}
-					$customer_rates = $this->model->getData('customer_rates',['customer_id'=>$_POST['customer_id'],'company_id'=>$_POST['company_id'],'transport_type'=>$_POST['transport_type'],'transport_speed'=>$_POST['transport_speed'],'kg_or_box'=>$_POST['kg_or_box'],'transport_mode'=>$_POST['transport_mode'],'delivery_type'=>$_POST['delivery_type']],'rates')[0]['rates'];
-					$customer_rates = unserialize($customer_rates);
-					if(empty($customer_rates)) $customer_rates = [];
-					foreach($customer_rates as $from_zone_id => $value){
-						foreach ($value as $to_zone_id => $rate) {
-							if(!empty($customer_rates[$from_zone_id][$to_zone_id])){
-								$rates[$from_zone_id][$to_zone_id] = $rate;
-							}
-						}
-					}
-				}
 			}
 			else{
 				$rates = [];
 			}
+			if($_POST['customer_type'] == 'prime'){
+				if(empty($_POST['customer_id'])){
+					$response['message'] = 'Wrong Parameters';
+					$response['code'] = 204;
+					echo json_encode($response);
+					return;
+				}
+				$customer_rates = $this->model->getData('customer_rates',['customer_id'=>$_POST['customer_id'],'company_id'=>$_POST['company_id'],'transport_type'=>$_POST['transport_type'],'transport_speed'=>$_POST['transport_speed'],'kg_or_box'=>$_POST['kg_or_box'],'transport_mode'=>$_POST['transport_mode'],'delivery_type'=>$_POST['delivery_type']],'rates')[0]['rates'];
+				$customer_rates = unserialize($customer_rates);
+				if(empty($customer_rates)) {
+				}
+				else{
+					$rates = $customer_rates;
+				}
+				// foreach($customer_rates as $from_zone_id => $value){
+				// 	if(empty($value)) $value = [];
+				// 	foreach ($value as $to_zone_id => $rate) {
+				// 		if(!empty($customer_rates[$from_zone_id][$to_zone_id])){
+				// 			if(isset($rates[$from_zone_id][$to_zone_id])){
+				// 				$rates[$from_zone_id][$to_zone_id] = $rate;
+				// 			}
+				// 			else{
+				// 				$rates[$from_zone_id] = [];
+				// 				$rates[$from_zone_id][$to_zone_id] = $rate;
+				// 			}
+				// 		}
+				// 	}
+				// }
+			}
+			
 			$response['rates'] = $rates;
 			$response['message'] = 'success';
 			$response['code'] = 200;
 			$response['status'] = true;
 			echo json_encode($response);
 		}
-
 	/********************************** TAT *****************************************/
 		function tat(){
 			$response = array('code' => -1, 'status' => false, 'message' => '');
@@ -3537,41 +3616,102 @@ class Admin_api extends CI_Controller {
 			// } 
 			echo json_encode($response);
 		}
-
-		function get_tat(){
+		function getTat(){
 			$response = array('code' => -1, 'status' => false, 'message' => '');
-			$validate = validateToken();
-			if($validate){
-				if ($_SERVER["REQUEST_METHOD"] == "POST"){
-					if (empty($_POST['mode_id']) && $_POST['transport_type_id']){
-						$response['message'] = 'Less Parameters';
-						$response['code'] = 201;
-					}
-					else{
-						$select = '*';
-						if(!empty($_POST['select']) && isset($_POST['select'])) {
-							$select = $_POST['select'];
-							unset($_POST['select']);
-						}
-						$tat = $this->tatl->getData('tat',$_POST,$select);
-						$response['tat'] = $tat;
-						$response['message'] = 'success';
-						$response['code'] = 200;
-						$response['status'] = true;
-					}
-				} 
-				else {
-					$response['message'] = 'Invalid Request';
-					$response['code'] = 204;
-				}
+			// $validate = validateToken();
+			// if(!$validate){
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			//  	echo json_encode($response);
+			//  	return;
+			// }
+			if ($_SERVER["REQUEST_METHOD"] != "POST") {
+				$response['message'] = 'Invalid Request';
+				$response['code'] = 204;
+				echo json_encode($response);
+			 	return;
+			}
+			$time = $this->model->getData('tat',['company_id'=>$_POST['company_id'],'transport_type'=>$_POST['transport_type'],'transport_speed'=>$_POST['transport_speed'],'transport_mode'=>$_POST['transport_mode'],'type'=>$_POST['type']],'time')[0]['time'];
+			if(!empty($time)){
+				$time = unserialize($time);
 			}
 			else{
-				$response['message'] = 'Authentication required';
-				$response['code'] = 203;
-			} 
+				$time = [];
+			}			
+			$response['time'] = $time;
+			$response['message'] = 'success';
+			$response['code'] = 200;
+			$response['status'] = true;
 			echo json_encode($response);
 		}
-	
+		function saveTat(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if(!$validate){
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			//  	echo json_encode($response);
+			//  	return;
+			// }
+			if ($_SERVER["REQUEST_METHOD"] != "POST") {
+				$response['message'] = 'Invalid Request';
+				$response['code'] = 204;
+				echo json_encode($response);
+			 	return;
+			}
+			$insert = $_POST;
+			unset($insert['from_zone_id']);
+			unset($insert['to_zone_id']);
+			$time = $this->model->getValue('tat','time',['company_id'=>$_POST['company_id'],'transport_type'=>$_POST['transport_type'],'transport_speed'=>$_POST['transport_speed'],'transport_mode'=>$_POST['transport_mode'],'type'=>$_POST['type']]);
+			if(!empty($time)){
+				$time = unserialize($time);
+				if(!is_array($time)) $time = [];
+				if(!isset($time[$_POST['from_zone_id']])) $time[$_POST['from_zone_id']] = [];
+				$time[$_POST['from_zone_id']][$_POST['to_zone_id']] = $_POST['time'];
+				$insert['time'] = serialize($time);
+				$this->model->updateData('tat',$insert,['company_id'=>$_POST['company_id'],'transport_type'=>$_POST['transport_type'],'transport_speed'=>$_POST['transport_speed'],'transport_mode'=>$_POST['transport_mode'],'type'=>$_POST['type']]);
+			}
+			else{
+				$time = array($_POST['from_zone_id']=>[$_POST['to_zone_id']=>$_POST['time']]);
+				$insert['time'] = serialize($time);
+				$this->model->insertData('tat',$insert);
+			}
+			$response['message'] = 'TAT Updated';
+			$response['code'] = 200;
+			$response['status'] = true;
+			echo json_encode($response);
+			return;
+			
+		}
+		function saveAllTat(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if(!$validate){
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			//  	echo json_encode($response);
+			//  	return;
+			// }
+			if ($_SERVER["REQUEST_METHOD"] != "POST") {
+				$response['message'] = 'Invalid Request';
+				$response['code'] = 204;
+				echo json_encode($response);
+			 	return;
+			}
+			$insert = $_POST;
+			$time = $this->model->getValue('tat','time',['company_id'=>$_POST['company_id'],'transport_type'=>$_POST['transport_type'],'transport_speed'=>$_POST['transport_speed'],'transport_mode'=>$_POST['transport_mode'],'type'=>$_POST['type']]);
+			if(!empty($time)){
+				$this->model->updateData('tat',$insert,['company_id'=>$_POST['company_id'],'transport_type'=>$_POST['transport_type'],'transport_speed'=>$_POST['transport_speed'],'transport_mode'=>$_POST['transport_mode'],'type'=>$_POST['type']]);
+			}
+			else{
+				$this->model->insertData('tat',$insert);
+			}
+			$response['message'] = 'TAT Updated';
+			$response['code'] = 200;
+			$response['status'] = true;
+			echo json_encode($response);
+			return;
+		}
 	/********************************** Ship(Order) *****************************************/
 
 		function placeOrder(){
@@ -3666,6 +3806,36 @@ class Admin_api extends CI_Controller {
 			echo json_encode($response);
 		}
 
+		function getShipment(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if(!$validate){
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			//  	echo json_encode($response);
+			//  	return;
+			// }
+			if ($_SERVER["REQUEST_METHOD"] != "POST") {
+				$response['message'] = 'Invalid Request';
+				$response['code'] = 204;
+				echo json_encode($response);
+				return;
+			}
+			$select = '*';
+			if(!empty($_POST['select']) && isset($_POST['select'])) {
+				$select = $_POST['select'];
+				unset($_POST['select']);
+			}
+			$_POST = empty($_POST) ? [] : $_POST;
+
+			$ship = $this->model->getData('ship',$_POST,$select);
+			$response['ship'] = $ship;
+			$response['message'] = 'success';
+			$response['code'] = 200;
+			$response['status'] = true;
+			echo json_encode($response);
+		}
+
 		function ship_history(){
 			$response = array('code' => -1, 'status' => false, 'message' => '');
 			// $validate = validateToken();
@@ -3755,13 +3925,14 @@ class Admin_api extends CI_Controller {
 	    		$start_date = $this->model->getValue('customer','start_date',['id'=>$customer_id]);
 	    		$end_date = $this->model->getValue('customer','end_date',['id'=>$customer_id]);
 	    		$current_date = date('d/m/Y');
-	    		if(strtotime($current_date) <= strtotime($end_date)){
+	    		if($current_date <= $end_date){
 	    			$is_prime = true;
 	    			$rate['customer_id'] = $customer_id;
 	    			$customer_rates = $this->model->getValue('customer_rates','rates',$rate);
 	    			$customer_rates = unserialize($customer_rates);
 	    			if(empty($customer_rates)) $customer_rates = [];
 	    			foreach($customer_rates as $key => $value){
+	    				if(empty($value)) $value = [];
 	    				foreach ($value as $key2 => $value2) {
 	    					if(!empty($customer_rates[$key][$key2])){
 	    						$rates[$key][$key2] = $value2;
@@ -3805,6 +3976,7 @@ class Admin_api extends CI_Controller {
 	    	}
 	    	
 	    	$rate = isset($rates[$from_zone_id][$to_zone_id]) ? $rates[$from_zone_id][$to_zone_id] : '';
+	    	$response['customer_type'] = $customer_type;
 	    	$response['rate'] = $rate;
 	    	$response['message'] = 'success';
 			$response['code'] = 200;
@@ -3853,7 +4025,7 @@ class Admin_api extends CI_Controller {
     		$end_date = $this->model->getValue('customer','end_date',['id'=>$customer_id]);
     		$current_date = date('d/m/Y');
     		if($customer_type == 'prime'){
-	    		if(strtotime($current_date) <= strtotime($end_date)){
+	    		if($current_date <= $end_date){
 	    			$is_prime = true;
 	    		}
     		}
@@ -3901,23 +4073,24 @@ class Admin_api extends CI_Controller {
 		}
 
 		function generateInvoice() {
-			// $response = array('code' => -1, 'status' => false, 'message' => '');
-			// // $validate = validateToken();
-			// // if(!$validate){
-			// // 	$response['message'] = 'Authentication required';
-			// // 	$response['code'] = 203;
-			// //  	echo json_encode($response);
-			// //  	return;
-			// // }
-			// if ($_SERVER["REQUEST_METHOD"] != "POST") {
-			// 	$response['message'] = 'Invalid Request';
-			// 	$response['code'] = 204;
-			// 	echo json_encode($response);
-			// 	return;
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if(!$validate){
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			//  	echo json_encode($response);
+			//  	return;
 			// }
+			if ($_SERVER["REQUEST_METHOD"] != "POST") {
+				$response['message'] = 'Invalid Request';
+				$response['code'] = 204;
+				echo json_encode($response);
+				return;
+			}
 			// $pickup_city, $drop_city, $grand_total, $pickup_address, $drop_address, $shipping_mode, $pickup_email, $drop_email = '')
 			// $select = 'company_id,shipper_contact,recepient_contact,total_actual_weight,total_charge_weight,no_of_boxes,transport_mode,total_invoice_value,e_way_bill_no';
 			$ship = $this->model->getData('ship',['id'=>$_POST['id']])[0];
+			$ship_dimensions = $this->model->getData('ship_dimensions',['ship_id'=>$_POST['id']]);
 			$logo  = $this->model->getValue('company','logo',['id'=>$ship['company_id']]);
 			$company_name  = $this->model->getValue('company','name',['id'=>$ship['company_id']]);
 			$ship['logo'] = $logo;
@@ -3938,6 +4111,7 @@ class Admin_api extends CI_Controller {
         	$this->db->update('ship', array('airway_file_name' => $file_name . ".pdf"), array('id' => $_POST['id']));
 
 			$response['ship'] = $ship;
+			$response['ship_dimensions'] = $ship_dimensions;
 			$response['shipper'] = $shipper;
 			$response['recepient'] = $recepient;
 			$response['company'] = $company;
