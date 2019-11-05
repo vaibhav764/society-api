@@ -768,7 +768,7 @@ class Adminapi_Model extends CI_Model
             $box_count=$this->get_total_order($o_id);
             $query = $this->db->get_where('map_barcode',array('o_id'=>$o_id,'awb_no'=>$awb_no));
             $count = $query->num_rows();
-            $response['no_of_packages']=$box_count;
+            $response['total_order']=$box_count;
             $response['scan_count']=$count;
             if($count==$box_count)
             {
@@ -783,12 +783,12 @@ class Adminapi_Model extends CI_Model
     public function get_total_order($o_id)
     {
            
-            $this->db->select('no_of_packages');
+            $this->db->select('no_of_boxes');
             $this->db->from('ship');
             $this->db->where('id',$o_id);
             $query = $this->db->get();
             $result = $query->row_array();
-            $result=$result['no_of_packages'];           
+            $result=$result['no_of_boxes'];           
             return $result;
     }
       public function check_data($barcode_no)
@@ -968,7 +968,7 @@ class Adminapi_Model extends CI_Model
                     $box_count=$this->get_total_order1($awb_no);
                     $query = $this->db->get_where('source_inscan',array('awb_no'=>$awb_no));
                     $count = $query->num_rows();
-                    $response['no_of_packages']=$box_count;
+                    $response['no_of_boxes']=$box_count;
                     $response['scan_count']=$count;
                     if($count==$box_count)
                     {
@@ -986,7 +986,7 @@ class Adminapi_Model extends CI_Model
                     $box_count=$this->get_total_order1($awb_no);
                     $query = $this->db->get_where('destination_inscan',array('awb_no'=>$awb_no));
                     $count = $query->num_rows();
-                    $response['no_of_packages']=$box_count;
+                    $response['no_of_boxes']=$box_count;
                     $response['scan_count']=$count;
                     if($count==$box_count)
                     {
@@ -1004,7 +1004,7 @@ class Adminapi_Model extends CI_Model
                     $box_count=$this->get_total_order1($awb_no);
                     $query = $this->db->get_where('source_outscan',array('awb_no'=>$awb_no));
                     $count = $query->num_rows();
-                    $response['no_of_packages']=$box_count;
+                    $response['no_of_boxes']=$box_count;
                     $response['scan_count']=$count;
                     if($count==$box_count)
                     {
@@ -1022,7 +1022,7 @@ class Adminapi_Model extends CI_Model
                     $box_count=$this->get_total_order1($awb_no);
                     $query = $this->db->get_where('destination_outscan',array('awb_no'=>$awb_no));
                     $count = $query->num_rows();
-                    $response['no_of_packages']=$box_count;
+                    $response['no_of_boxes']=$box_count;
                     $response['scan_count']=$count;
                     if($count==$box_count)
                     {
@@ -1038,12 +1038,12 @@ class Adminapi_Model extends CI_Model
         public function get_total_order1($awb_no)
             {
                     
-                    $this->db->select('no_of_packages');
+                    $this->db->select('no_of_boxes');
                     $this->db->from('ship');
                     $this->db->where('AWBno',$awb_no);
                     $query = $this->db->get();
                     $result = $query->row_array();
-                    $result=$result['no_of_packages'];           
+                    $result=$result['no_of_boxes'];           
                     return $result;
             }
       
