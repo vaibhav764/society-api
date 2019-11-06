@@ -1355,7 +1355,7 @@ class Admin_api extends CI_Controller {
             $email_data = array('email_txt' => $email_txt, 'txt' => $txt);
             $subject = "Your password";
             $message = $this->load->view('Email-template', $email_data, true);
-			sendEmail('piyush.nerkar@softonauts.com',$login['email'],$subject,$message);
+			// sendEmail('piyush.nerkar@softonauts.com',$login['email'],$subject,$message);
 
 			$response['message'] = 'Customer Added';
 			$response['code'] = 200;
