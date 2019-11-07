@@ -619,17 +619,8 @@ class Admin_api extends CI_Controller {
 			// $validate = validateToken();
 			// if($validate){
 				if ($_SERVER["REQUEST_METHOD"] == "POST"){
-					$id = $this->model->getValue('login','id',['id'=>$_POST['created_by']]);
-					if (empty($id)) {
-						$response['message'] = 'Admin id is required';
-						$response['code'] = 201;
-					}
-					else if (empty($_POST['id'])){
+					if (empty($_POST['id'])){
 						$response['message'] = 'Company id is required';
-						$response['code'] = 201;
-					}
-					else if (empty($_POST['name'])){
-						$response['message'] = 'Less Parameters';
 						$response['code'] = 201;
 					}
 					else{
