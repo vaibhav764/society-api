@@ -497,6 +497,7 @@ class Admin_api extends CI_Controller {
 								$login['username'] = $_POST['name'];
 								$login['phone'] = $_POST['contact'];
 								$login['email'] = $_POST['email'];
+								$login['logo'] = $_POST['logo'];
 								$login['password'] = encyrpt_password($password);
 								$login['usertype'] = 'company';
 								$login['status'] = 1;
@@ -625,6 +626,7 @@ class Admin_api extends CI_Controller {
 					}
 					else{
 						$company = $this->model->updateData('company',$_POST,['id'=>$_POST['id']]);
+						$company = $this->model->updateData('login',['logo'=>$_POST['logo']],['fk_id'=>$_POST['id'],'usertype'=>'company']);
 						$response['message'] = 'success';
 						$response['code'] = 200;
 						$response['status'] = true;
@@ -1885,6 +1887,7 @@ class Admin_api extends CI_Controller {
 								$employee['username'] = $_POST['name'];
 								$employee['phone'] = $_POST['contact'];
 								$employee['email'] = $_POST['email'];
+								$employee['logo'] = $_POST['photo'];
 								$employee['usertype'] = 'employee';
 								$employee['status'] = 1;
 								$employee['created_by'] = $_POST['created_by'];
@@ -2005,7 +2008,9 @@ class Admin_api extends CI_Controller {
 					else{
 						$employee = $this->model->updateData('employee',$_POST,['id'=>$_POST['id']]);
 
-						$response['message'] = 'Employee Updated';
+						$employee = $this->model->updateData('login',['logo'=>$_POST['photo']],['fk_id'=>$_POST['id'],'usertype'=>'employee']);
+
+						$response['message'] = 'success';
 						$response['code'] = 200;
 						$response['status'] = true;
 					}
@@ -2165,6 +2170,7 @@ class Admin_api extends CI_Controller {
 								$vendor['username'] = $_POST['contact_prsn_name'];
 								$vendor['phone'] = $_POST['contact'];
 								$vendor['email'] = $_POST['email'];
+								$vendor['logo'] = $_POST['logo'];
 								$vendor['usertype'] = 'vendor';
 								$vendor['status'] = 1;
 								$vendor['created_by'] = $_POST['created_by'];
@@ -2277,6 +2283,7 @@ class Admin_api extends CI_Controller {
 					}
 					else{
 						$vendor = $this->model->updateData('vendor',$_POST,['id'=>$_POST['id']]);
+						$vendor = $this->model->updateData('login',['logo'=>$_POST['logo']],['fk_id'=>$_POST['id'],'usertype'=>'vendor']);
 
 						$response['message'] = 'success';
 						$response['code'] = 200;
