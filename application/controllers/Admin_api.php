@@ -1899,12 +1899,12 @@ class Admin_api extends CI_Controller {
 								$employee['created_by'] = $_POST['created_by'];
 								$this->model->insertData('login',$employee);
 							}
-							$response['message'] = 'success';
+							$response['message'] = 'Employee Added';
 							$response['code'] = 200;
 							$response['status'] = true;
 						}
 						else{
-							$response['message'] = 'Employee email is already exist';
+							$response['message'] = 'Email Exist';
 							$response['code'] = 201;
 						}
 					}
@@ -1935,11 +1935,19 @@ class Admin_api extends CI_Controller {
 					if(!empty($employees))
 					{
 						foreach ($employees as $key => $value) {
-
-							$employees[$key]['company_name']=$this->model->getValue('company','name',['id'=>$value['company_id']]);
-							$employees[$key]['city_name']=$this->model->getValue('cities','city',['id'=>$value['city_id']]);
-							$employees[$key]['state_name']=$this->model->getValue('states','name',['id'=>$value['state_id']]);
-							$employees[$key]['designation']=$this->model->getValue('designation','designation',['id'=>$value['designation_id']]);
+							if(!empty($value['company_id'])){
+								$employees[$key]['company_name']=$this->model->getValue('company','name',['id'=>$value['company_id']]);
+							}
+							if(!empty($value['city_id'])){
+								$employees[$key]['city_name']=$this->model->getValue('cities','city',['id'=>$value['city_id']]);
+							}
+							if(!empty($value['state_id'])){
+								$employees[$key]['state_name']=$this->model->getValue('states','name',['id'=>$value['state_id']]);
+							}
+							if(!empty($value['designation_id'])){
+								$employees[$key]['designation']=$this->model->getValue('designation','designation',['id'=>$value['designation_id']]);
+							}
+							
 						}
 					}
 					$response['next_id'] = $this->model->generate_next_id('employee','autoid','emp','3');
@@ -2000,13 +2008,13 @@ class Admin_api extends CI_Controller {
 			// if($validate){
 				if ($_SERVER["REQUEST_METHOD"] == "POST"){
 					if (empty($_POST['id'])){
-						$response['message'] = 'Employee id is required';
+						$response['message'] = 'Wrong Parameters';
 						$response['code'] = 201;
 					}
 					else{
 						$employee = $this->model->updateData('employee',$_POST,['id'=>$_POST['id']]);
 
-						$response['message'] = 'success';
+						$response['message'] = 'Employee Updated';
 						$response['code'] = 200;
 						$response['status'] = true;
 					}
@@ -2029,7 +2037,7 @@ class Admin_api extends CI_Controller {
 			// if($validate){
 				if ($_SERVER["REQUEST_METHOD"] == "POST"){
 					if (empty($_POST['id'])){
-						$response['message'] = 'Employee id is required';
+						$response['message'] = 'Wrong Parameters';
 						$response['code'] = 201;
 					}
 					else{
@@ -3830,6 +3838,29 @@ class Admin_api extends CI_Controller {
 
 			$ship = $this->model->getData('ship',$_POST,$select);
 			$response['ship'] = $ship;
+			$response['message'] = 'success';
+			$response['code'] = 200;
+			$response['status'] = true;
+			echo json_encode($response);
+		}
+
+		function updateShipment(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if(!$validate){
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			//  	echo json_encode($response);
+			//  	return;
+			// }
+			if ($_SERVER["REQUEST_METHOD"] != "POST") {
+				$response['message'] = 'Invalid Request';
+				$response['code'] = 204;
+				echo json_encode($response);
+				return;
+			}
+			$_POST = empty($_POST) ? [] : $_POST;
+			$this->model->updateData('ship',$_POST,['id'=>$_POST['id']]);
 			$response['message'] = 'success';
 			$response['code'] = 200;
 			$response['status'] = true;
