@@ -6674,6 +6674,17 @@ class Admin_api extends CI_Controller {
 							unset($_POST['select']);
 						}
 						$manifest = $this->model->get_manifest_details($city, $vehicle, $date_from, $date_to, $id);
+						if(!empty($manifest))
+						{
+							foreach ($manifest as $key => $value) {
+
+								$manifest[$key]['pickup_city']=$this->model->getValue('customer_contacts','city',['id'=>$value['shipper_contact']]);
+								$manifest[$key]['drop_city']=$this->model->getValue('customer_contacts','city',['id'=>$value['shipper_contact']]);
+								
+							}
+						}
+						
+
 						$response['manifest'] = $manifest;
 						$response['message'] = 'success';
 						$response['code'] = 200;

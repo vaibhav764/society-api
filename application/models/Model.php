@@ -551,14 +551,14 @@ class Model extends CI_Model {
         $this->db->from('source_outscan');
 		$this->db->join('ship', 'source_outscan.awb_no=ship.AWBno', 'left');
 		$this->db->join('vehicle', 'source_outscan.vehicle_id=vehicle.id', 'left');
-		$this->db->join('company', 'ship.c_id=company.id', 'left');
+		$this->db->join('company', 'ship.company_id=company.id', 'left');
         $this->db->where('source_outscan.city', $city);
         $this->db->where('source_outscan.vehicle_id', $vehicle);
         $this->db->where('source_outscan.date >=', $date_from);
         $this->db->where('source_outscan.date <=', $date_to);
         // $this->db->where('tbl_order_booking.c_id',$id);
         $this->db->group_by('ship.AWBno');
-        $this->db->order_by('ship.order_date', 'ASC');
+        $this->db->order_by('ship.ship_date', 'ASC');
         //  $this->db->order_by('source_outscan.id','DESC');
         $query = $this->db->get();
         $result = $query->result_array();
