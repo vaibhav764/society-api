@@ -195,7 +195,7 @@ class Admin_api extends CI_Controller {
 							$response['status'] = true;
 						}
 						else{
-							$response['message'] = 'Otp is incorrect';
+							$response['message'] = 'Otp Incorrect';
 							$response['code'] = 203;
 						}
 					}
@@ -220,19 +220,19 @@ class Admin_api extends CI_Controller {
 			// if($validate){
 				if ($_SERVER["REQUEST_METHOD"] == "POST"){
 					if ($_POST['new_password'] != $_POST['confirm_password']){
-						$response['message'] = 'Confirm password mismatch';
+						$response['message'] = 'Password Mismatch';
 						$response['code'] = 201;
 					}
 					else{
 						$isExist = $this->model->getData('login',['email'=>$_POST['email'],'password'=>$_POST['old_password']]);
 						if(!empty($isExist)){
 							$this->model->updateData('login',['password'=>encyrpt_password($_POST['new_password'])],['email'=>$_POST['email']]);
-							$response['message'] = 'success';
+							$response['message'] = 'Password Updated';
 							$response['code'] = 200;
 							$response['status'] = true;
 						}
 						else{
-							$response['message'] = 'Email or password is incorrect';
+							$response['message'] = 'Incorrect Email/Password';
 							$response['code'] = 203;
 						}
 					}
@@ -437,7 +437,7 @@ class Admin_api extends CI_Controller {
 					{
 						$pro_select_box .= '<option value="">Select City</option>';
 						foreach ($cities as $cities) {
-							$pro_select_box .='<option value="'.$cities['id'].'">'.$cities['city'].'('.$cities['pincode'].')</option>';
+							$pro_select_box .='<option value="'.$cities['id'].'">'.$cities['city'].' ('.$cities['pincode'].')</option>';
 						}
 					}
 
@@ -511,7 +511,7 @@ class Admin_api extends CI_Controller {
 				                $message = $this->load->view('Email-template', $email_data, true);
 								sendEmail('piyush.nerkar@softonauts.com',$login['email'],$subject,$message);
 							}
-							$response['message'] = 'success';
+							$response['message'] = 'Company Added';
 							$response['code'] = 200;
 							$response['status'] = true;
 						}
@@ -587,7 +587,7 @@ class Admin_api extends CI_Controller {
 					// }
 					// else 
 					if (empty($_POST['id'])){
-						$response['message'] = 'Company id is required';
+						$response['message'] = 'Wrong Parameters';
 						$response['code'] = 201;
 					}
 					else{
@@ -621,13 +621,13 @@ class Admin_api extends CI_Controller {
 			// if($validate){
 				if ($_SERVER["REQUEST_METHOD"] == "POST"){
 					if (empty($_POST['id'])){
-						$response['message'] = 'Company id is required';
+						$response['message'] = 'Wrong Parameters';
 						$response['code'] = 201;
 					}
 					else{
 						$company = $this->model->updateData('company',$_POST,['id'=>$_POST['id']]);
 						$company = $this->model->updateData('login',['logo'=>$_POST['logo']],['fk_id'=>$_POST['id'],'usertype'=>'company']);
-						$response['message'] = 'success';
+						$response['message'] = 'Company Updated';
 						$response['code'] = 200;
 						$response['status'] = true;
 					}
@@ -649,19 +649,14 @@ class Admin_api extends CI_Controller {
 			// $validate = validateToken();
 			// if($validate){
 				if ($_SERVER["REQUEST_METHOD"] == "POST"){
-					$id = $this->model->getValue('login','id',['id'=>$_POST['created_by'],'usertype'=>'admin']);
-					if (empty($id)) {
-						$response['message'] = 'Admin id is required';
-						$response['code'] = 201;
-					}
-					else if (empty($_POST['id'])){
-						$response['message'] = 'Company id is required';
+					if (empty($_POST['id'])){
+						$response['message'] = 'Wrong Parameters';
 						$response['code'] = 201;
 					}
 					else{
 						$company = $this->model->deleteData('company',['id'=>$_POST['id']]);
 						$company = $this->model->deleteData('login',['fk_id'=>$_POST['id'],'usertype'=>'company']);
-						$response['message'] = 'success';
+						$response['message'] = 'Company Deleted';
 						$response['code'] = 200;
 						$response['status'] = true;
 					}
@@ -722,7 +717,7 @@ class Admin_api extends CI_Controller {
 			 	return;
 			}
 			if (empty($_POST['company_id'])){
-				$response['message'] = 'Invalid Request';
+				$response['message'] = 'Wrong Parameters';
 				$response['code'] = 201;
 				echo json_encode($response);
 			 	return;
@@ -759,7 +754,7 @@ class Admin_api extends CI_Controller {
 			 	return;
 			}
 			if (empty($_POST['company_id'])){
-				$response['message'] = 'Company id is required';
+				$response['message'] = 'Wrong Parameters';
 				$response['code'] = 201;
 				echo json_encode($response);
 			 	return;
@@ -768,7 +763,7 @@ class Admin_api extends CI_Controller {
 			*example $_POST['select'] = ['modes','transport_types','customer_types']
 			*/
 			if(empty($_POST['select'])){
-				$response['message'] = 'select array is required';
+				$response['message'] = 'Wrong Parameters';
 				$response['code'] = 201;
 				echo json_encode($response);
 			 	return;
@@ -819,7 +814,7 @@ class Admin_api extends CI_Controller {
 			// if($validate){
 				if ($_SERVER["REQUEST_METHOD"] == "POST"){
 					if (empty($_POST['manager_name'])){
-						$response['message'] = 'Less Parameters';
+						$response['message'] = 'Wrong Parameters';
 						$response['code'] = 201;
 					}
 					else{
@@ -828,7 +823,7 @@ class Admin_api extends CI_Controller {
 						$isExist3 = $this->model->isExist('login','phone',$_POST['contact']);
 						$isExist4 = $this->model->isExist('login','email',$_POST['email']);
 						if($isExist || $isExist2 || $isExist3 || $isExist4){
-							$response['message'] = 'Email or contact is already exist';
+							$response['message'] = 'Email/Contact Exists';
 							$response['code'] = 201;
 						}
 						else{
@@ -845,7 +840,7 @@ class Admin_api extends CI_Controller {
 								$login['created_by'] = $_POST['created_by'];
 								$this->model->insertData('login',$login);
 							}
-							$response['message'] = 'success';
+							$response['message'] = 'Branch Added';
 							$response['code'] = 200;
 							$response['status'] = true;
 						}
@@ -906,7 +901,7 @@ class Admin_api extends CI_Controller {
 			// if($validate){
 				if ($_SERVER["REQUEST_METHOD"] == "POST"){
 					if (empty($_POST['id'])){
-						$response['message'] = 'Branch id is required';
+						$response['message'] = 'Wrong Parameters';
 						$response['code'] = 201;
 					}
 					else{
@@ -940,7 +935,7 @@ class Admin_api extends CI_Controller {
 			// if($validate){
 				if ($_SERVER["REQUEST_METHOD"] == "POST"){
 					if (empty($_POST['id'])){
-						$response['message'] = 'Branch id is required';
+						$response['message'] = 'Wrong Parameters';
 						$response['code'] = 201;
 					}
 					else if (empty($_POST['manager_name'])){
@@ -950,7 +945,7 @@ class Admin_api extends CI_Controller {
 					else{
 						// echo '<pre>'; print_r($_POST); exit;
 						$branch = $this->model->updateData('branch',$_POST,['id'=>$_POST['id']]);
-						$response['message'] = 'success';
+						$response['message'] = 'Branch Updated';
 						$response['code'] = 200;
 						$response['status'] = true;
 					}
@@ -973,13 +968,13 @@ class Admin_api extends CI_Controller {
 			// if($validate){
 				if ($_SERVER["REQUEST_METHOD"] == "POST"){
 					if (empty($_POST['id'])){
-						$response['message'] = 'Company id is required';
+						$response['message'] = 'Wrong Parameters';
 						$response['code'] = 201;
 					}
 					else{
 						$company = $this->model->deleteData('branch',['id'=>$_POST['id']]);
 						$company = $this->model->deleteData('login',['fk_id'=>$_POST['id'],'usertype'=>'branch']);
-						$response['message'] = 'success';
+						$response['message'] = 'Branch Deleted';
 						$response['code'] = 200;
 						$response['status'] = true;
 					}
@@ -1659,7 +1654,11 @@ class Admin_api extends CI_Controller {
 			}
 			$customer_name = $this->model->getValue('customer','name',['id'=> $_POST['customer_id']]);
 			$_POST['city'] = !empty($_POST['city']) ? $_POST['city'] : '';
-			$_POST['customer_name'] = $customer_name.'('.$_POST['city'].')';
+			$_POST['customer_name'] = $customer_name.' ('.$_POST['city'].')';
+			if(isset($_POST['default_address']) && $_POST['default_address'] =='1'){
+				$this->model->updateData('customer_contacts',['default_address'=>0],['customer_id'=>$_POST['customer_id']]);
+				$_POST['default_address'] = '1';
+			}
 			$this->model->insertData('customer_contacts',$_POST);
 			$response['message'] = 'success';
 			$response['code'] = 200;
@@ -3717,6 +3716,180 @@ class Admin_api extends CI_Controller {
 			$response['status'] = true;
 			echo json_encode($response);
 			return;
+		}
+	/********************************** Quotations *****************************************/
+		function saveQuotation(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if(!$validate){
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			//  	echo json_encode($response);
+			//  	return;
+			// }
+			if ($_SERVER["REQUEST_METHOD"] != "POST") {
+				$response['message'] = 'Invalid Request';
+				$response['code'] = 204;
+				echo json_encode($response);
+			 	return;
+			}
+			$insert = $_POST;
+			unset($insert['rate']);
+			unset($insert['from_zone_id']);
+			unset($insert['to_zone_id']);
+			$rates = $this->model->getValue('quotation','rates',['quotation_number'=>$_POST['quotation_number'],'company_id'=>$_POST['company_id'],'transport_type'=>$_POST['transport_type'],'transport_speed'=>$_POST['transport_speed'],'kg_or_box'=>$_POST['kg_or_box'],'transport_mode'=>$_POST['transport_mode'],'delivery_type'=>$_POST['delivery_type']]);
+			if(!empty($rates)){
+				$rates = unserialize($rates);
+				$rates[$_POST['from_zone_id']][$_POST['to_zone_id']] = $_POST['rate'];
+				$insert['rates'] = serialize($rates);
+				$this->model->updateData('quotation',$insert,['company_id'=>$_POST['company_id'],'transport_type'=>$_POST['transport_type'],'transport_speed'=>$_POST['transport_speed'],'kg_or_box'=>$_POST['kg_or_box'],'transport_mode'=>$_POST['transport_mode'],'delivery_type'=>$_POST['delivery_type']]);
+				$response['message'] = 'Quotation Updated';
+			}
+			else{
+				$rate = array($_POST['from_zone_id']=>[$_POST['to_zone_id']=>$_POST['rate']]);
+				$insert['rates'] = serialize($rate);
+				$this->model->insertData('quotation',$insert);
+				$response['message'] = 'Quotation Added';
+			}
+			$response['code'] = 200;
+			$response['status'] = true;
+			echo json_encode($response);
+			return;
+		}
+		function addQuotations(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if(!$validate){
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			//  	echo json_encode($response);
+			//  	return;
+			// }
+			if ($_SERVER["REQUEST_METHOD"] != "POST") {
+				$response['message'] = 'Invalid Request';
+				$response['code'] = 204;
+				echo json_encode($response);
+			 	return;
+			}
+			$insert = $_POST;
+			$where = [];
+			$where['transport_type'] = $_POST['transport_type'];
+			$where['transport_mode'] = $_POST['transport_mode'];
+			$where['transport_speed'] = $_POST['transport_speed'];
+			$where['delivery_type'] = $_POST['delivery_type'];
+			$where['quotation_number'] = $_POST['quotation_number'];
+			$isExist = $this->model->getData('quotation',$where);
+			if(!empty($isExist)){
+				$response['message'] = 'Quotation Exists';
+				$response['code'] = 201;
+				echo json_encode($response);
+			 	return;
+			}
+			$insert = $_POST;
+			$this->model->insertData('quotation',$insert);
+			$response['message'] = 'Quotation Added';
+			$response['code'] = 200;
+			$response['status'] = true;
+			echo json_encode($response);
+		}
+		function getQuotations(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if(!$validate){
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			//  	echo json_encode($response);
+			//  	return;
+			// }
+			if ($_SERVER["REQUEST_METHOD"] != "POST") {
+				$response['message'] = 'Invalid Request';
+				$response['code'] = 204;
+				echo json_encode($response);
+			 	return;
+			}
+			$where = ['company_id'=>$_POST['company_id'],'transport_type'=>$_POST['transport_type'],'transport_speed'=>$_POST['transport_speed'],'kg_or_box'=>$_POST['kg_or_box'],'transport_mode'=>$_POST['transport_mode'],'delivery_type'=>$_POST['delivery_type']];
+			
+			$rates = $this->model->getData('global_rates',$where,'rates')[0]['rates'];
+			if(!empty($rates)){
+				$rates = unserialize($rates);
+			}
+			else{
+				$rates = [];
+			}
+
+			if(!empty($_POST['quotation_number'])){
+				$where['quotation_number'] = $_POST['quotation_number'];
+			}
+			$rates2 = $this->model->getData('quotation',$where,'rates')[0]['rates'];
+			if(!empty($rates2)){
+				$rates = unserialize($rates2);				
+			}
+			
+			$response['rates'] = $rates;
+			$response['message'] = 'success';
+			$response['code'] = 200;
+			$response['status'] = true;
+			echo json_encode($response);
+		}
+		function getQuotation(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if(!$validate){
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			//  	echo json_encode($response);
+			//  	return;
+			// }
+			if ($_SERVER["REQUEST_METHOD"] != "POST") {
+				$response['message'] = 'Invalid Request';
+				$response['code'] = 204;
+				echo json_encode($response);
+			 	return;
+			}
+			$select = '*';
+			if(!empty($_POST['select']) && isset($_POST['select'])){
+				$select = $_POST['select'];
+				unset($_POST['select']);
+			}
+			$_POST = empty($_POST) ? [] : $_POST;
+
+			$quotation = $this->model->getData('quotation',$_POST,$select);
+			if(empty($quotation)){
+				$quotation = [];			
+			}
+			else{
+				foreach ($quotation as $key => $value) {
+					if(empty($value['rates'])) continue;
+					$rates = unserialize($value['rates']);
+					if(empty($rates)) continue;
+					$rates2 = [];
+					$all_empty = false;
+					foreach ($rates as $key3 => $value3) {
+						if(empty($value3)) continue;
+						$from_zone = $this->model->getValue('zone','zone',['id'=>$key3]);
+						$rates2[$from_zone] = [];
+						foreach ($value3 as $key2 => $rate) {
+							if(empty($rate)){
+								$all_empty = true;
+								continue;
+							}
+							else{
+								$all_empty = false;
+							}
+							$to_zone = $this->model->getValue('zone','zone',['id'=>$key2]);
+							$rates2[$from_zone][$to_zone] = $rate;
+						}
+					}
+					$quotation[$key]['rates'] = $rates2;
+					if($all_empty) unset($quotation[$key]);
+				}
+			}
+			
+			$response['quotation'] = $quotation;
+			$response['message'] = 'success';
+			$response['code'] = 200;
+			$response['status'] = true;
+			echo json_encode($response);
 		}
 	/********************************** Ship(Order) *****************************************/
 
