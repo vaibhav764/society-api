@@ -567,7 +567,7 @@ class Admin_api extends CI_Controller {
 				$company = [];
 			}
 
-			$response['next_id'] = $this->model->generate_next_id('company','autoid','com','3');
+			$response['next_id'] = $this->model->generate_next_id('company','autoid','COM','3');
 			$response['companies'] = $company;
 			$response['message'] = 'success';
 			$response['code'] = 200;
@@ -1311,7 +1311,7 @@ class Admin_api extends CI_Controller {
 				$customer_contacts = json_decode($_POST['customer_contacts'],true);
 			}
 			unset($_POST['customer_contacts']);
-			$_POST['autoid'] = $this->model->generate_next_id('customer','autoid','cust','3');
+			$_POST['autoid'] = $this->model->generate_next_id('customer','autoid','CUST','3');
 
 			$customer_id = $this->model->insertData('customer',$_POST);
 			if(empty($customer_id)){
@@ -1383,7 +1383,7 @@ class Admin_api extends CI_Controller {
 			}
 			$customer = $this->model->getData('customer',$_POST,$select);
 			if(empty($customer)){
-				$response['next_id'] = $this->model->generate_next_id('customer','autoid','cust','3');
+				$response['next_id'] = $this->model->generate_next_id('customer','autoid','CUST','3');
 				$response['customer'] = [];
 				$response['message'] = 'No Data';
 				$response['code'] = 201;
@@ -1407,7 +1407,7 @@ class Admin_api extends CI_Controller {
 				}
 			}
 			
-			$response['next_id'] = $this->model->generate_next_id('customer','autoid','cust','3');
+			$response['next_id'] = $this->model->generate_next_id('customer','autoid','CUST','3');
 			$response['customer'] = $customer;
 			$response['message'] = 'success';
 			$response['code'] = 200;
@@ -1943,7 +1943,7 @@ class Admin_api extends CI_Controller {
 							
 						}
 					}
-					$response['next_id'] = $this->model->generate_next_id('employee','autoid','emp','3');
+					$response['next_id'] = $this->model->generate_next_id('employee','autoid','EMP','3');
 					$response['employees'] = $employees;
 					$response['message'] = 'success';
 					$response['code'] = 200;
@@ -2219,7 +2219,7 @@ class Admin_api extends CI_Controller {
 
 						}
 					}
-					$response['next_id'] = $this->model->generate_next_id('vendor','autoid','ven',3);
+					$response['next_id'] = $this->model->generate_next_id('vendor','autoid','VEN',3);
 					$response['vendors'] = $vendors;
 					$response['message'] = 'success';
 					$response['code'] = 200;
