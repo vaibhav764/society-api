@@ -779,6 +779,7 @@ function send_email($from,$email, $subject, $message, $attach = '') {
 }
 
 function sendEmail($from,$to,$subject,$message,$attach=''){
+    error_reporting(0);
     // Always set content-type when sending HTML email
     $headers = "MIME-Version: 1.0" . "\r\n";
     $headers .= "Content-type:text/html;charset=UTF-8" . "\r\n";

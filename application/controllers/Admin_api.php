@@ -567,7 +567,7 @@ class Admin_api extends CI_Controller {
 				$company = [];
 			}
 
-			$response['next_id'] = $this->model->generate_next_id('company','autoid','com','3');
+			$response['next_id'] = $this->model->generate_next_id('company','autoid','COM','3');
 			$response['companies'] = $company;
 			$response['message'] = 'success';
 			$response['code'] = 200;
@@ -1343,7 +1343,7 @@ class Admin_api extends CI_Controller {
             $email_data = array('email_txt' => $email_txt, 'txt' => $txt);
             $subject = "Your password";
             $message = $this->load->view('Email-template', $email_data, true);
-			// sendEmail('piyush.nerkar@softonauts.com',$login['email'],$subject,$message);
+			sendEmail('piyush.nerkar@softonauts.com',$login['email'],$subject,$message);
 
 			$response['message'] = 'Customer Added';
 			$response['code'] = 200;
