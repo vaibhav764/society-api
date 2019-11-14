@@ -6905,6 +6905,4 @@ class Admin_api extends CI_Controller {
 			// } 
 			echo json_encode($response);
 		}
-
-
-		
+	}
