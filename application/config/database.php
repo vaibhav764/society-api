@@ -81,9 +81,9 @@ $db['default'] = array(
 	'database' => 'logistics',
 
  //    'hostname' => 'localhost',
-	// 'username' => 'softona1_smoke',
-	// 'password' => 'hFde7Bb+ulO0',
-	// 'database' => 'softona1_smoke_enders',
+	// 'username' => 'apexworl_apex',
+	// 'password' => 'x%rEKQ[A6^rE',
+	// 'database' => 'apexworl_newapex',
 	
 	'dbdriver' => 'mysqli',
 	'dbprefix' => '',

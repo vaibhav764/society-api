@@ -22,6 +22,7 @@ class Admin_api extends CI_Controller {
 				echo json_encode($response);
 				return;
 			}
+
 			if (empty($_POST['email'])){
 				$response['message'] = 'Email Required';
 				$response['code'] = 201;
@@ -118,7 +119,7 @@ class Admin_api extends CI_Controller {
 				return;
 			}
 			$this->model->updateData('login',['password'=>encyrpt_password($_POST['new_password'])],['email'=>$_POST['email']]);
-			$response['message'] = 'success';
+			$response['message'] = 'Password Changed';
 			$response['code'] = 200;
 			$response['status'] = true;
 			echo json_encode($response);
@@ -146,7 +147,21 @@ class Admin_api extends CI_Controller {
 						if(!empty($login) || !empty($login2)){
 							$otp = get_random_number(6);
 							$this->model->updateData('login',['otp'=>$otp],['id'=>$login_data['id']]);
-							sendEmail('piyush.nerkar@softonauts.com',$login_data['email'],'otp','otp is'.$otp);
+							$subject = 'One Time Password';
+							$message = '';
+							$message .= '<p>'.$otp.' is your one time password(OTP). Please enter the OTP to proceed.</p><br>';
+							$message .= '<p>Thank You</p>';
+							$message .= '<p>Team Softonauts</p>';
+							
+							
+							if($login_data['usertype'] == 'company'){
+								sendEmail('info@softonauts.com',$login_data['email'],$subject,$message);
+							}
+							else if($login_data['usertype'] == 'customer'){
+								$company_id = $this->model->getValue('customer','company_id',['id'=>$login_data['fk_id']]);
+								$company_email = $this->model->getValue('login','email',['fk_id'=>$company_id]);
+								sendEmail($company_email,$login_data['email'],$subject,$message);
+							}
 							$response['message'] = 'success';
 							$response['code'] = 200;
 							$response['status'] = true;
@@ -230,6 +245,22 @@ class Admin_api extends CI_Controller {
 							$response['message'] = 'Password Updated';
 							$response['code'] = 200;
 							$response['status'] = true;
+							$subject = 'Password Updated';
+							$message = '';
+							$message .= '<p>Hello,'.$isExist[0]['username'].'.</p>';
+							$message .= '<p>		We have received your request for forgot password.</p>';
+							$message .= '<p>We have updated your password</p>';
+							$message .= '<p>Thank You</p>';
+							$message .= '<p>Team Softonauts</p>';
+							if($isExist[0]['usertype'] == 'company'){
+								sendEmail('info@softonauts.com',$isExist[0]['email'],$subject,$message);
+							}
+							else if($isExist[0]['usertype'] == 'customer'){
+								$company_id = $this->model->getValue('customer','company_id',['id'=>$isExist[0]['fk_id']]);
+								$company_email = $this->model->getValue('login','email',['fk_id'=>$company_id]);
+								sendEmail($company_email,$isExist[0]['email'],$subject,$message);
+							}
+							sendEmail('info@softonauts.com',$isExist[0]['email'],$subject,$message);
 						}
 						else{
 							$response['message'] = 'Incorrect Email/Password';
@@ -323,7 +354,7 @@ class Admin_api extends CI_Controller {
 					if(count($state)>0)
 					{
 						$pro_select_box = '';
-						$pro_select_box .= '<option value="">Select State</option>';
+						// $pro_select_box .= '<option value="">Select State</option>';
 						foreach ($state as $states) {
 							$pro_select_box .='<option value="'.$states['id'].'">'.$states['name'].'</option>';
 						}
@@ -435,7 +466,7 @@ class Admin_api extends CI_Controller {
 					$pro_select_box = '';
 					if(count($cities)>0)
 					{
-						$pro_select_box .= '<option value="">Select City</option>';
+						// $pro_select_box .= '<option value="">Select City</option>';
 						foreach ($cities as $cities) {
 							$pro_select_box .='<option value="'.$cities['id'].'">'.$cities['city'].' ('.$cities['pincode'].')</option>';
 						}
@@ -504,12 +535,25 @@ class Admin_api extends CI_Controller {
 								$login['created_by'] = $_POST['created_by'];
 								$this->model->insertData('login',$login);
 
-								$email_txt = $_POST['name'].'Thank you for Registration with us.';
-				                $txt = " Your new password is : " . $password . "";
-				                $email_data = array('email_txt' => $email_txt, 'txt' => $txt);
-				                $subject = "Your password";
-				                $message = $this->load->view('Email-template', $email_data, true);
-								sendEmail('piyush.nerkar@softonauts.com',$login['email'],$subject,$message);
+								// $email_txt = $_POST['name'].'Thank you for Registration with us.';
+				    //             $txt = " Your new password is : " . $password . "";
+				    //             $email_data = array('email_txt' => $email_txt, 'txt' => $txt);
+				    //             $subject = "Your password";
+				    //             $message = $this->load->view('Email-template', $email_data, true);
+								// sendEmail('piyush.nerkar@softonauts.com',$login['email'],$subject,$message);
+
+								$subject = 'Welcome Message';
+								$message = '';
+								$message .= 'Hello,'.$login['username'];
+								$message .= '<p>Welcome on board. We would like to inform you that your work';
+								$message .= 'efficiency defineatly will grow</p>';
+
+								$message .= '<p>Your User Id: '.$login['email'].'</p>';
+								$message .= '<p>Your Password: '.$password.'</p>';
+								$message .= '<p>Team Softonauts</p>';
+								$message .= '<p>Help@softonauts.com</p>';
+								
+								sendEmail('info@softonauts.com',$login['email'],$subject,$message);
 							}
 							$response['message'] = 'Company Added';
 							$response['code'] = 200;
@@ -549,7 +593,13 @@ class Admin_api extends CI_Controller {
 				$select = $_POST['select'];
 				unset($_POST['select']);
 			}
-			$company = $this->model->getData('company',$_POST,$select);
+			$order_by = [];
+			if(!empty($_POST['order_by']) && isset($_POST['order_by'])){
+				$order_by_arr = explode('=', $_POST['order_by']);
+				$order_by[$order_by_arr[0]] = $order_by_arr[1];
+				unset($_POST['order_by']);
+			}
+			$company = $this->model->getData('company',$_POST,$select,$order_by);
 			if(!empty($company)){
 				foreach ($company as $key => $value) {
 					if(!empty($value['country_id'])){
@@ -626,7 +676,9 @@ class Admin_api extends CI_Controller {
 					}
 					else{
 						$company = $this->model->updateData('company',$_POST,['id'=>$_POST['id']]);
-						$company = $this->model->updateData('login',['logo'=>$_POST['logo']],['fk_id'=>$_POST['id'],'usertype'=>'company']);
+						if(!empty($_POST['logo'])){
+							$company = $this->model->updateData('login',['logo'=>$_POST['logo']],['fk_id'=>$_POST['id'],'usertype'=>'company']);
+						}
 						$response['message'] = 'Company Updated';
 						$response['code'] = 200;
 						$response['status'] = true;
@@ -1306,11 +1358,11 @@ class Admin_api extends CI_Controller {
 				echo json_encode($response);
 				return;
 			}
-			$customer_contacts = [];
-			if(!empty($_POST['customer_contacts'])){
-				$customer_contacts = json_decode($_POST['customer_contacts'],true);
-			}
-			unset($_POST['customer_contacts']);
+			// $customer_contacts = [];
+			// if(!empty($_POST['customer_contacts'])){
+			// 	$customer_contacts = json_decode($_POST['customer_contacts'],true);
+			// }
+			// unset($_POST['customer_contacts']);
 			$_POST['autoid'] = $this->model->generate_next_id('customer','autoid','CUST','3');
 
 			$customer_id = $this->model->insertData('customer',$_POST);
@@ -1320,12 +1372,12 @@ class Admin_api extends CI_Controller {
 				echo json_encode($response);
 				return;
 			}
-			if(!empty($customer_contacts)){
-				foreach ($customer_contacts as $key => $value) {
-					$value['customer_id'] = $customer_id;
-					$this->model->insertData('customer_contacts',$value);
-				}
-			}
+			// if(!empty($customer_contacts)){
+			// 	foreach ($customer_contacts as $key => $value) {
+			// 		$value['customer_id'] = $customer_id;
+			// 		$this->model->insertData('customer_contacts',$value);
+			// 	}
+			// }
 			$password = generateRandomString(8);
 			$customer = [];
 			$customer['fk_id'] = $customer_id;
@@ -1338,12 +1390,26 @@ class Admin_api extends CI_Controller {
 			$customer['password'] = encyrpt_password($password);
 			$this->model->insertData('login',$customer);
 
-			$email_txt = $_POST['name'].'Thank you for Registration with us.';
-            $txt = " Your new password is : " . $password . "";
-            $email_data = array('email_txt' => $email_txt, 'txt' => $txt);
-            $subject = "Your password";
-            $message = $this->load->view('Email-template', $email_data, true);
-			sendEmail('piyush.nerkar@softonauts.com',$login['email'],$subject,$message);
+			// $email_txt = $_POST['name'].'Thank you for Registration with us.';
+   //          $txt = " Your new password is : " . $password . "";
+   //          $email_data = array('email_txt' => $email_txt, 'txt' => $txt);
+   //          $subject = "Your password";
+   //          $message = $this->load->view('Email-template', $email_data, true);
+			// sendEmail('piyush.nerkar@softonauts.com',$customer['email'],$subject,$message);
+
+			$subject = 'Welcome Message';
+			$message = '';
+			$message .= 'Hello,'.$customer['username'];
+			$message .= '<p>Welcome on board. We would like to inform you that your work';
+			$message .= 'efficiency defineatly will grow</p>';
+
+			$message .= '<p>Your User Id: '.$customer['email'].'</p>';
+			$message .= '<p>Your Password: '.$password.'</p>';
+			$message .= '<p>Team Softonauts</p>';
+			$message .= '<p>Help@softonauts.com</p>';
+
+			$company_email = $this->model->getValue('login','email',['fk_id'=>$_POST['company_id']]);
+			sendEmail($company_email,$customer['email'],$subject,$message);
 
 			$response['message'] = 'Customer Added';
 			$response['code'] = 200;
@@ -1381,7 +1447,13 @@ class Admin_api extends CI_Controller {
 				$contacts = $_POST['contacts'];
 				unset($_POST['contacts']);
 			}
-			$customer = $this->model->getData('customer',$_POST,$select);
+			$order_by = [];
+			if(!empty($_POST['order_by']) && isset($_POST['order_by'])){
+				$order_by_arr = explode('=', $_POST['order_by']);
+				$order_by[$order_by_arr[0]] = $order_by_arr[1];
+				unset($_POST['order_by']);
+			}
+			$customer = $this->model->getData('customer',$_POST,$select,$order_by);
 			if(empty($customer)){
 				$response['next_id'] = $this->model->generate_next_id('customer','autoid','CUST','3');
 				$response['customer'] = [];
@@ -1521,11 +1593,11 @@ class Admin_api extends CI_Controller {
 				echo json_encode($response);
 				return;
 			}
-			$v_customer_contacts = [];
-			if(!empty($_POST['customer_contacts'])){
-				$_POST['customer_contacts'] = json_decode($_POST['customer_contacts'],true);
-				$v_customer_contacts = $_POST['customer_contacts'];
-			}
+			// $v_customer_contacts = [];
+			// if(!empty($_POST['customer_contacts'])){
+			// 	$_POST['customer_contacts'] = json_decode($_POST['customer_contacts'],true);
+			// 	$v_customer_contacts = $_POST['customer_contacts'];
+			// }
 			
 			unset($_POST['customer_contacts']);
 			$customer = $this->model->updateData('customer',$_POST,['id'=>$_POST['id']]);
@@ -2009,7 +2081,7 @@ class Admin_api extends CI_Controller {
 
 						$employee = $this->model->updateData('login',['logo'=>$_POST['photo']],['fk_id'=>$_POST['id'],'usertype'=>'employee']);
 
-						$response['message'] = 'success';
+						$response['message'] = 'Employee Updated';
 						$response['code'] = 200;
 						$response['status'] = true;
 					}
@@ -2103,7 +2175,7 @@ class Admin_api extends CI_Controller {
 						
 						
 						
-						$response['message'] = 'success';
+						$response['message'] = 'Data Updated';
 						$response['code'] = 200;
 						$response['status'] = true;
 					}
@@ -2377,7 +2449,13 @@ class Admin_api extends CI_Controller {
 						$select = $_POST['select'];
 						unset($_POST['select']);
 					}
-					$vehicles = $this->model->getData('vehicle',$_POST,$select);
+					$order_by = [];
+					if(!empty($_POST['order_by']) && isset($_POST['order_by'])){
+						$order_by_arr = explode('=', $_POST['order_by']);
+						$order_by[$order_by_arr[0]] = $order_by_arr[1];
+						unset($_POST['order_by']);
+					}
+					$vehicles = $this->model->getData('vehicle',$_POST,$select,$order_by);
 					if(!empty($vehicles))
 					{
 						foreach ($vehicles as $key => $value) {
@@ -2443,13 +2521,13 @@ class Admin_api extends CI_Controller {
 			// if($validate){
 				if ($_SERVER["REQUEST_METHOD"] == "POST"){
 					if (empty($_POST['id'])){
-						$response['message'] = 'Vehicle id is required';
+						$response['message'] = 'Wrong Parameters';
 						$response['code'] = 201;
 					}
 					else{
 						$vehicle = $this->model->updateData('vehicle',$_POST,['id'=>$_POST['id']]);
 
-						$response['message'] = 'success';
+						$response['message'] = 'Data Updated';
 						$response['code'] = 200;
 						$response['status'] = true;
 					}
