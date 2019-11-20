@@ -1,10 +1,4 @@
-<IfModule mod_rewrite.c> 
-RewriteEngine On 
-#RewriteBase / 
- 
-RewriteCond %{REQUEST_FILENAME} !-f 
-RewriteRule ^ index.php [QSA,L] 
-</IfModule>
-
-php_value max_execution_time 259200
-php_value memory_limit 2048M
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php/$1 [L]

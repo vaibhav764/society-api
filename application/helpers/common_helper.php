@@ -780,13 +780,22 @@ function send_email($from,$email, $subject, $message, $attach = '') {
 
 function sendEmail($from,$to,$subject,$message,$attach=''){
     error_reporting(0);
-    // Always set content-type when sending HTML email
-    $headers = "MIME-Version: 1.0" . "\r\n";
-    $headers .= "Content-type:text/html;charset=UTF-8" . "\r\n";
-    // More headers
-    $headers .= 'From: '.$from. "\r\n";
-    // $headers .= 'Cc: myboss@example.com' . "\r\n";
-    mail($to,$subject,$message,$headers);
+    $CI = get_instance();
+    $CI->load->library('email');
+    $CI->email->set_mailtype("html");
+    $CI->email->from($from);
+    $CI->email->to($to);
+    $CI->email->subject($subject);
+    $CI->email->message($message);
+    $CI->email->attach($attach);
+    $CI->email->send();
+    // // Always set content-type when sending HTML email
+    // $headers = "MIME-Version: 1.0" . "\r\n";
+    // $headers .= "Content-type:text/html;charset=UTF-8" . "\r\n";
+    // // More headers
+    // $headers .= 'From: '.$from. "\r\n";
+    // // $headers .= 'Cc: myboss@example.com' . "\r\n";
+    // mail($to,$subject,$message,$headers);
 }
 
 function sendSMS($mobile_no,$message){

@@ -351,13 +351,17 @@ class Admin_api extends CI_Controller {
 						unset($_POST['select']);
 					}
 					$state = $this->model->getData('states',['country_id'=>$_POST['country_id']],$select);
+					$pro_select_box = '';
 					if(count($state)>0)
 					{
-						$pro_select_box = '';
-						// $pro_select_box .= '<option value="">Select State</option>';
-						foreach ($state as $states) {
-							$pro_select_box .='<option value="'.$states['id'].'">'.$states['name'].'</option>';
+						
+						$pro_select_box .= '<option value="">Select State</option>';
+						if(!empty($state)){
+							foreach ($state as $states) {
+								$pro_select_box .='<option value="'.$states['id'].'">'.$states['name'].'</option>';
+							}
 						}
+						
 					}
 
 					$response['states'] = $pro_select_box;
@@ -466,12 +470,14 @@ class Admin_api extends CI_Controller {
 					$pro_select_box = '';
 					if(count($cities)>0)
 					{
-						// $pro_select_box .= '<option value="">Select City</option>';
-						foreach ($cities as $cities) {
-							$pro_select_box .='<option value="'.$cities['id'].'">'.$cities['city'].' ('.$cities['pincode'].')</option>';
+						$pro_select_box .= '<option value="">Select City</option>';
+						if(!empty($cities)){
+							foreach ($cities as $cities) {
+								$pro_select_box .='<option value="'.$cities['id'].'">'.$cities['city'].' ('.$cities['pincode'].')</option>';
+							}
 						}
+						
 					}
-
 					$response['cities'] = $pro_select_box;
 					$response['cities2'] = $cities;
 					$response['message'] = 'success';
@@ -647,6 +653,23 @@ class Admin_api extends CI_Controller {
 							unset($_POST['select']);
 						}
 						$company = $this->model->getData('company',$_POST,$select);
+						if(empty($company)){
+							$response['message'] = 'No Data';
+							$response['code'] = 201;
+							echo json_encode($response);
+							return;
+						}
+						foreach ($company as $key => $value) {
+							if(!empty($value['country_id'])){
+								$company[$key]['country_name']=$this->model->getValue('countries','name',['id'=>$value['country_id']]);
+							}
+							if(!empty($value['city_id'])){
+								$company[$key]['city_name']=$this->model->getValue('cities','city',['id'=>$value['city_id']]);
+							}
+							if(!empty($value['state_id'])){
+								$company[$key]['state_name']=$this->model->getValue('states','name',['id'=>$value['state_id']]);
+							}
+						}
 						$response['company'] = $company;
 						$response['message'] = 'success';
 						$response['code'] = 200;
@@ -920,7 +943,13 @@ class Admin_api extends CI_Controller {
 						$select = $_POST['select'];
 						unset($_POST['select']);
 					}
-					$branches = $this->model->getData('branch',$_POST,$select);
+					$order_by = [];
+					if(!empty($_POST['order_by']) && isset($_POST['order_by'])){
+						$order_by_arr = explode('=', $_POST['order_by']);
+						$order_by[$order_by_arr[0]] = $order_by_arr[1];
+						unset($_POST['order_by']);
+					}
+					$branches = $this->model->getData('branch',$_POST,$select,$order_by);
 					if(!empty($branches))
 					{
 						foreach ($branches as $key => $value) {
@@ -1104,6 +1133,9 @@ class Admin_api extends CI_Controller {
 							foreach ($_POST['types'] as $key => $type) {
 								
 								if(isset($_POST['type_ids'][$key]) && !empty($_POST['type_ids'][$key])){
+									if(empty($type)){
+										$this->model->deleteData2('transport_type',['id'=>$_POST['type_ids'][$key]]);
+									}
 									$this->model->updateData('transport_type',['updated_by'=>$_POST['updated_by'],'type'=>trim($type)],['id'=>$_POST['type_ids'][$key]]);
 								}
 								else{
@@ -1176,6 +1208,9 @@ class Admin_api extends CI_Controller {
 							foreach ($_POST['types'] as $key => $type) {
 								
 								if(isset($_POST['type_ids'][$key]) && !empty($_POST['type_ids'][$key])){
+									if(empty($type)){
+										$this->model->deleteData2('customer_types',['id'=>$_POST['type_ids'][$key]]);
+									}
 									$this->model->updateData('customer_types',['updated_by'=>$_POST['updated_by'],'type'=>trim($type)],['id'=>$_POST['type_ids'][$key]]);
 								}
 								else{
@@ -1874,13 +1909,16 @@ class Admin_api extends CI_Controller {
 							foreach ($_POST['designations'] as $key => $designation) {
 							
 								if(isset($_POST['designation_ids'][$key]) && !empty($_POST['designation_ids'][$key])){
+									if(empty($designation)){
+										$this->model->deleteData2('designation',['id'=>$_POST['designation_ids'][$key]]);
+									}
 									$this->model->updateData('designation',['updated_by'=>$_POST['updated_by'],'designation'=>$designation],['id'=>$_POST['designation_ids'][$key]]);
 								}
 								else{
 									$isExist = $this->model->getValue('designation','designation',['created_by'=>$_POST['created_by'],'designation'=>$designation]);
 									if(empty($isExist)){
 										if(!empty($designation)){
-											$this->model->insertData('designation',['created_by'=>$_POST['created_by'],'designation'=>$designation]);
+											$this->model->insertData('designation',['created_by'=>$_POST['created_by'],'company_id'=>$_POST['company_id'],'designation'=>$designation]);
 										}
 									}
 									else{
@@ -1996,7 +2034,13 @@ class Admin_api extends CI_Controller {
 						$select = $_POST['select'];
 						unset($_POST['select']);
 					}
-					$employees = $this->model->getData('employee',$_POST,$select);
+					$order_by = [];
+					if(!empty($_POST['order_by']) && isset($_POST['order_by'])){
+						$order_by_arr = explode('=', $_POST['order_by']);
+						$order_by[$order_by_arr[0]] = $order_by_arr[1];
+						unset($_POST['order_by']);
+					}
+					$employees = $this->model->getData('employee',$_POST,$select,$order_by);
 					if(!empty($employees))
 					{
 						foreach ($employees as $key => $value) {
@@ -2011,6 +2055,9 @@ class Admin_api extends CI_Controller {
 							}
 							if(!empty($value['designation_id'])){
 								$employees[$key]['designation']=$this->model->getValue('designation','designation',['id'=>$value['designation_id']]);
+							}
+							else{
+								$employees[$key]['designation'] = '';
 							}
 							
 						}
@@ -2156,6 +2203,9 @@ class Admin_api extends CI_Controller {
 							foreach ($_POST['types'] as $key => $type) {
 								
 								if(isset($_POST['type_ids'][$key]) && !empty($_POST['type_ids'][$key])){
+									if(empty($type)){
+										$this->model->deleteData2('vendor_types',['id'=>$_POST['type_ids'][$key]]);
+									}
 									$this->model->updateData('vendor_types',['updated_by'=>$_POST['updated_by'],'type'=>trim($type)],['id'=>$_POST['type_ids'][$key]]);
 								}
 								else{
@@ -2279,7 +2329,13 @@ class Admin_api extends CI_Controller {
 						$select = $_POST['select'];
 						unset($_POST['select']);
 					}
-					$vendors = $this->model->getData('vendor',$_POST,$select);
+					$order_by = [];
+					if(!empty($_POST['order_by']) && isset($_POST['order_by'])){
+						$order_by_arr = explode('=', $_POST['order_by']);
+						$order_by[$order_by_arr[0]] = $order_by_arr[1];
+						unset($_POST['order_by']);
+					}
+					$vendors = $this->model->getData('vendor',$_POST,$select,$order_by);
 					if(!empty($vendors))
 					{
 						foreach ($vendors as $key => $value) {
@@ -2590,6 +2646,7 @@ class Admin_api extends CI_Controller {
 						if(empty($isExist)){
 							// $_POST['cities'] = implode(',', $_POST['cities']);
 							// $_POST['countries'] = implode(',', $_POST['countries']);
+							$_POST['zone'] = ucwords(strtolower($_POST['zone']));
 							$zone_id = $this->model->insertData('zone',$_POST);
 							$response['message'] = 'success';
 							$response['code'] = 200;
@@ -2624,8 +2681,29 @@ class Admin_api extends CI_Controller {
 						$select = $_POST['select'];
 						unset($_POST['select']);
 					}
-					$zones = $this->model->getData('zone',$_POST,$select);
+					$order_by = [];
+					if(!empty($_POST['order_by']) && isset($_POST['order_by'])){
+						$order_by_arr = explode('=', $_POST['order_by']);
+						$order_by[$order_by_arr[0]] = $order_by_arr[1];
+						unset($_POST['order_by']);
+					}
+					$zones = $this->model->getData('zone',$_POST,$select,$order_by);
 					if(empty($zones)) $zones = [];
+					foreach ($zones as $key => $value) {
+						if(!empty($value['cities'])){
+							$cities = explode(',', $value['cities']);
+							$cities2 = [];
+							$pincodes = [];
+							if(!empty($cities)){
+								foreach ($cities as $key2 => $city_id) {
+									$cities2[] = $this->model->getValue('cities','city',['id'=>$city_id]);
+									$pincodes[] = $this->model->getValue('cities','pincode',['id'=>$city_id]);
+								}
+							}
+							$zones[$key]['city_names'] = $cities2;
+							$zones[$key]['pincodes'] = $pincodes;
+						}
+					}
 					$response['zone'] = $zones;
 					$response['message'] = 'success';
 					$response['code'] = 200;
@@ -2699,6 +2777,7 @@ class Admin_api extends CI_Controller {
 					else{
 						// $_POST['cities'] = implode(',', $_POST['cities']);
 						// $_POST['countries'] = implode(',', $_POST['countries']);
+						$_POST['zone'] = ucwords(strtolower($_POST['zone']));
 						$zone = $this->model->updateData('zone',$_POST,['id'=>$_POST['id']]);
 						$response['message'] = 'success';
 						$response['code'] = 200;
@@ -2723,12 +2802,12 @@ class Admin_api extends CI_Controller {
 			// if($validate){
 				if ($_SERVER["REQUEST_METHOD"] == "POST"){
 					if (empty($_POST['id'])){
-						$response['message'] = 'Zone id is required';
+						$response['message'] = 'Wrong Parameters';
 						$response['code'] = 201;
 					}
 					else{
 						$zone = $this->model->deleteData('zone',['id'=>$_POST['id']]);
-						$response['message'] = 'success';
+						$response['message'] = 'Zone Deleted';
 						$response['code'] = 200;
 						$response['status'] = true;
 					}
@@ -3282,6 +3361,9 @@ class Admin_api extends CI_Controller {
 								// }
 
 								if(isset($_POST['mode_ids'][$key]) && !empty($_POST['mode_ids'][$key])){
+									if(empty($mode_name)){
+										$this->model->deleteData2('mode',['id'=>$_POST['mode_ids'][$key]]);
+									}
 									$this->model->updateData('mode',['updated_by'=>$_POST['updated_by'],'mode_name'=>trim($mode_name)],['id'=>$_POST['mode_ids'][$key]]);
 								}
 								else{
@@ -3851,23 +3933,49 @@ class Admin_api extends CI_Controller {
 			}
 			$insert = $_POST;
 			$where = [];
+			$where['company_id'] = $_POST['company_id'];
 			$where['transport_type'] = $_POST['transport_type'];
 			$where['transport_mode'] = $_POST['transport_mode'];
 			$where['transport_speed'] = $_POST['transport_speed'];
 			$where['delivery_type'] = $_POST['delivery_type'];
+			$where['kg_or_box'] = $_POST['kg_or_box'];
+			$where['customer_type'] = $_POST['customer_type'];
 			$where['quotation_number'] = $_POST['quotation_number'];
-			$isExist = $this->model->getData('quotation',$where);
-			if(!empty($isExist)){
-				$response['message'] = 'Quotation Exists';
-				$response['code'] = 201;
-				echo json_encode($response);
-			 	return;
+			$where['customer_name'] = $_POST['customer_name'];
+			$quotation = $this->model->getData('quotation',$where);
+			
+			$all_empty = false;
+			$rates2 = unserialize($_POST['rates']);
+			foreach ($rates2 as $key => $value){
+				if(empty($value)) continue;
+				foreach ($value as $key2 => $rate) {
+					if(empty($rate)){
+						$all_empty = true;
+						continue;
+					}
+					else{
+						$all_empty = false;
+					}
+				}
 			}
-			$insert = $_POST;
-			$this->model->insertData('quotation',$insert);
-			$response['message'] = 'Quotation Added';
-			$response['code'] = 200;
-			$response['status'] = true;
+			if(!$all_empty){
+				$insert = $_POST;
+				if(!empty($quotation)){
+					$response['message'] = 'Quotation Updated';
+					$this->model->updateData('quotation',$insert,['id'=>$quotation[0]['id']]);
+				}
+				else{
+					$response['message'] = 'Quotation Added';
+					$this->model->insertData('quotation',$insert);
+				}
+				$response['code'] = 200;
+				$response['status'] = true;
+			}
+			else{
+				$response['code'] = 201;
+				$response['status'] = false;
+			}
+			
 			echo json_encode($response);
 		}
 		function getQuotations(){
@@ -3886,22 +3994,14 @@ class Admin_api extends CI_Controller {
 			 	return;
 			}
 			$where = ['company_id'=>$_POST['company_id'],'transport_type'=>$_POST['transport_type'],'transport_speed'=>$_POST['transport_speed'],'kg_or_box'=>$_POST['kg_or_box'],'transport_mode'=>$_POST['transport_mode'],'delivery_type'=>$_POST['delivery_type']];
+			$where['quotation_number'] = $_POST['quotation_number'];
+			$where['customer_name'] = $_POST['customer_name'];
 			
-			$rates = $this->model->getData('global_rates',$where,'rates')[0]['rates'];
+			$rates = $this->model->getData('quotation',$where,'rates')[0]['rates'];
 			if(!empty($rates)){
-				$rates = unserialize($rates);
-			}
-			else{
-				$rates = [];
+				$rates = unserialize($rates);		
 			}
 
-			if(!empty($_POST['quotation_number'])){
-				$where['quotation_number'] = $_POST['quotation_number'];
-			}
-			$rates2 = $this->model->getData('quotation',$where,'rates')[0]['rates'];
-			if(!empty($rates2)){
-				$rates = unserialize($rates2);				
-			}
 			
 			$response['rates'] = $rates;
 			$response['message'] = 'success';
@@ -3930,7 +4030,6 @@ class Admin_api extends CI_Controller {
 				unset($_POST['select']);
 			}
 			$_POST = empty($_POST) ? [] : $_POST;
-
 			$quotation = $this->model->getData('quotation',$_POST,$select);
 			if(empty($quotation)){
 				$quotation = [];			
@@ -3941,11 +4040,13 @@ class Admin_api extends CI_Controller {
 					$rates = unserialize($value['rates']);
 					if(empty($rates)) continue;
 					$rates2 = [];
+					$rates3 = [];
 					$all_empty = false;
 					foreach ($rates as $key3 => $value3) {
 						if(empty($value3)) continue;
 						$from_zone = $this->model->getValue('zone','zone',['id'=>$key3]);
 						$rates2[$from_zone] = [];
+						$rates3[$key3] = [];
 						foreach ($value3 as $key2 => $rate) {
 							if(empty($rate)){
 								$all_empty = true;
@@ -3956,14 +4057,44 @@ class Admin_api extends CI_Controller {
 							}
 							$to_zone = $this->model->getValue('zone','zone',['id'=>$key2]);
 							$rates2[$from_zone][$to_zone] = $rate;
+							$rates3[$key3][$key2] = $rate;
 						}
 					}
-					$quotation[$key]['rates'] = $rates2;
+					$quotation[$key]['rates2'] = $rates2;
+					$quotation[$key]['rates'] = $rates3;
 					if($all_empty) unset($quotation[$key]);
 				}
 			}
 			
 			$response['quotation'] = $quotation;
+			$response['message'] = 'success';
+			$response['code'] = 200;
+			$response['status'] = true;
+			echo json_encode($response);
+		}
+		function getQuotationList(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if(!$validate){
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			//  	echo json_encode($response);
+			//  	return;
+			// }
+			if ($_SERVER["REQUEST_METHOD"] != "POST") {
+				$response['message'] = 'Invalid Request';
+				$response['code'] = 204;
+				echo json_encode($response);
+			 	return;
+			}
+			$quotations = $this->model->getData('quotation',$_POST);
+			if(!empty($quotations)){
+				$quotations = unserialize($quotations);		
+			}
+			else{
+				$quotations = [];
+			}
+			$response['quotations'] = $quotations;
 			$response['message'] = 'success';
 			$response['code'] = 200;
 			$response['status'] = true;
@@ -4188,11 +4319,11 @@ class Admin_api extends CI_Controller {
 	    		$customer_id = $_POST['recepient_id'];
 	    	}
 	    	$rate['company_id'] = $_POST['company_id'];
-	    	$rate['transport_type'] = $_POST['transport_type'];
-	    	$rate['transport_speed'] = $_POST['transport_speed'];
-	    	$rate['delivery_type'] = $_POST['delivery_type'];
-	    	$rate['transport_mode'] = $_POST['transport_mode'];
-	    	$rate['kg_or_box'] = $_POST['weight_unit'];
+	    	$rate['transport_type'] = strtolower($_POST['transport_type']);
+	    	$rate['transport_speed'] = strtolower($_POST['transport_speed']);
+	    	$rate['delivery_type'] = strtolower($_POST['delivery_type']);
+	    	$rate['transport_mode'] = strtolower($_POST['transport_mode']);
+	    	$rate['kg_or_box'] = strtolower($_POST['weight_unit']);
 	    	$rates = $this->model->getValue('global_rates','rates',$rate);
 	    	if(!empty($rates)){
 	    		$rates = unserialize($rates);
