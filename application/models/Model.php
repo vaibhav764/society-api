@@ -138,7 +138,41 @@ class Model extends CI_Model {
 		return $this->db->get()->result_array();
 	}
 
-
+	function getDataGroupBy($tableName,$group_by,$where_data) /*$wh_data,*/
+	{
+		try{
+			if (isset($tableName) && isset($where_data)) {
+				if (!$this->db->field_exists('status', $tableName)){
+					$this->db->trans_start();
+					$this->db->query("ALTER TABLE `".$tableName."` ADD `status` VARCHAR(25) NOT NULL");
+					$this->db->trans_complete();
+				}
+				$where_data['status !='] = 'deleted';
+				$this->db->trans_start();
+				// $this->db->select($select);
+				if(!empty($where_data)){
+					$this->db->where($where_data);
+				}
+				if(!empty($group_by)){
+					$this->db->group_by($group_by);
+				}
+				
+				$query = $this->db->get($tableName);
+                               
+				$this->db->trans_complete();
+				if ($query->num_rows() > 0){
+					$rows = $query->result_array();
+					return $rows;
+				}else{
+					return false;
+				} 
+			}else{
+				return false;
+			}
+		} catch (Exception $e){
+			return false;
+		}
+	}
 
     function countrecord($tablename)
     {

@@ -2824,6 +2824,121 @@ class Admin_api extends CI_Controller {
 			echo json_encode($response);
 		}
 
+		function uploadZoneXls(){
+			error_reporting(0);
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if(!$validate){
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			//  	echo json_encode($response);
+			//  	return;
+			// }
+			if ($_SERVER["REQUEST_METHOD"] != "POST") {
+				$response['message'] = 'Invalid Request';
+				$response['code'] = 204;
+				echo json_encode($response);
+				 return;
+			}
+			
+			$_POST = json_decode($_POST['upload_data'],true);
+			if(empty($_POST)) {
+				$response['message'] = 'Empty Data';
+				$response['code'] = 201;
+				echo json_encode($response);
+				return;
+			}
+			$cities = true;
+			$zones = true;
+			// if($cities){
+			// 	$this->model->truncate_table('cities');
+			// }
+			// if($zones){
+			// 	$this->model->truncate_table('zone');
+			// }
+			foreach ($_POST as $key => $value) {
+				if(empty($value)) continue;
+                if($key == 0) continue;
+
+                $pincode = $value[0];
+                $city_name = $value[1];
+                $state_code = $value[2];
+                $zone_name = $value[3];
+                $zone_code = $value[4];
+                $zone_type = $value[5];
+                $transport_type = $value[6];
+                $city_data = $this->model->getData('cities',['pincode'=>$pincode]);
+
+                $city_id = '';
+                $country_id = '';
+                if(empty($pincode) || empty($city_name) || empty($state_code) || empty($zone_name) || empty($zone_code)){
+                	continue;
+                }
+                if(empty($city_data)){
+                	$city = [];
+                	$city['pincode'] = $pincode;
+                	$city['city'] = $city_name;
+                	$city['state_code'] = $state_code;
+
+                	$states = $this->model->getData('states',['state_code'=>$state_code],'id,country_id')[0];
+                	$city['state_id'] = $states['id'];
+                	$city['country_id'] = $states['country_id'];
+                	$city['pincode'] = $pincode;
+                	$city_id = $this->model->insertData('cities',$city);
+                	$country_id = $city['country_id'];
+                }
+                else{
+                	$city_id = $city_data[0]['id'];
+                	$country_id = $city_data[0]['country_id'];
+                }
+                $zone_data = $this->model->getData('zone',['company_id'=>$_POST['company_id'],'zone_code'=>$zone_code,'zone'=>$zone_name],'id,cities,countries');
+				if(empty($zone_data)){
+					$zone = [];
+					$zone['company_id'] = $_POST['company_id'];
+					$zone['zone_type'] = $zone_type;
+					$zone['transport_type'] = $transport_type;
+					$zone['zone_code'] = $zone_code;
+					$zone['zone'] = ucwords(strtolower($zone_name));
+					$zone['cities'] = $city_id;
+					$zone['countries'] = $country_id;
+					$zone_id = $this->model->insertData('zone',$zone);
+				}
+				else{
+
+					$zone = [];
+					if(empty($zone_data[0]['cities'])){
+						$zone['cities'] = $city_id;
+					}
+					else{
+						$cities = explode(',',$zone_data[0]['cities']);
+						if(!in_array($city_id, $cities)){
+							$cities[] = $city_id;
+						}
+						
+						$zone['cities'] = implode(',', $cities);
+					}
+					if($transport_type == strtolower('international')){
+						if(empty($zone_data[0]['countries'])){
+							$zone['countries'] = $country_id;
+						}
+						else{
+							$countries = explode(',',$zone_data[0]['countries']);
+							if(!in_array($country_id, $countries)){
+								$countries[] = $country_id;
+							}
+							$zone['countries'] = implode(',', $countries);
+						}
+					}
+					
+					$zone_id = $this->model->updateData('zone',$zone,['id'=>$zone_data[0]['id']]);
+				}
+            }
+			$response['message'] = 'Zones Added';
+			$response['code'] = 200;
+			$response['status'] = true;
+			echo json_encode($response);
+		}
+
 	/********************************** Zone Areas *****************************************/
 
 		// function add_zone_areas(){
@@ -3616,7 +3731,7 @@ class Admin_api extends CI_Controller {
 				return;
 			}
 		}
-		function saveAllRates(){
+		function saveAllRates2(){
 			$response = array('code' => -1, 'status' => false, 'message' => '');
 			// $validate = validateToken();
 			// if(!$validate){
@@ -3642,6 +3757,9 @@ class Admin_api extends CI_Controller {
 
 			if(strtolower($_POST['customer_type']) == 'normal'){
 				unset($insert['customer_id']);
+				$rates = unserialize($_POST['rates']);
+
+				$insert['rates'] = serialize($rates);
 				$rates = $this->model->getValue('global_rates','rates',['company_id'=>$_POST['company_id'],'transport_type'=>$_POST['transport_type'],'transport_speed'=>$_POST['transport_speed'],'kg_or_box'=>$_POST['kg_or_box'],'transport_mode'=>$_POST['transport_mode'],'delivery_type'=>$_POST['delivery_type']]);
 				if(!empty($rates)){
 					$this->model->updateData('global_rates',$insert,['company_id'=>$_POST['company_id'],'transport_type'=>$_POST['transport_type'],'transport_speed'=>$_POST['transport_speed'],'kg_or_box'=>$_POST['kg_or_box'],'transport_mode'=>$_POST['transport_mode'],'delivery_type'=>$_POST['delivery_type']]);
@@ -3656,20 +3774,11 @@ class Admin_api extends CI_Controller {
 				return;
 			}
 			if(strtolower($_POST['customer_type']) == 'prime' && !empty($_POST['customer_id'])){
+				$rates = unserialize($_POST['rates']);
+				
+				$insert['rates'] = serialize($rates);
 				$rates = $this->model->getData('customer_rates',['company_id'=>$_POST['company_id'],'customer_id'=>$_POST['customer_id'],'transport_type'=>$_POST['transport_type'],'transport_speed'=>$_POST['transport_speed'],'kg_or_box'=>$_POST['kg_or_box'],'transport_mode'=>$_POST['transport_mode'],'delivery_type'=>$_POST['delivery_type']],'id,rates');
 				if(!empty($rates)){
-					// $rates = unserialize($rates);
-					// $p_rates = unserialize($_POST['rates']);
-					// if(!empty($p_rates)){
-					// 	foreach ($p_rates as $from_zone_id => $value) {
-					// 		if(!empty($value)){
-					// 			foreach ($value as $to_zone_id => $rate) {
-					// 				$rates[$from_zone_id][$to_zone_id] = $rate;
-					// 			}
-					// 		}
-					// 	}
-					// }
-					// $insert['rates'] = unserialize($_POST['rates']);
 					$this->model->updateData('customer_rates',['rates'=>$insert['rates']],['id'=>$rates[0]['id']]);
 				}
 				else{
@@ -3682,6 +3791,122 @@ class Admin_api extends CI_Controller {
 				return;
 			}
 			echo json_encode($response);
+		}
+		function saveAllRates(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if(!$validate){
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			//  	echo json_encode($response);
+			//  	return;
+			// }
+			if ($_SERVER["REQUEST_METHOD"] != "POST") {
+				$response['message'] = 'Invalid Request';
+				$response['code'] = 204;
+				echo json_encode($response);
+			 	return;
+			}
+			$insert = $_POST;
+			$where = [];
+			$where['company_id'] = $_POST['company_id'];
+			$where['transport_type'] = $_POST['transport_type'];
+			$where['transport_mode'] = $_POST['transport_mode'];
+			$where['transport_speed'] = $_POST['transport_speed'];
+			$where['delivery_type'] = $_POST['delivery_type'];
+			$where['kg_or_box'] = $_POST['kg_or_box'];
+			$where['customer_type'] = $_POST['customer_type'];
+			if(strtolower($_POST['customer_type']) == 'normal'){
+				
+				$global_rates = $this->model->getData('global_rates',$where);
+				$rates = unserialize($_POST['rates']);
+				
+				if(empty($rates)){
+					$response['message'] = 'Empty Data';
+					$response['code'] = 201;
+					echo json_encode($response);
+				 	return;
+				}
+				$all_empty2 = true;
+				foreach ($rates as $key => $value){
+					if(empty($value)) {
+						continue;
+					}
+					$all_empty = true;
+					foreach ($value as $key2 => $rate) {
+						if(!empty($rate)){
+							$all_empty = false;
+							$all_empty2 = false;
+						}
+					}
+
+					if($all_empty) unset($rates[$key]);
+				}
+
+				if($all_empty2){
+					$response['message'] = 'Empty Data';
+					$response['code'] = 201;
+					echo json_encode($response);
+				 	return;
+				}
+				$_POST['rates'] = serialize($rates);
+				$insert = $_POST;
+				unset($insert['customer_id']);
+				if(!empty($global_rates)){
+					$response['id'] = $global_rates[0]['id'];
+					$response['message'] = 'Rates Updated';
+					$this->model->updateData('global_rates',$insert,['id'=>$global_rates[0]['id']]);
+				}
+				else{
+					$response['message'] = 'Rates Added';
+					$id = $this->model->insertData('global_rates',$insert);
+					$response['id'] = $id;
+				}
+				$response['code'] = 200;
+				$response['status'] = true;
+				echo json_encode($response);
+				return;
+			}
+			if(strtolower($_POST['customer_type']) == 'prime' && !empty($_POST['customer_id'])){
+				$where['customer_id'] = $_POST['customer_id'];
+				$customer_rates = $this->model->getData('customer_rates',$where);
+				$rates = unserialize($_POST['rates']);
+				$all_empty2 = true;
+				foreach ($rates as $key => $value){
+					if(empty($value)) {
+						continue;
+					}
+					$all_empty2 = false;
+					$all_empty = true;
+					foreach ($value as $key2 => $rate) {
+						if(!empty($rate)){
+							$all_empty = false;
+						}
+					}
+					if($all_empty) unset($rates[$key]);
+				}
+				if($all_empty2){
+					$response['message'] = 'Empty Data';
+					$response['code'] = 201;
+					echo json_encode($response);
+				 	return;
+				}
+				$_POST['rates'] = serialize($rates);
+				$insert = $_POST;
+				if(!empty($customer_rates)){
+					$response['id'] = $customer_rates[0]['id'];
+					$response['message'] = 'Rates Updated';
+					$this->model->updateData('customer_rates',$insert,['id'=>$customer_rates[0]['id']]);
+				}
+				else{
+					$response['message'] = 'Rates Added';
+					$id = $this->model->insertData('customer_rates',$insert);
+					$response['id'] = $id;
+				}
+				$response['code'] = 200;
+				$response['status'] = true;
+				echo json_encode($response);
+			}
 		}
 		function get_rates(){
 			$response = array('code' => -1, 'status' => false, 'message' => '');
@@ -3944,38 +4169,43 @@ class Admin_api extends CI_Controller {
 			$where['customer_name'] = $_POST['customer_name'];
 			$quotation = $this->model->getData('quotation',$where);
 			
-			$all_empty = false;
-			$rates2 = unserialize($_POST['rates']);
-			foreach ($rates2 as $key => $value){
-				if(empty($value)) continue;
+			
+			$rates = unserialize($_POST['rates']);
+			$all_empty2 = true;
+			foreach ($rates as $key => $value){
+				if(empty($value)) {
+					continue;
+				}
+				$all_empty2 = false;
+				$all_empty = true;
 				foreach ($value as $key2 => $rate) {
-					if(empty($rate)){
-						$all_empty = true;
-						continue;
-					}
-					else{
+					if(!empty($rate)){
 						$all_empty = false;
 					}
 				}
+				if($all_empty) unset($rates[$key]);
 			}
-			if(!$all_empty){
-				$insert = $_POST;
-				if(!empty($quotation)){
-					$response['message'] = 'Quotation Updated';
-					$this->model->updateData('quotation',$insert,['id'=>$quotation[0]['id']]);
-				}
-				else{
-					$response['message'] = 'Quotation Added';
-					$this->model->insertData('quotation',$insert);
-				}
-				$response['code'] = 200;
-				$response['status'] = true;
+			if($all_empty2){
+				$response['message'] = 'Empty Data';
+				$response['code'] = 201;
+				echo json_encode($response);
+			 	return;
+			}
+			$_POST['rates'] = serialize($rates);
+			$insert = $_POST;
+			if(!empty($quotation)){
+				$response['id'] = $quotation[0]['id'];
+				$response['message'] = 'Quotation Updated';
+				$this->model->updateData('quotation',$insert,['id'=>$quotation[0]['id']]);
 			}
 			else{
-				$response['code'] = 201;
-				$response['status'] = false;
+				$response['message'] = 'Quotation Added';
+				$id = $this->model->insertData('quotation',$insert);
+				$response['id'] = $id;
 			}
-			
+
+			$response['code'] = 200;
+			$response['status'] = true;
 			echo json_encode($response);
 		}
 		function getQuotations(){
@@ -4029,8 +4259,13 @@ class Admin_api extends CI_Controller {
 				$select = $_POST['select'];
 				unset($_POST['select']);
 			}
+			$group_by = [];
+			if(!empty($_POST['group_by']) && isset($_POST['group_by'])){
+				$group_by = $_POST['group_by'];
+				unset($_POST['group_by']);
+			}
 			$_POST = empty($_POST) ? [] : $_POST;
-			$quotation = $this->model->getData('quotation',$_POST,$select);
+			$quotation = $this->model->getData('quotation',$_POST,$select,[],$group_by);
 			if(empty($quotation)){
 				$quotation = [];			
 			}
@@ -4041,32 +4276,78 @@ class Admin_api extends CI_Controller {
 					if(empty($rates)) continue;
 					$rates2 = [];
 					$rates3 = [];
-					$all_empty = false;
+					$all_empty2 = true;
 					foreach ($rates as $key3 => $value3) {
-						if(empty($value3)) continue;
+						if(empty($value3)) {
+							continue;
+						}
+						$all_empty2 = false;
 						$from_zone = $this->model->getValue('zone','zone',['id'=>$key3]);
 						$rates2[$from_zone] = [];
 						$rates3[$key3] = [];
+						$all_empty = true;
 						foreach ($value3 as $key2 => $rate) {
-							if(empty($rate)){
-								$all_empty = true;
-								continue;
-							}
-							else{
+							if(!empty($rate)){
 								$all_empty = false;
 							}
 							$to_zone = $this->model->getValue('zone','zone',['id'=>$key2]);
 							$rates2[$from_zone][$to_zone] = $rate;
 							$rates3[$key3][$key2] = $rate;
 						}
+						if($all_empty) unset($rates2[$from_zone]);
+						if($all_empty) unset($rates3[$key3]);
 					}
+					
 					$quotation[$key]['rates2'] = $rates2;
 					$quotation[$key]['rates'] = $rates3;
-					if($all_empty) unset($quotation[$key]);
+					if(!empty($value['city_id'])){
+						$quotation[$key]['city'] = $this->model->getValue('cities','city',['id'=>$value['city_id']]);
+					}
+					if(!empty($value['state_id'])){
+						$quotation[$key]['state'] = $this->model->getValue('states','name',['id'=>$value['state_id']]);
+					}
+					if($all_empty2) unset($quotation[$key]);
+				}
+				
+			}
+			$global_rates = $this->model->getData('global_rates');
+			if(empty($global_rates)){
+				$global_rates = [];			
+			}
+			else{
+				foreach ($global_rates as $key => $value) {
+					if(empty($value['rates'])) continue;
+					$rates = unserialize($value['rates']);
+					if(empty($rates)) continue;
+					$rates2 = [];
+					$rates3 = [];
+					$all_empty2 = true;
+					foreach ($rates as $key3 => $value3) {
+						if(empty($value3)) {
+							continue;
+						}
+						$all_empty2 = false;
+						$from_zone = $this->model->getValue('zone','zone',['id'=>$key3]);
+						$rates2[$from_zone] = [];
+						$rates3[$key3] = [];
+						$all_empty = true;
+						foreach ($value3 as $key2 => $rate) {
+							if(!empty($rate)){
+								$all_empty = false;
+							}
+							$to_zone = $this->model->getValue('zone','zone',['id'=>$key2]);
+							$rates2[$from_zone][$to_zone] = $rate;
+							$rates3[$key3][$key2] = $rate;
+						}
+						if($all_empty) unset($rates2[$from_zone]);
+						if($all_empty) unset($rates3[$key3]);
+					}
+					$global_rates[$key]['rates2'] = $rates2;
+					$global_rates[$key]['rates'] = $rates3;
 				}
 			}
-			
 			$response['quotation'] = $quotation;
+			$response['global_rates'] = $global_rates;
 			$response['message'] = 'success';
 			$response['code'] = 200;
 			$response['status'] = true;
@@ -4096,6 +4377,64 @@ class Admin_api extends CI_Controller {
 			}
 			$response['quotations'] = $quotations;
 			$response['message'] = 'success';
+			$response['code'] = 200;
+			$response['status'] = true;
+			echo json_encode($response);
+		}
+		function sendQuotation(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if(!$validate){
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			//  	echo json_encode($response);
+			//  	return;
+			// }
+			if ($_SERVER["REQUEST_METHOD"] != "POST") {
+				$response['message'] = 'Invalid Request';
+				$response['code'] = 204;
+				echo json_encode($response);
+			 	return;
+			}
+			$subject = 'Your Quotation';
+			$message = '';
+			$message .= 'Hello,'.$_POST['customer_name'];
+			$message .= '<p>Welcome on board. We would like to inform you that your work';
+			$message .= 'efficiency defineatly will grow</p>';
+
+			$message .= '<p>Your User Id: '.$_POST['email'].'</p>';
+			$message .= '<p>Team Softonauts</p>';
+			$message .= '<p>Help@softonauts.com</p>';
+
+			$company_email = $this->model->getValue('login','email',['fk_id'=>$_POST['company_id']]);
+			sendEmail($company_email,$_POST['email'],$subject,$message);
+			$response['message'] = 'Quotation Send';
+			$response['code'] = 200;
+			$response['status'] = true;
+			echo json_encode($response);
+		}
+		function updateQuotation(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if(!$validate){
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			//  	echo json_encode($response);
+			//  	return;
+			// }
+			if ($_SERVER["REQUEST_METHOD"] != "POST") {
+				$response['message'] = 'Invalid Request';
+				$response['code'] = 204;
+				echo json_encode($response);
+			 	return;
+			}
+			$update = [];
+			if(!empty($_POST['update']) && isset($_POST['update'])) {
+				$update = $_POST['update'];
+				unset($_POST['update']);
+			}
+			$this->model->updateData('quotation',$update,$_POST);
+			$response['message'] = 'Quotation Updated';
 			$response['code'] = 200;
 			$response['status'] = true;
 			echo json_encode($response);
