@@ -540,13 +540,12 @@ class Admin_api extends CI_Controller {
 								$login['status'] = 1;
 								$login['created_by'] = $_POST['created_by'];
 								$this->model->insertData('login',$login);
-
-								// $email_txt = $_POST['name'].'Thank you for Registration with us.';
-				    //             $txt = " Your new password is : " . $password . "";
-				    //             $email_data = array('email_txt' => $email_txt, 'txt' => $txt);
-				    //             $subject = "Your password";
-				    //             $message = $this->load->view('Email-template', $email_data, true);
-								// sendEmail('piyush.nerkar@softonauts.com',$login['email'],$subject,$message);
+								$setting = [];
+								$setting['company_id'] = $company_id;
+								$setting['customer_types'] = $this->model->getValue('customer_types','id',['LOWER(type)'=>'normal']);
+								$setting['modes'] = $this->model->getValue('mode','id',['LOWER(mode_name)'=>'surface']);
+								$setting['transport_types'] = $this->model->getValue('transport_type','id',['LOWER(type)'=>'domestic']);
+								$this->model->insertData('company_setting',$setting);
 
 								$subject = 'Welcome Message';
 								$message = '';
@@ -866,6 +865,11 @@ class Admin_api extends CI_Controller {
 					$vendor_types = $this->model->getData('vendor_types',[],'id,type',[],['id'=>$ids]);
 					$response['vendor_types'] = $vendor_types;
 				}
+				if($fieldName == 'countries'){
+					$ids = explode(',', $ids);
+					$countries = $this->model->getData('countries',[],'id,name',[],['id'=>$ids]);
+					$response['countries'] = $countries;
+				}
 				if($fieldName == 'volumetric_weight'){
 					$volumetric_weight = $ids;
 					$response['volumetric_weight'] = json_decode($volumetric_weight,true);
@@ -1112,8 +1116,8 @@ class Admin_api extends CI_Controller {
 			// $validate = validateToken();
 			// if($validate){
 				if ($_SERVER["REQUEST_METHOD"] == "POST"){
-					if (empty($_POST['created_by']) || empty($_POST['types'])) {
-						$response['message'] = 'Created_by is required';
+					if (empty($_POST['types'])) {
+						$response['message'] = 'Empty Data';
 						$response['code'] = 201;
 					}
 					else{
