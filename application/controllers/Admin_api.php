@@ -4740,6 +4740,9 @@ class Admin_api extends CI_Controller {
 	    		$customer_type = strtolower($customer_type);
 	    		$customer_id = $_POST['recepient_id'];
 	    	}
+	    	else{
+	    		$customer_type = 'normal';
+	    	}
 	    	$rate['company_id'] = $_POST['company_id'];
 	    	$rate['transport_type'] = strtolower($_POST['transport_type']);
 	    	// $rate['customer_type'] = strtolower($customer_type);
@@ -4748,13 +4751,13 @@ class Admin_api extends CI_Controller {
 	    	$rate['transport_mode'] = strtolower($_POST['transport_mode']);
 	    	$rate['kg_or_box'] = strtolower($_POST['weight_unit']);
 	    	$rates = $this->model->getValue('global_rates','rates',$rate);
-	    	$response['rates'] = $rates;
 	    	if(!empty($rates)){
 	    		$rates = unserialize($rates);
 	    	}
 	    	else{
 	    		$rates = [];
 	    	}
+	    	$response['rates'] = $rates;
 			$is_prime = false;
 	    	if($customer_type == 'prime'){
 	    		$start_date = $this->model->getValue('customer','start_date',['id'=>$customer_id]);
@@ -4776,44 +4779,50 @@ class Admin_api extends CI_Controller {
 	    			}
 	    		}
 	    	}
-	    	$from_zones = $this->model->getSqlData('SELECT id,zone_type,customer_id,zone FROM zone WHERE FIND_IN_SET('.$_POST['sender_city_id'].',cities) > 0 AND company_id = '.$_POST['company_id']);
-	    	if(empty($from_zones)){
-	    		$response['message'] = 'Incorrect Pincode';
-				$response['code'] = 201;
-				$response['status'] = false;
-				echo json_encode($response);
-				return;
-	    	}
-	    	$from_zone_id = $from_zones[0]['id'];
-	    	$response['from_zone_id'] = $from_zone_id;
-	    	if(($_POST['bill_to'] == 'sender' || $_POST['bill_to'] != 'recepient' || $_POST['bill_to'] != 'third_party') && !empty($_POST['sender_id'])){ 
-	    		foreach ($from_zones as $key => $value) {
-	    			if($is_prime && $value['zone_type'] == 'customized' && $value['customer_id'] == $customer_id){
-	    				$from_zone_id = $value['id'];
-	    			}
-	    		}
-	    	}
 	    	
-	    	$to_zones = $this->model->getSqlData('SELECT id,zone_type,customer_id,zone FROM zone WHERE FIND_IN_SET('.$_POST['recepient_city_id'].',cities) > 0 AND company_id = '.$_POST['company_id']);
-	    	if(empty($to_zones)){
-	    		$response['message'] = 'Incorrect Pincode';
-				$response['code'] = 201;
-				$response['status'] = false;
-				echo json_encode($response);
-				return;
+	    	if($rate['transport_type'] == 'domestic'){
+	    		$from_zones = $this->model->getSqlData('SELECT id,zone_type,customer_id,zone FROM zone WHERE FIND_IN_SET('.$_POST['sender_city_id'].',cities) > 0 AND company_id = '.$_POST['company_id']);
+		    	if(empty($from_zones)){
+		    		$response['message'] = 'Incorrect Pincode';
+					$response['code'] = 201;
+					$response['status'] = false;
+					echo json_encode($response);
+					return;
+		    	}
+		    	$from_zone_id = $from_zones[0]['id'];
+		    	// $response['from_zone_id'] = $from_zone_id;
+		    	// if(($_POST['bill_to'] == 'sender' || $_POST['bill_to'] != 'recepient' || $_POST['bill_to'] != 'third_party') && !empty($_POST['sender_id'])){ 
+		    	// 	foreach ($from_zones as $key => $value) {
+		    	// 		if($is_prime && $value['zone_type'] == 'customized' && $value['customer_id'] == $customer_id){
+		    	// 			$from_zone_id = $value['id'];
+		    	// 		}
+		    	// 	}
+		    	// }
+		    	
+		    	$to_zones = $this->model->getSqlData('SELECT id,zone_type,customer_id,zone FROM zone WHERE FIND_IN_SET('.$_POST['recepient_city_id'].',cities) > 0 AND company_id = '.$_POST['company_id']);
+		    	if(empty($to_zones)){
+		    		$response['message'] = 'Incorrect Pincode';
+					$response['code'] = 201;
+					$response['status'] = false;
+					echo json_encode($response);
+					return;
+		    	}
+		    	$to_zone_id = $to_zones[0]['id'];
+		    	// $response['to_zone_id'] = $to_zone_id;
+		    	// if($_POST['bill_to'] == 'recepient'){
+		    	// 	foreach ($to_zones as $key => $value) {
+		    	// 		if($is_prime && $value['zone_type'] == 'customized' && $value['customer_id'] == $customer_id){
+		    	// 			$to_zone_id = $value['id'];
+		    	// 		}
+		    	// 	}
+		    	// }
 	    	}
-	    	$to_zone_id = $to_zones[0]['id'];
-	    	$response['to_zone_id'] = $to_zone_id;
-	    	if($_POST['bill_to'] == 'recepient'){
-	    		foreach ($to_zones as $key => $value) {
-	    			if($is_prime && $value['zone_type'] == 'customized' && $value['customer_id'] == $customer_id){
-	    				$to_zone_id = $value['id'];
-	    			}
-	    		}
+	    	else if($rate['transport_type'] == 'international'){
+		    	$from_zone_id = $_POST['sender_country_id'];
+		    	$to_zone_id = $_POST['recepient_country_id'];
 	    	}
 	    	
 	    	$rate = isset($rates[$from_zone_id][$to_zone_id]) ? $rates[$from_zone_id][$to_zone_id] : '';
-	    	$response['customer_type'] = $customer_type;
 	    	$response['rate'] = $rate;
 	    	$response['message'] = 'success';
 			$response['code'] = 200;
