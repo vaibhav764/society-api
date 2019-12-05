@@ -119,6 +119,21 @@ class Admin_api extends CI_Controller {
 				return;
 			}
 			$this->model->updateData('login',['password'=>encyrpt_password($_POST['new_password'])],['email'=>$_POST['email']]);
+			$subject = 'Password Updated';
+			$message = '';
+			$message .= '<p>Hello,'.$isExist[0]['username'].'.</p>';
+			$message .= '<p>		We have received your request for forgot password.</p>';
+			$message .= '<p>We have updated your password</p>';
+			$message .= '<p>Thank You</p>';
+			$message .= '<p>Team Softonauts</p>';
+			if($isExist[0]['usertype'] == 'company'){
+				sendEmail('info@softonauts.com',$isExist[0]['email'],$subject,$message);
+			}
+			else if($isExist[0]['usertype'] == 'customer'){
+				$company_id = $this->model->getValue('customer','company_id',['id'=>$isExist[0]['fk_id']]);
+				$company_email = $this->model->getValue('login','email',['fk_id'=>$company_id]);
+				sendEmail($company_email,$isExist[0]['email'],$subject,$message);
+			}
 			$response['message'] = 'Password Changed';
 			$response['code'] = 200;
 			$response['status'] = true;
@@ -260,7 +275,7 @@ class Admin_api extends CI_Controller {
 								$company_email = $this->model->getValue('login','email',['fk_id'=>$company_id]);
 								sendEmail($company_email,$isExist[0]['email'],$subject,$message);
 							}
-							sendEmail('info@softonauts.com',$isExist[0]['email'],$subject,$message);
+							//sendEmail('info@softonauts.com',$isExist[0]['email'],$subject,$message);
 						}
 						else{
 							$response['message'] = 'Incorrect Email/Password';
@@ -1450,6 +1465,7 @@ class Admin_api extends CI_Controller {
 			$company_email = $this->model->getValue('login','email',['fk_id'=>$_POST['company_id']]);
 			sendEmail($company_email,$customer['email'],$subject,$message);
 
+			$response['id'] = $customer_id;
 			$response['message'] = 'Customer Added';
 			$response['code'] = 200;
 			$response['status'] = true;
@@ -3799,7 +3815,7 @@ class Admin_api extends CI_Controller {
 				echo json_encode($response);
 				return;
 			}
-			if(!empty($_POST['customer_id'])){
+			else if(!empty($_POST['customer_id'])){
 				$rates = $this->model->getValue('customer_rates','rates',['company_id'=>$_POST['company_id'],'customer_id'=>$_POST['customer_id'],'transport_type'=>$_POST['transport_type'],'transport_speed'=>$_POST['transport_speed'],'kg_or_box'=>$_POST['kg_or_box'],'transport_mode'=>$_POST['transport_mode'],'delivery_type'=>$_POST['delivery_type']]);
 				if(!empty($rates)){
 					$rates = unserialize($rates);
@@ -4177,7 +4193,7 @@ class Admin_api extends CI_Controller {
 			$insert = $_POST;
 			$where = [];
 			$where['company_id'] = $_POST['company_id'];
-			$where['customer_type'] = $_POST['customer_type'];
+			// $where['customer_type'] = $_POST['customer_type'];
 			$where['quotation_number'] = $_POST['quotation_number'];
 			$where['customer_name'] = $_POST['customer_name'];
 			if(strtolower($_POST['customer_type']) != 'normal' ){
@@ -4190,7 +4206,7 @@ class Admin_api extends CI_Controller {
 			$quotation = $this->model->getData('quotation',$where);
 			
 			$insert = $_POST;
-			
+			$insert['agree_status'] = '';
 			if(strtolower($_POST['customer_type']) == 'normal' ){
 				$insert['rates'] = '';
 			}
@@ -4260,6 +4276,7 @@ class Admin_api extends CI_Controller {
 			$where = ['company_id'=>$_POST['company_id'],'transport_type'=>$_POST['transport_type'],'transport_speed'=>$_POST['transport_speed'],'kg_or_box'=>$_POST['kg_or_box'],'delivery_type'=>$_POST['delivery_type']];
 			$where['quotation_number'] = $_POST['quotation_number'];
 			$where['customer_name'] = $_POST['customer_name'];
+			$where['transport_mode'] = $_POST['transport_mode'];
 			
 			$quotation = $this->model->getData('quotation',$where,'rates,transport_mode');
 			if(!empty($quotation)){
@@ -4303,12 +4320,18 @@ class Admin_api extends CI_Controller {
 				$select = $_POST['select'];
 				unset($_POST['select']);
 			}
+			$where = [];
+			if(!empty($_POST['where']) && isset($_POST['where'])){
+				$where = json_decode($_POST['where'],true);
+				unset($_POST['where']);
+			}
 			$group_by = [];
 			if(!empty($_POST['group_by']) && isset($_POST['group_by'])){
 				$group_by = $_POST['group_by'];
 				unset($_POST['group_by']);
 			}
 			$_POST = empty($_POST) ? [] : $_POST;
+			$_POST = array_merge($_POST,$where);
 			$quotation = $this->model->getData('quotation',$_POST,$select,[],$group_by);
 			if(empty($quotation)){
 				$response['message'] = 'Please Add Quotation';
@@ -4456,6 +4479,7 @@ class Admin_api extends CI_Controller {
 
 			$company_email = $this->model->getValue('login','email',['fk_id'=>$_POST['company_id']]);
 			sendEmail($company_email,$_POST['email'],$subject,$message,$attach);
+			$this->model->updateData('quotation',['agree_status'=>'send'],['quotation_number'=>$_POST['quotation_number']]);
 			$response['message'] = 'Quotation Send';
 			$response['code'] = 200;
 			$response['status'] = true;
@@ -4515,6 +4539,54 @@ class Admin_api extends CI_Controller {
 			// } 
 			echo json_encode($response);
 		}
+
+		function quotationToCustRates(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if(!$validate){
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			//  	echo json_encode($response);
+			//  	return;
+			// }
+			if ($_SERVER["REQUEST_METHOD"] != "POST") {
+				$response['message'] = 'Invalid Request';
+				$response['code'] = 204;
+				echo json_encode($response);
+			 	return;
+			}
+			if(empty($_POST['quotation_number'])){
+				$response['message'] = 'Wrong Parameters';
+				$response['code'] = 201;
+				echo json_encode($response);
+			 	return;
+			}
+			$customer_id = $_POST['customer_id'];
+			unset($_POST['customer_id']);
+			$quotations = $this->model->getData('quotation',$_POST);
+			if(!empty($quotations)){
+				foreach ($quotations as $key => $value){
+					$rate = [];
+					$rate['company_id'] = $value['company_id']; 
+					$rate['customer_type'] = $value['customer_type']; 
+					$rate['customer_id'] = $customer_id; 
+					$rate['kg_or_box'] = $value['kg_or_box']; 
+					$rate['transport_type'] = $value['transport_type']; 
+					$rate['transport_mode'] = $value['transport_mode']; 
+					$rate['transport_speed'] = $value['transport_speed'];
+					$customer_rates = $this->model->getData('customer_rates',$rate);
+					if(empty($customer_rates)){
+						$rate['rates'] = $value['rates'];
+						$this->model->insertData('customer_rates',$rate);
+					}
+				}
+				$this->model->updateData('quotation',['agree_status'=>'assigned'],$_POST);
+			}
+			$response['message'] = 'Customer And Rates Added';
+			$response['code'] = 200;
+			$response['status'] = true;
+			echo json_encode($response);
+		}
 	/********************************** Ship(Order) *****************************************/
 
 		function placeOrder(){
@@ -4559,13 +4631,24 @@ class Admin_api extends CI_Controller {
 				echo json_encode($response);
 				return;
 			}
-			$where = ['pincode'=>$shipper['pincode'],'customer_id'=>$shipper['customer_id']];
-			$where['type'] = 'sender';
+			
 			$shipper['type'] = 'sender';
 			$shipper['name'] = explode('(', $shipper['name'])[0];
-			$customer_name = $this->model->getValue('customer','name',['id'=> $shipper['customer_id']]);
 			$shipper['city'] = !empty($shipper['city']) ? $shipper['city'] : '';
-			$shipper['customer_name'] = $customer_name.' ('.$shipper['city'].')';
+			$shipper_id = (int)$shipper['customer_id'];
+			if($shipper_id > 0) {
+				$customer_name = $this->model->getValue('customer','name',['id'=> $shipper['customer_id']]);
+				$shipper['customer_name'] = $customer_name.' ('.$shipper['city'].')';
+				$where = ['pincode'=>$shipper['pincode'],'customer_id'=>$shipper['customer_id']];
+			}
+			else{
+				// $_POST['shipper_id'] = 'no register';
+				// $shipper['customer_id'] = 'no register';
+				$shipper['customer_name'] = $shipper['customer_id'].' ('.$shipper['city'].')';
+				$where = ['pincode'=>$shipper['pincode'],'contact'=>$shipper['contact'],'email'=>$shipper['email']];
+				$where['customer_id'] = $shipper['customer_id'];
+			}
+			$where['type'] = 'sender';
 			$id = $this->model->getValue('customer_contacts','id',$where);
 			if(!empty($default_sender)){
 				$this->model->updateData('customer_contacts',['default_address'=>0],['customer_id'=>$shipper['customer_id']]);
@@ -4581,13 +4664,22 @@ class Admin_api extends CI_Controller {
 
 
 			$_POST['shipper_contact'] = $id;
-			$where = ['pincode'=>$recepient['pincode'],'customer_id'=>$recepient['customer_id']];
-			$where['type'] = 'recepient';
+			
 			$recepient['type'] = 'recepient';
 			$recepient['name'] = explode('(', $recepient['name'])[0];
-			$customer_name = $this->model->getValue('customer','name',['id'=> $recepient['customer_id']]);
 			$recepient['city'] = !empty($recepient['city']) ? $recepient['city'] : '';
-			$recepient['customer_name'] = $customer_name.' ('.$recepient['city'].')';
+			$recepient_id = (int)$recepient['customer_id'];
+			if($recepient_id > 0) {
+				$customer_name = $this->model->getValue('customer','name',['id'=> $recepient['customer_id']]);
+				$recepient['customer_name'] = $customer_name.' ('.$recepient['city'].')';
+				$where = ['pincode'=>$recepient['pincode'],'customer_id'=>$recepient['customer_id']];
+			}
+			else{
+				$where = ['pincode'=>$recepient['pincode'],'contact'=>$recepient['contact'],'email'=>$recepient['email']];
+				$recepient['customer_name'] = $recepient['customer_id'].' ('.$recepient['city'].')';
+				$where['customer_id'] = $recepient['customer_id'];
+			}
+			$where['type'] = 'recepient';
 			$id = $this->model->getValue('customer_contacts','id',$where);
 			if(!empty($residential_address)){
 				$this->model->updateData('customer_contacts',['default_address'=>0],['customer_id'=>$recepient['customer_id']]);
@@ -4824,6 +4916,8 @@ class Admin_api extends CI_Controller {
 	    	
 	    	$rate = isset($rates[$from_zone_id][$to_zone_id]) ? $rates[$from_zone_id][$to_zone_id] : '';
 	    	$response['rate'] = $rate;
+	    	$response['from_zone_id'] = $from_zone_id;
+	    	$response['to_zone_id'] = $to_zone_id;
 	    	$response['message'] = 'success';
 			$response['code'] = 200;
 			$response['status'] = true;
