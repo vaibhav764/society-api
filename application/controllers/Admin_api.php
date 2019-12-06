@@ -777,6 +777,24 @@ class Admin_api extends CI_Controller {
 				echo json_encode($response);
 				return;
 			}
+			$volumetric_weight = json_decode($_POST['volumetric_weight'],true);
+			if(!empty($volumetric_weight)){
+				foreach ($volumetric_weight as $key => $value) {
+					if(empty($value)){
+						$volumetric_weight[$key] = 1;
+					}
+				}
+			}
+			$_POST['volumetric_weight'] = json_encode($volumetric_weight);
+			$cft = json_decode($_POST['cft'],true);
+			if(!empty($cft)){
+				foreach ($cft as $key => $value) {
+					if(empty($value)){
+						$cft[$key] = 1;
+					}
+				}
+			}
+			$_POST['cft'] = json_encode($cft);
 			$isExist = $this->model->isExist('company_setting','company_id',$_POST['company_id']);
 			if($isExist){
 				$this->model->updateData('company_setting',$_POST,['company_id'=>$_POST['company_id']]);
@@ -1418,6 +1436,24 @@ class Admin_api extends CI_Controller {
 			// }
 			// unset($_POST['customer_contacts']);
 			$_POST['autoid'] = $this->model->generate_next_id('customer','autoid','CUST','3');
+			$volumetric_weight = json_decode($_POST['volumetric_weight'],true);
+			if(!empty($volumetric_weight)){
+				foreach ($volumetric_weight as $key => $value) {
+					if(empty($value)){
+						$volumetric_weight[$key] = 1;
+					}
+				}
+			}
+			$_POST['volumetric_weight'] = json_encode($volumetric_weight);
+			$cft = json_decode($_POST['cft'],true);
+			if(!empty($cft)){
+				foreach ($cft as $key => $value) {
+					if(empty($value)){
+						$cft[$key] = 1;
+					}
+				}
+			}
+			$_POST['cft'] = json_encode($cft);
 
 			$customer_id = $this->model->insertData('customer',$_POST);
 			if(empty($customer_id)){
@@ -1655,6 +1691,24 @@ class Admin_api extends CI_Controller {
 			// }
 			
 			unset($_POST['customer_contacts']);
+			$volumetric_weight = json_decode($_POST['volumetric_weight'],true);
+			if(!empty($volumetric_weight)){
+				foreach ($volumetric_weight as $key => $value) {
+					if(empty($value)){
+						$volumetric_weight[$key] = 1;
+					}
+				}
+			}
+			$_POST['volumetric_weight'] = json_encode($volumetric_weight);
+			$cft = json_decode($_POST['cft'],true);
+			if(!empty($cft)){
+				foreach ($cft as $key => $value) {
+					if(empty($value)){
+						$cft[$key] = 1;
+					}
+				}
+			}
+			$_POST['cft'] = json_encode($cft);
 			$customer = $this->model->updateData('customer',$_POST,['id'=>$_POST['id']]);
 
 			// if(!empty($v_customer_contacts)) {
@@ -4438,7 +4492,18 @@ class Admin_api extends CI_Controller {
 				echo json_encode($response);
 			 	return;
 			}
-			$quotations = $this->model->getData('quotation',$_POST);
+			$select = '*';
+			if(!empty($_POST['select']) && isset($_POST['select'])){
+				$select = $_POST['select'];
+				unset($_POST['select']);
+			}
+			$order_by = [];
+			if(!empty($_POST['order_by']) && isset($_POST['order_by'])){
+				$order_by_arr = explode('=', $_POST['order_by']);
+				$order_by[$order_by_arr[0]] = $order_by_arr[1];
+				unset($_POST['order_by']);
+			}
+			$quotations = $this->model->getData('quotation',$_POST,$select,$order_by);
 			if(!empty($quotations)){
 				$quotations = $quotations;		
 			}
@@ -4806,6 +4871,115 @@ class Admin_api extends CI_Controller {
 			echo json_encode($response);
 		}
 
+		function getShipments(){
+			$response = array('code' => -1, 'status' => false, 'message' => '');
+			// $validate = validateToken();
+			// if(!$validate){
+			// 	$response['message'] = 'Authentication required';
+			// 	$response['code'] = 203;
+			//  	echo json_encode($response);
+			//  	return;
+			// }
+			if ($_SERVER["REQUEST_METHOD"] != "POST") {
+				$response['message'] = 'Invalid Request';
+				$response['code'] = 204;
+				echo json_encode($response);
+				return;
+			}
+			$select = '*';
+			if(!empty($_POST['select']) && isset($_POST['select'])) {
+				$select = $_POST['select'];
+				unset($_POST['select']);
+			}
+			$shipment = $this->model->getData('ship',$_POST,$select);
+			if(empty($shipment)){
+				$response['message'] = 'No Data';
+				$response['code'] = 201;
+				echo json_encode($response);
+				return;
+			}
+			if(!empty($shipment)){
+				foreach ($shipment as $key => $value) {
+					if(isset($value['shipper_id'])){
+						$shipper_id = (int)$value['shipper_id'];
+						if($shipper_id > 0){
+							$shipment[$key]['shipper'] = $this->model->getData('customer',['id'=>$value['shipper_id']]);
+							if(empty($shipment[$key]['shipper'])){
+								$shipment[$key]['shipper'] = [];
+								$response['shipper'] = 'No Data';
+							}
+							else{
+								$shipment[$key]['shipper'] = $shipment[$key]['shipper'][0];
+							}
+						}
+						else{
+							$shipment[$key]['shipper'] = ['id'=>$value['shipper_id']];
+						}
+					}
+					if(isset($value['recepient_id'])){
+						$recepient_id = (int)$value['recepient_id'];
+						if($recepient_id > 0){
+							$shipment[$key]['recepient'] = $this->model->getData('customer',['id'=>$value['recepient_id']]);
+							if(empty($shipment[$key]['recepient'])){
+								$shipment[$key]['recepient'] = [];
+								$response['recepient'] = 'No Data';
+							}
+							else{
+								$shipment[$key]['recepient'] = $shipment[$key]['recepient'][0];
+							}
+						}
+						else{
+							$shipment[$key]['recepient'] = ['id'=>$value['recepient_id']];
+						}
+					}
+					if(isset($value['shipper_contact'])){
+						$shipment[$key]['shipper_contact'] = $this->model->getData('customer_contacts',['id'=>$value['shipper_contact']]);
+						if(empty($shipment[$key]['shipper_contact'])){
+							$shipment[$key]['shipper_contact'] = [];
+							$response['shipper_contact'] = 'No Data';
+						}
+						else{
+							$shipment[$key]['shipper_contact'] = $shipment[$key]['shipper_contact'][0];
+						}
+					}
+					if(isset($value['recepient_contact'])){
+						$shipment[$key]['recepient_contact'] = $this->model->getData('customer_contacts',['id'=>$value['recepient_contact']]);
+						if(empty($shipment[$key]['recepient_contact'])){
+							$shipment[$key]['recepient_contact'] = [];
+							$response['recepient_contact'] = 'No Data';
+						}
+						else{
+							$shipment[$key]['recepient_contact'] = $shipment[$key]['recepient_contact'][0];
+						}
+					}
+					if(!empty($value['id'])){
+						$shipment[$key]['ship_dimensions'] = $this->model->getData('ship_dimensions',['ship_id'=>$value['id']]);
+						if(empty($shipment[$key]['ship_dimensions'])){
+							$shipment[$key]['ship_dimensions'] = [];
+							$response['ship_dimensions'] = 'No Data';
+						}
+						
+						$shipment[$key]['ship_payment'] = $this->model->getData('ship_payment',['ship_id'=>$value['id']]);
+						if(empty($shipment[$key]['ship_payment'])){
+							$shipment[$key]['ship_payment'] = [];
+							$response['ship_payment'] = 'No Data';
+						}
+						else{
+							$shipment[$key]['ship_payment'] = $shipment[$key]['ship_payment'][0];
+						}
+					}
+				}
+			}
+			else{
+				$shipment = [];
+			}
+			$response['shipment'] = $shipment;
+			$response['message'] = 'success';
+			$response['code'] = 200;
+			$response['status'] = true;
+			echo json_encode($response);
+		}
+
 		function getShipCharges(){
 			$response = array('code' => -1, 'status' => false, 'message' => '');
 			// $validate = validateToken();
@@ -4921,6 +5095,7 @@ class Admin_api extends CI_Controller {
 	    	$response['message'] = 'success';
 			$response['code'] = 200;
 			$response['status'] = true;
+			// echo '<pre>'; print_r($response); exit;
 	    	echo json_encode($response);
 		}
 
