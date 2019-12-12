@@ -164,7 +164,7 @@ class Admin_api extends CI_Controller {
 							$this->model->updateData('login',['otp'=>$otp],['id'=>$login_data['id']]);
 							$subject = 'One Time Password';
 							$message = '';
-							$message .= '<p>'.$otp.' is your one time password(OTP). Please enter the OTP to proceed.</p><br>';
+							$message .= '<p><b>'.$otp.'</b> is your <b>one time password(OTP)</b>. Please enter the OTP to proceed.</p><br>';
 							$message .= '<p>Thank You</p>';
 							$message .= '<p>Team Softonauts</p>';
 							
@@ -262,7 +262,7 @@ class Admin_api extends CI_Controller {
 							$response['status'] = true;
 							$subject = 'Password Updated';
 							$message = '';
-							$message .= '<p>Hello,'.$isExist[0]['username'].'.</p>';
+							$message .= '<p>Hello,'.$isExist[0]['username'].'</p>';
 							$message .= '<p>		We have received your request for forgot password.</p>';
 							$message .= '<p>We have updated your password</p>';
 							$message .= '<p>Thank You</p>';
@@ -564,12 +564,12 @@ class Admin_api extends CI_Controller {
 
 								$subject = 'Welcome Message';
 								$message = '';
-								$message .= 'Hello,'.$login['username'];
-								$message .= '<p>Welcome on board. We would like to inform you that your work';
+								$message .= 'Hello, '.$login['username'];
+								$message .= '<p>Welcome on board. We would like to inform you that your work ';
 								$message .= 'efficiency defineatly will grow</p>';
 
-								$message .= '<p>Your User Id: '.$login['email'].'</p>';
-								$message .= '<p>Your Password: '.$password.'</p>';
+								$message .= '<p>Your User Id: <b>'.$login['email'].'</b></p>';
+								$message .= '<p>Your Password: <b>'.$password.'</b></p>';
 								$message .= '<p>Team Softonauts</p>';
 								$message .= '<p>Help@softonauts.com</p>';
 								
@@ -713,9 +713,14 @@ class Admin_api extends CI_Controller {
 					}
 					else{
 						$company = $this->model->updateData('company',$_POST,['id'=>$_POST['id']]);
+						$login = [];
 						if(!empty($_POST['logo'])){
-							$company = $this->model->updateData('login',['logo'=>$_POST['logo']],['fk_id'=>$_POST['id'],'usertype'=>'company']);
+							$login['logo'] = $_POST['logo'];
 						}
+						if(!empty($_POST['name'])){
+							$login['username'] = $_POST['name'];
+						}
+						$this->model->updateData('login',$login,['fk_id'=>$_POST['id'],'usertype'=>'company']);
 						$response['message'] = 'Company Updated';
 						$response['code'] = 200;
 						$response['status'] = true;
@@ -1963,7 +1968,7 @@ class Admin_api extends CI_Controller {
 			// $validate = validateToken();
 			// if($validate){
 				if ($_SERVER["REQUEST_METHOD"] == "POST"){
-					if (empty($_POST['created_by']) || empty($_POST['designations'])){
+					if (empty($_POST['company_id']) || empty($_POST['designations'])){
 						$response['message'] = 'Less Parameters';
 						$response['code'] = 201;
 					}
@@ -1974,7 +1979,7 @@ class Admin_api extends CI_Controller {
 							if(!empty($db_ids)){
 								foreach ($db_ids as $key => $id) {
 									if(!in_array($id, $_POST['designation_ids'])){
-										$this->model->deleteData('designation',['id'=>$id]);
+										$this->model->deleteData2('designation',['id'=>$id]);
 									}
 								}
 							}
@@ -1989,7 +1994,7 @@ class Admin_api extends CI_Controller {
 									$this->model->updateData('designation',['updated_by'=>$_POST['updated_by'],'designation'=>$designation],['id'=>$_POST['designation_ids'][$key]]);
 								}
 								else{
-									$isExist = $this->model->getValue('designation','designation',['created_by'=>$_POST['created_by'],'designation'=>$designation]);
+									$isExist = $this->model->getValue('designation','designation',['company_id'=>$_POST['company_id'],'designation'=>$designation]);
 									if(empty($isExist)){
 										if(!empty($designation)){
 											$this->model->insertData('designation',['created_by'=>$_POST['created_by'],'company_id'=>$_POST['company_id'],'designation'=>$designation]);
@@ -2000,7 +2005,7 @@ class Admin_api extends CI_Controller {
 										$response['code'] = 201;
 									}
 								}
-							}	
+							}
 						}
 						
 						$response['message'] = 'success';
@@ -2127,12 +2132,12 @@ class Admin_api extends CI_Controller {
 							if(!empty($value['state_id'])){
 								$employees[$key]['state_name']=$this->model->getValue('states','name',['id'=>$value['state_id']]);
 							}
-							if(!empty($value['designation_id'])){
-								$employees[$key]['designation']=$this->model->getValue('designation','designation',['id'=>$value['designation_id']]);
-							}
-							else{
-								$employees[$key]['designation'] = '';
-							}
+							// if(!empty($value['designation_id'])){
+							// 	$employees[$key]['designation']=$this->model->getValue('designation','designation',['id'=>$value['designation_id']]);
+							// }
+							// else{
+							// 	$employees[$key]['designation'] = '';
+							// }
 							
 						}
 					}
@@ -4434,7 +4439,7 @@ class Admin_api extends CI_Controller {
 				}
 				
 			}
-			$global_rates = $this->model->getData('global_rates');
+			$global_rates = $this->model->getData('global_rates',['company_id'=>$_POST['company_id']]);
 			if(empty($global_rates)){
 				$global_rates = [];			
 			}
@@ -4542,7 +4547,7 @@ class Admin_api extends CI_Controller {
 			$message .= '<p>Help@softonauts.com</p>';
 			$attach = $_POST['attach'];
 
-			$company_email = $this->model->getValue('login','email',['fk_id'=>$_POST['company_id']]);
+			$company_email = $this->model->getValue('login','email',['fk_id'=>$_POST['company_id'],'usertype'=>'company']);
 			sendEmail($company_email,$_POST['email'],$subject,$message,$attach);
 			$this->model->updateData('quotation',['agree_status'=>'send'],['quotation_number'=>$_POST['quotation_number']]);
 			$response['message'] = 'Quotation Send';
@@ -4700,6 +4705,7 @@ class Admin_api extends CI_Controller {
 			$shipper['type'] = 'sender';
 			$shipper['name'] = explode('(', $shipper['name'])[0];
 			$shipper['city'] = !empty($shipper['city']) ? $shipper['city'] : '';
+			$shipper['company_id'] = $_POST['company_id'];
 			$shipper_id = (int)$shipper['customer_id'];
 			if($shipper_id > 0) {
 				$customer_name = $this->model->getValue('customer','name',['id'=> $shipper['customer_id']]);
@@ -4733,6 +4739,7 @@ class Admin_api extends CI_Controller {
 			$recepient['type'] = 'recepient';
 			$recepient['name'] = explode('(', $recepient['name'])[0];
 			$recepient['city'] = !empty($recepient['city']) ? $recepient['city'] : '';
+			$recepient['company_id'] = $_POST['company_id'];
 			$recepient_id = (int)$recepient['customer_id'];
 			if($recepient_id > 0) {
 				$customer_name = $this->model->getValue('customer','name',['id'=> $recepient['customer_id']]);
@@ -4757,17 +4764,47 @@ class Admin_api extends CI_Controller {
 				$id = $this->model->insertData('customer_contacts',$recepient);
 			}
 			$_POST['recepient_contact'] = $id;
-
-			$ship_id = $this->model->insertData('ship',$_POST);
-			if(!empty($ship_dimensions)) {
-				foreach ($ship_dimensions as $key => $ship_dimension){
-					$ship_dimension['ship_id'] = $ship_id;
-					$this->model->insertData('ship_dimensions',$ship_dimension);
+			if(!empty($_POST['id'])){
+				$ship_id = decrypt_password($_POST['id']);
+				$this->model->updateData('ship',$_POST,['id'=>$ship_id]);
+				$db_ship_dimensions = $this->model->getData('ship_dimensions',['ship_id'=>$ship_id]);
+				if(!empty($db_ship_dimensions)){
+					$db_ids = array_column($db_ship_dimensions, 'id');
 				}
+				if(!empty($ship_dimensions)) {
+					$v_ids =[];
+					foreach ($ship_dimensions as $key => $ship_dimension){
+						$ship_dimension['ship_id'] = $ship_id;
+						if(!empty($ship_dimension['id'])){
+							$this->model->updateData('ship_dimensions',$ship_dimension,['id'=>$ship_dimension['id']]);
+							$v_ids[] = $ship_dimension['id'];
+						}
+						else{
+							$v_ids[] = $this->model->insertData('ship_dimensions',$ship_dimension);
+						}
+					}
+					foreach ($db_ids as $key => $value) {
+						if(!in_array($value, $v_ids)){
+							$this->model->deleteData('ship_dimensions',['id'=>$value]);
+						}
+					}
+				}
+				$response['message'] = 'Order Updated';
+			}
+			else{
+				$ship_id = $this->model->insertData('ship',$_POST);
+				if(!empty($ship_dimensions)) {
+					foreach ($ship_dimensions as $key => $ship_dimension){
+						$ship_dimension['ship_id'] = $ship_id;
+						$this->model->insertData('ship_dimensions',$ship_dimension);
+					}
+				}
+				$response['message'] = 'Order Placed';
 			}
 			
+			
 			$response['ship_id'] = $ship_id;
-			$response['message'] = 'Order Placed';
+			
 			$response['code'] = 200;
 			$response['status'] = true;
 			echo json_encode($response);
@@ -5006,8 +5043,10 @@ class Admin_api extends CI_Controller {
 	    		$customer_type = strtolower($customer_type);
 	    		$customer_id = $_POST['recepient_id'];
 	    	}
-	    	else{
-	    		$customer_type = 'normal';
+	    	else if($_POST['bill_to'] == 'third_party' && !empty($_POST['third_party'])){
+	    		$customer_type = $this->model->getValue('customer','type',['id'=>$_POST['third_party']]);
+	    		$customer_type = strtolower($customer_type);
+	    		$customer_id = $_POST['third_party'];
 	    	}
 	    	$rate['company_id'] = $_POST['company_id'];
 	    	$rate['transport_type'] = strtolower($_POST['transport_type']);
@@ -5127,6 +5166,12 @@ class Admin_api extends CI_Controller {
 	    		$customer = $this->model->getData('customer',['id'=>$_POST['recepient_id']],'insurance_charges,bilty_charges,toll_charges,fuel_charges');
 	    		$customer_type = strtolower($customer_type);
 	    		$customer_id = $_POST['recepient_id'];
+	    	}
+	    	else if($_POST['bill_to'] == 'third_party' && !empty($_POST['third_party'])){
+	    		$customer_type = $this->model->getValue('customer','type',['id'=>$_POST['third_party']]);
+	    		$customer = $this->model->getData('customer',['id'=>$_POST['third_party']],'insurance_charges,bilty_charges,toll_charges,fuel_charges');
+	    		$customer_type = strtolower($customer_type);
+	    		$customer_id = $_POST['third_party'];
 	    	}
 	    	if(empty($customer)){
 	    		$response['message'] = 'Wrong Parameters';
@@ -6768,8 +6813,6 @@ class Admin_api extends CI_Controller {
 			}
 			echo json_encode($response);
 		}
-
-
 	//***************************************manual Tracking****************************************/ 
 		function getNoBoxesByAWB(){
 			$response = array('code' => -1, 'status' => false, 'message' => '');
@@ -6866,14 +6909,14 @@ class Admin_api extends CI_Controller {
 				if ($_SERVER["REQUEST_METHOD"] == "POST") 
 				{
 						$awb_no['AWBno']=$this->input->post('awb_no');
-						$o_id = $this->model->getData('ship',$awb_no,'id');
-						$o_id = $o_id[0]['id'];
+						$o_id = $this->model->getData('ship','id',['awb_no'=>$_POST['awb_no']]);
+						// $o_id = $o_id[0]['id'];
 						$awb_no=$awb_no['AWBno'];
 						$barcode_no = json_decode($_POST['barcode_no'],true);
 						$emp_id = $this->input->post('emp_id');
 						$date = date('d/m/Y');
 						
-						for($i=0; $i<count($barcode_no); $i++) {
+						for($i=0; $i<count($barcode_no); $i++){
 							if (empty($awb_no)) {
 								$response['message'] = 'Awb No is required.';
 								$response['code'] = 201;
