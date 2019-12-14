@@ -493,11 +493,13 @@ class Model extends CI_Model {
     	return $data->$field;
     }
 
-    function isExist($tablename,$fieldname,$value){
+    function isExist($tablename,$fieldname,$value,$where = array()){
+    	$where['status !=']='deleted';
     	if(!empty($value)){
     		$query = $this->db->select($fieldname)
     		->from($tablename)
     		->where($fieldname,$value)
+    		->where($where)
     		->get();
     		$num_rows = $query->num_rows();
     		if($num_rows > 0){
