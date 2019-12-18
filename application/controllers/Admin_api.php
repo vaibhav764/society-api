@@ -611,11 +611,13 @@ class Admin_api extends CI_Controller {
             unset($_POST['order_by']);
         }
         $mapped_company = $this->model->getValue('company','mapped_company',$_POST);
-        $company = explode(',', $mapped_company);
+        $company = !empty($mapped_company) ? explode(',', $mapped_company):[];
         $company2 = [];
+        $company2[] = $_POST;
         foreach ($company as $key => $value) {
-            $company2['id'] = $value;
-            $company2['name'] = $this->model->getValue('company','name',['id'=>$value]);
+            $val['id'] = $value;
+            $val['name'] = $this->model->getValue('company','name',['id'=>$value]);
+            $company2[] = $val;
         }
         $response['companies'] = $company2;
         $response['message'] = 'success';
@@ -3728,9 +3730,10 @@ class Admin_api extends CI_Controller {
                 return;
             }
             $customer_rates = $this->model->getData('customer_rates', ['customer_id' => $_POST['customer_id'], 'company_id' => $_POST['company_id'], 'transport_type' => $_POST['transport_type'], 'transport_speed' => $_POST['transport_speed'], 'kg_or_box' => $_POST['kg_or_box'], 'transport_mode' => $_POST['transport_mode'], 'delivery_type' => $_POST['delivery_type']], 'rates') [0]['rates'];
-            $customer_rates = unserialize($customer_rates);
+            
             if (empty($customer_rates)) {
             } else {
+                $customer_rates = unserialize($customer_rates);
                 $rates = $customer_rates;
             }
             // foreach($customer_rates as $from_zone_id => $value){
@@ -3750,6 +3753,30 @@ class Admin_api extends CI_Controller {
             
         }
         $response['rates'] = $rates;
+        $response['message'] = 'success';
+        $response['code'] = 200;
+        $response['status'] = true;
+        echo json_encode($response);
+    }
+    function getAllRates() {
+        $response = array('code' => - 1, 'status' => false, 'message' => '');
+        // $validate = validateToken();
+        // if(!$validate){
+        //  $response['message'] = 'Authentication required';
+        //  $response['code'] = 203;
+        //      echo json_encode($response);
+        //      return;
+        // }
+        if ($_SERVER["REQUEST_METHOD"] != "POST") {
+            $response['message'] = 'Invalid Request';
+            $response['code'] = 204;
+            echo json_encode($response);
+            return;
+        }
+        $global_rates = $this->model->getData('global_rates',$_POST);
+        $customer_rates = $this->model->getData('customer_rates',$_POST);
+        $response['global_rates'] = $global_rates;
+        $response['customer_rates'] = $customer_rates;
         $response['message'] = 'success';
         $response['code'] = 200;
         $response['status'] = true;
@@ -4367,7 +4394,14 @@ class Admin_api extends CI_Controller {
             return;
         }
         $isExist = $this->model->isExist('ship','AWBno',$_POST['AWBno']);
-        if($isExist){
+        if(!empty($_POST['id'])){
+            $edit_ship_id = decrypt_password($_POST['id']);
+        }
+        else{
+            $edit_ship_id = 0;
+        }
+        
+        if($isExist && $edit_ship_id == 0){
         	$response['message'] = 'Awb Number Exist';
             $response['code'] = 201;
             echo json_encode($response);
@@ -4451,6 +4485,7 @@ class Admin_api extends CI_Controller {
         $_POST['recepient_contact'] = $id;
         if (!empty($_POST['id'])) {
             $ship_id = decrypt_password($_POST['id']);
+            $_POST['id'] = decrypt_password($_POST['id']);
             $this->model->updateData('ship', $_POST, ['id' => $ship_id]);
             $db_ship_dimensions = $this->model->getData('ship_dimensions', ['ship_id' => $ship_id]);
             if (!empty($db_ship_dimensions)) {
@@ -4870,7 +4905,7 @@ class Admin_api extends CI_Controller {
             $select = $_POST['select'];
             unset($_POST['select']);
         }
-        $zone_id = $this->model->getSqlData('SELECT id FROM zone WHERE FIND_IN_SET(' . $_POST['city_id'] . ',cities) > 0');
+        $zone_id = $this->model->getSqlData('SELECT id,zone FROM zone WHERE FIND_IN_SET(' . $_POST['city_id'] . ',cities) > 0');
         if (!isset($zone_id[0])) {
             $response['message'] = 'City Unavailable';
             $response['code'] = 201;
@@ -4878,8 +4913,8 @@ class Admin_api extends CI_Controller {
             echo json_encode($response);
             return;
         }
-        $zone_id = $zone_id[0]['id'];
-        $response['zone_id'] = $zone_id;
+        $response['zone_id'] = $zone_id[0]['id'];
+        $response['zone'] = $zone_id[0]['zone'];
         $response['message'] = 'success';
         $response['code'] = 200;
         $response['status'] = true;
