@@ -68,8 +68,6 @@ class Admin_api extends CI_Controller {
         $response['message'] = 'success';
         $response['code'] = 200;
         $response['status'] = true;
-        // echo"<pre>";
-        // print_r($response);die;
         echo json_encode($response);
     }
     /********************************** Change Password *****************************************/
