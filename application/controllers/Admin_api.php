@@ -6827,4 +6827,195 @@ class Admin_api extends CI_Controller {
         // }
         echo json_encode($response);
     }
+    //********************************************Sac Code*******************************************/
+    function addSacCode() {
+        $response = array('code' => - 1, 'status' => false, 'message' => '');
+        // echo"<pre>";
+        // print_r($_POST);die;
+        // $validate = validateToken();
+        // if($validate){
+        if ($_SERVER["REQUEST_METHOD"] == "POST") {
+            if (empty($_POST['transport_mode'])) {
+                $response['message'] = 'Less Parameters';
+                $response['code'] = 201;
+            } 
+            else if (empty($_POST['sac_code'])) {
+                $response['message'] = 'Less Parameters';
+                $response['code'] = 201;
+            } 
+            else if (empty($_POST['gst_per'])) {
+                $response['message'] = 'Less Parameters';
+                $response['code'] = 201;
+            }
+            else{
+                $isExist = $this->model->isExist('sac_code', 'transport_mode', $_POST['transport_mode']);
+                $isExist2 = $this->model->isExist('sac_code', 'sac_code', $_POST['sac_code']);
+                if (!$isExist && !$isExist2) {
+                    $sac_id = $this->model->insertData('sac_code', $_POST);
+                    
+                    $response['message'] = 'Sac Code Added';
+                    $response['code'] = 200;
+                    $response['status'] = true;
+                } else {
+                    $response['message'] = 'Alredy Exist';
+                    $response['code'] = 201;
+                }
+            }
+        } else {
+            $response['message'] = 'Invalid Request';
+            $response['code'] = 204;
+        }
+        // }
+        // else{
+        // 	$response['message'] = 'Authentication required';
+        // 	$response['code'] = 203;
+        // }
+        echo json_encode($response);
+    }
+    function updateSacCode() {
+        $response = array('code' => - 1, 'status' => false, 'message' => '');
+        // $validate = validateToken();
+        // if($validate){
+        if ($_SERVER["REQUEST_METHOD"] == "POST") {
+            if (empty($_POST['id'])) {
+                $response['message'] = 'Wrong Parameters';
+                $response['code'] = 201;
+            } else {
+                $sacCode = $this->model->updateData('sac_code', $_POST, ['id' => $_POST['id']]);
+                // $employee = $this->model->updateData('login', ['logo' => $_POST['photo']], ['fk_id' => $_POST['id'], 'usertype' => 'employee']);
+                $response['message'] = 'Sac Code Updated';
+                $response['code'] = 200;
+                $response['status'] = true;
+            }
+        } else {
+            $response['message'] = 'Invalid Request';
+            $response['code'] = 204;
+        }
+        // }
+        // else{
+        // 	$response['message'] = 'Authentication required';
+        // 	$response['code'] = 203;
+        // }
+        echo json_encode($response);
+    }
+    function get_all_sacCode() {
+        $response = array('code' => - 1, 'status' => false, 'message' => '');
+        // $validate = validateToken();
+        // if($validate){
+        if ($_SERVER["REQUEST_METHOD"] == "POST") {
+            $select = '*';
+            if (!empty($_POST['select']) && isset($_POST['select'])) {
+                $select = $_POST['select'];
+                unset($_POST['select']);
+            }
+            $order_by = [];
+            if (!empty($_POST['order_by']) && isset($_POST['order_by'])) {
+                $order_by_arr = explode('=', $_POST['order_by']);
+                $order_by[$order_by_arr[0]] = $order_by_arr[1];
+                unset($_POST['order_by']);
+            }
+            $sacCode = $this->model->getData('sac_code', $_POST, $select, $order_by);
+           
+            $response['sacCodes'] = $sacCode;
+            $response['message'] = 'success';
+            $response['code'] = 200;
+            $response['status'] = true;
+        } else {
+            $response['message'] = 'Invalid Request';
+            $response['code'] = 204;
+        }
+        // }
+        // else{
+        // 	$response['message'] = 'Authentication required';
+        // 	$response['code'] = 203;
+        // }
+        echo json_encode($response);
+    }
+    function get_sacCode() {
+        $response = array('code' => - 1, 'status' => false, 'message' => '');
+        // $validate = validateToken();
+        // if($validate){
+        if ($_SERVER["REQUEST_METHOD"] == "POST") {
+            if (empty($_POST['id'])) {
+                $response['message'] = 'SacCode id is required';
+                $response['code'] = 201;
+            } else {
+                $select = '*';
+                if (!empty($_POST['select']) && isset($_POST['select'])) {
+                    $select = $_POST['select'];
+                    unset($_POST['select']);
+                }
+                $sacCode = $this->model->getData('sac_code', $_POST, $select);
+                $response['sacCode'] = $sacCode;
+                $response['message'] = 'success';
+                $response['code'] = 200;
+                $response['status'] = true;
+            }
+        } else {
+            $response['message'] = 'Invalid Request';
+            $response['code'] = 204;
+        }
+        // }
+        // else{
+        // 	$response['message'] = 'Authentication required';
+        // 	$response['code'] = 203;
+        // }
+        echo json_encode($response);
+    }
+    function get_sacCode_byName() {
+        $response = array('code' => - 1, 'status' => false, 'message' => '');
+        // $validate = validateToken();
+        // if($validate){
+        if ($_SERVER["REQUEST_METHOD"] == "POST") {
+            if (empty($_POST['transport_mode'])) {
+                $response['message'] = 'Transport Mode is required';
+                $response['code'] = 201;
+            } else {
+                $select = '*';
+                if (!empty($_POST['select']) && isset($_POST['select'])) {
+                    $select = $_POST['select'];
+                    unset($_POST['select']);
+                }
+                $sacCode = $this->model->getData('sac_code', $_POST, $select);
+                $response['sacCode'] = $sacCode;
+                $response['message'] = 'success';
+                $response['code'] = 200;
+                $response['status'] = true;
+            }
+        } else {
+            $response['message'] = 'Invalid Request';
+            $response['code'] = 204;
+        }
+        // }
+        // else{
+        // 	$response['message'] = 'Authentication required';
+        // 	$response['code'] = 203;
+        // }
+        echo json_encode($response);
+    }
+    function delete_sacCode() {
+        $response = array('code' => - 1, 'status' => false, 'message' => '');
+        // $validate = validateToken();
+        // if($validate){
+        if ($_SERVER["REQUEST_METHOD"] == "POST") {
+            if (empty($_POST['id'])) {
+                $response['message'] = 'Wrong Parameters';
+                $response['code'] = 201;
+            } else {
+                $company = $this->model->deleteData('sac_code', ['id' => $_POST['id']]);
+                $response['message'] = 'Sac Code Deleted';
+                $response['code'] = 200;
+                $response['status'] = true;
+            }
+        } else {
+            $response['message'] = 'Invalid Request';
+            $response['code'] = 204;
+        }
+        // }
+        // else{
+        // 	$response['message'] = 'Authentication required';
+        // 	$response['code'] = 203;
+        // }
+        echo json_encode($response);
+    }
 }
