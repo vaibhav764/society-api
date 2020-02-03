@@ -4638,18 +4638,23 @@ class Admin_api extends CI_Controller {
             unset($_POST['select']);
         }
         $shipment = $this->model->getData('ship', $_POST, $select);
+        // echo '<pre>'; print_r($shipment); exit;
         if (empty($shipment)) {
             $response['message'] = 'No Data';
             $response['code'] = 201;
             echo json_encode($response);
             return;
         }
+        // $shipment[$key]['shipper'] = $this->model->getData('customer', ['id' => $value['shipper_id']]);
         if (!empty($shipment)) {
             foreach ($shipment as $key => $value) {
                 if (isset($value['shipper_id'])) {
                     $shipper_id = (int)$value['shipper_id'];
+
                     if ($shipper_id > 0) {
                         $shipment[$key]['shipper'] = $this->model->getData('customer', ['id' => $value['shipper_id']]);
+                        $shipment[$key]['company_data'] = $this->model->getData('company', ['id' => $value['company_id']]);
+                        
                         if (empty($shipment[$key]['shipper'])) {
                             $shipment[$key]['shipper'] = [];
                             $response['shipper'] = 'No Data';
@@ -6000,7 +6005,11 @@ class Admin_api extends CI_Controller {
                 $select = $_POST['select'];
                 unset($_POST['select']);
             }
+            // echo '<pre>'; print_r($select);
+            // echo '<pre>'; print_r($_POST);
+            //  exit;
             $order_status = $this->model->getData('tbl_order_status', $_POST, $select);
+            // echo '<pre>'; print_r($order_status); exit;
             $response['order_status'] = $order_status;
             $response['message'] = 'success';
             $response['code'] = 200;
