@@ -4872,11 +4872,15 @@ class Admin_api extends CI_Controller {
         $start_date = $this->model->getValue('customer', 'start_date', ['id' => $customer_id]);
         $end_date = $this->model->getValue('customer', 'end_date', ['id' => $customer_id]);
         $current_date = date('d/m/Y');
+        $end_date = strtotime($end_date);
+        $current_date = strtotime($current_date);
         if ($customer_type == 'prime') {
             if ($current_date <= $end_date) {
                 $is_prime = true;
             }
         }
+        // echo"<pre>";
+        // print_r($is_prime);die;
         $response['is_prime'] = $is_prime;
         $response['message'] = 'success';
         $response['code'] = 200;
