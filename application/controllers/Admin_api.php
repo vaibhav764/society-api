@@ -4500,11 +4500,12 @@ class Admin_api extends CI_Controller {
                         $v_ids[] = $this->model->insertData('ship_dimensions', $ship_dimension);
                     }
                 }
-                foreach ($db_ids as $key => $value) {
-                    if (!in_array($value, $v_ids)) {
-                        $this->model->deleteData('ship_dimensions', ['id' => $value]);
-                    }
-                }
+
+                // foreach ($db_ids as $key => $value) {
+                //     if (!in_array($value, $v_ids)) {
+                //         $this->model->deleteData('ship_dimensions', ['id' => $value]);
+                //     }
+                // }
             }
             $response['message'] = 'Order Updated';
         } else {
@@ -4552,6 +4553,8 @@ class Admin_api extends CI_Controller {
     }
     function updateShipment() {
         $response = array('code' => - 1, 'status' => false, 'message' => '');
+        // echo"<pre>";
+        // print_r($_POST);die;
         // $validate = validateToken();
         // if(!$validate){
         // 	$response['message'] = 'Authentication required';
@@ -4593,13 +4596,17 @@ class Admin_api extends CI_Controller {
             unset($_POST['select']);
         }
         $ship_history = $this->model->getData('ship', $_POST, $select, ['id' => 'DESC']);
+        // echo"<pre>";
+        // print_r($ship_history);die;
         if (!empty($ship_history)) {
             foreach ($ship_history as $key => $value) {
                 if (isset($value['shipper_contact'])) {
                     $ship_history[$key]['shipper'] = $this->model->getValue('customer_contacts', 'customer_name', ['id' => $value['shipper_contact']]);
+                    $ship_history[$key]['shipper_city'] = $this->model->getData('customer_contacts', ['id' => $value['shipper_contact']]);
                 }
                 if (isset($value['recepient_contact'])) {
                     $ship_history[$key]['recepient'] = $this->model->getValue('customer_contacts', 'customer_name', ['id' => $value['recepient_contact']]);
+                    $ship_history[$key]['recepient_city'] = $this->model->getData('customer_contacts', ['id' => $value['recepient_contact']]);
                 }
                 if (!empty($value['id'])) {
                     $ship_history[$key]['ship_dimensions'] = $this->model->getData('ship_dimensions', ['ship_id' => $value['id']]);
@@ -4855,16 +4862,19 @@ class Admin_api extends CI_Controller {
             $customer = $this->model->getData('customer', ['id' => $_POST['sender_id']], 'insurance_charges,bilty_charges,toll_charges,fuel_charges');
             $customer_type = strtolower($customer_type);
             $customer_id = $_POST['sender_id'];
+            $gst_per = $this->model->getValue('sac_code', 'gst_per', ['transport_mode' => $_POST['transport_mode']]);
         } else if ($_POST['bill_to'] == 'recepient' && !empty($_POST['recepient_id'])) {
             $customer_type = $this->model->getValue('customer', 'type', ['id' => $_POST['recepient_id']]);
             $customer = $this->model->getData('customer', ['id' => $_POST['recepient_id']], 'insurance_charges,bilty_charges,toll_charges,fuel_charges');
             $customer_type = strtolower($customer_type);
             $customer_id = $_POST['recepient_id'];
+            $gst_per = $this->model->getValue('sac_code', 'gst_per', ['transport_mode' => $_POST['transport_mode']]);
         } else if ($_POST['bill_to'] == 'third_party' && !empty($_POST['third_party'])) {
             $customer_type = $this->model->getValue('customer', 'type', ['id' => $_POST['third_party']]);
             $customer = $this->model->getData('customer', ['id' => $_POST['third_party']], 'insurance_charges,bilty_charges,toll_charges,fuel_charges');
             $customer_type = strtolower($customer_type);
             $customer_id = $_POST['third_party'];
+            $gst_per = $this->model->getValue('sac_code', 'gst_per', ['transport_mode' => $_POST['transport_mode']]);
         }
         if (empty($customer)) {
             $response['message'] = 'Wrong Parameters';
@@ -4873,6 +4883,7 @@ class Admin_api extends CI_Controller {
             return;
         }
         $response['customer'] = $customer[0];
+        $response['gst_per'] = $gst_per;
         $is_prime = false;
         $start_date = $this->model->getValue('customer', 'start_date', ['id' => $customer_id]);
         $end_date = $this->model->getValue('customer', 'end_date', ['id' => $customer_id]);
@@ -4884,8 +4895,6 @@ class Admin_api extends CI_Controller {
                 $is_prime = true;
             }
         }
-        // echo"<pre>";
-        // print_r($is_prime);die;
         $response['is_prime'] = $is_prime;
         $response['message'] = 'success';
         $response['code'] = 200;
@@ -4912,7 +4921,7 @@ class Admin_api extends CI_Controller {
             $select = $_POST['select'];
             unset($_POST['select']);
         }
-        $zone_id = $this->model->getSqlData('SELECT id,zone FROM zone WHERE FIND_IN_SET(' . $_POST['city_id'] . ',cities) > 0');
+        $zone_id = $this->model->getSqlData('SELECT id,zone FROM zone WHERE company_id = ' . $_POST['company_id'] . ' AND FIND_IN_SET(' . $_POST['city_id'] . ',cities) > 0');
         if (!isset($zone_id[0])) {
             $response['message'] = 'City Unavailable';
             $response['code'] = 201;
