@@ -7040,4 +7040,19 @@ class Admin_api extends CI_Controller {
         // }
         echo json_encode($response);
     }
+
+    public function pincode(){
+        $response = array('code' => - 1, 'status' => false, 'message' => '');
+        if ($_SERVER["REQUEST_METHOD"] == "POST") {
+            $pincode = $this->Admin_Model->pincode();
+            $response['code'] = 200;
+            $response['status'] = true;
+            $response= $pincode;
+
+        } else {
+            $response['message'] = 'Invalid Request';
+            $response['code'] = 204;
+        }
+        echo json_encode($response);
+    }
 }

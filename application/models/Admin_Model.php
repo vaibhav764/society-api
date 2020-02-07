@@ -2530,4 +2530,15 @@ class Admin_Model extends CI_Model {
         $response['data'] = $result;
         return $response;
     }
+    function pincode(){
+        $response = array();
+        $this->db->select('*');
+        $this->db->from('tbl_pin');
+        $query = $this->db->get();
+        $result = $query->result_array();
+        $response['status'] = 1;
+        $response['message'] = 'success';
+        $response['data'] = $result;
+        return $response;
+    }
 }
