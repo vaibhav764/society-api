@@ -1314,7 +1314,7 @@ class Admin_Model extends CI_Model {
         $this->db->join('states AS Dropstate', 'tbl_order_booking.drop_state=Dropstate.id', 'left');
         $this->db->where('tbl_order_booking.c_id', $data['id']);
         $this->db->where('tbl_order_booking.type !=', 'User');
-        $this->db->order_by('id', DESC);
+        $this->db->order_by('id', 'DESC');
         $query = $this->db->get();
         $result = $query->result_array();
         $response['status'] = 1;
@@ -1332,7 +1332,7 @@ class Admin_Model extends CI_Model {
         $this->db->join('states AS Dropstate', 'tbl_order_booking.drop_state=Dropstate.id', 'left');
         $this->db->where('tbl_order_booking.c_id', $data['id']);
         $this->db->where('tbl_order_booking.type !=', 'User');
-        $this->db->order_by('id', DESC);
+        $this->db->order_by('id', 'DESC');
         $query = $this->db->get();
         $result = $query->result_array();
         $response['status'] = 1;
@@ -1436,20 +1436,26 @@ class Admin_Model extends CI_Model {
         return $response;
     }
     public function get_manifest_details($city, $vehicle, $date_from, $date_to, $id) {
+        
         $response = array();
-        $this->db->select('tbl_outscan.*,tbl_outscan.created_at as outscan_date,GROUP_CONCAT(tbl_outscan.scan_count)scan_count,tbl_order_booking.*,tbl_order_booking.id as order_id, tbl_vehicle_master.*, tbl_vehicle_master.id as vehicle_id,tbl_company_master.id as company_id');
-        $this->db->from('tbl_outscan');
-        $this->db->join('tbl_order_booking', 'tbl_outscan.awb_no=tbl_order_booking.AWBno', 'left');
-        $this->db->join('tbl_vehicle_master', 'tbl_outscan.vechile_id=tbl_vehicle_master.id', 'left');
-        $this->db->join('tbl_company_master', 'tbl_order_booking.c_id=tbl_company_master.id', 'left');
-        $this->db->where('tbl_outscan.city', $city);
-        $this->db->where('tbl_outscan.vechile_id', $vehicle);
-        $this->db->where('tbl_outscan.date >=', $date_from);
-        $this->db->where('tbl_outscan.date <=', $date_to);
-        // $this->db->where('tbl_order_booking.c_id',$id);
-        $this->db->group_by('tbl_order_booking.AWBno');
-        $this->db->order_by('tbl_order_booking.order_date', 'ASC');
-        //  $this->db->order_by('tbl_outscan.id','DESC');
+        $this->db->select('source_outscan.*,GROUP_CONCAT(source_outscan.scan_count)scan_count,ship.*,ship.id as ship_id, vehicle.*, vehicle.id as v_id,company.contact,company.email,company.address,company.pincode,company.city_id,company.state_id,company.country_id,company.name as company_name,company.id as comp_id,customer_contacts.name, ToCustomer.name as to_customer,countries.name as country_name,states.name as state_name,cities.city as city_name');
+        $this->db->from('source_outscan');
+        $this->db->join('ship', 'source_outscan.awb_no=ship.AWBno', 'left');
+        $this->db->join('vehicle', 'source_outscan.vehicle_id=vehicle.id', 'left');
+        $this->db->join('company', 'ship.company_id=company.id', 'left');
+        $this->db->join('customer_contacts', 'ship.shipper_id=customer_contacts.customer_id', 'left');
+        $this->db->join('customer_contacts AS ToCustomer', 'ship.recepient_id=ToCustomer.customer_id', 'left');
+        $this->db->join('countries', 'company.country_id=countries.id', 'left');
+        $this->db->join('states', 'company.state_id=states.id', 'left');
+        $this->db->join('cities', 'company.city_id=cities.id', 'left');
+        $this->db->where('source_outscan.city', $city);
+        $this->db->where('source_outscan.vehicle_id', $vehicle);
+        $this->db->where('source_outscan.date >=', $date_from);
+        $this->db->where('source_outscan.date <=', $date_to);
+        $this->db->where('ship.company_id',$id);
+        $this->db->group_by('ship.AWBno');
+        $this->db->order_by('ship.ship_date', 'ASC');
+         $this->db->order_by('source_outscan.id','DESC');
         $query = $this->db->get();
         $result = $query->result_array();
         $response['status'] = 1;
@@ -1457,6 +1463,7 @@ class Admin_Model extends CI_Model {
         $response['data'] = $result;
         return $response;
     }
+  
     public function get_vehicle() {
         $query = $this->db->query('SELECT id,vcl_name FROM tbl_vehicle_master Where status=1');
         return $query->result();
@@ -1485,23 +1492,6 @@ class Admin_Model extends CI_Model {
         $response['data'] = $result;
         return $response;
     }
-    // public function generate_challan($vehicle,$date_from,$date_to)
-    // {
-    //     $response=array();
-    //     $this->db->select('tbl_outscan.*,tbl_outscan.awb_no as awb,tbl_outscan.created_at as outscan_date,tbl_order_booking.*,tbl_order_booking.created_at as order_date,tbl_order_booking.id as order_id, tbl_vehicle_master.*, tbl_vehicle_master.id as vehicle_id');
-    //     $this->db->from('tbl_outscan');
-    //     $this->db->join('tbl_order_booking','tbl_outscan.awb_no=tbl_order_booking.AWBno','left');
-    //     $this->db->join('tbl_vehicle_master','tbl_outscan.vechile_id=tbl_vehicle_master.id','left');
-    //     $this->db->where('tbl_outscan.vechile_id',$vehicle);
-    //     $this->db->where('tbl_outscan.date >=',$date_from);
-    //     $this->db->where('tbl_outscan.date <=',$date_to);
-    //     $query = $this->db->get();
-    //     $result = $query->result_array();
-    //     $response['status'] = 1;
-    //     $response['message'] = 'success';
-    //     $response['data'] = $result;
-    //     return $response;
-    // }
     public function generate_challan($vehicle, $date_from, $date_to) {
         $response = array();
         $this->db->select('tbl_outscan.*,tbl_outscan.awb_no as awb,tbl_outscan.created_at as outscan_date,tbl_order_booking.*,tbl_order_booking.created_at as order_date,tbl_order_booking.id as order_id, tbl_vehicle_master.*, tbl_vehicle_master.id as vehicle_id,tbl_manifest_reports.*,tbl_manifest_reports.id as manifest_id');

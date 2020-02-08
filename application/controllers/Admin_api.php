@@ -1367,6 +1367,7 @@ class Admin_api extends CI_Controller {
             }
         }
         $_POST['cft'] = json_encode($cft);
+        // echo "<pre>";print_r($_POST);die;
         $customer_id = $this->model->insertData('customer', $_POST);
         if (empty($customer_id)) {
             $response['message'] = 'System Error';
@@ -6772,37 +6773,31 @@ class Admin_api extends CI_Controller {
     }
     function get_manifest_details() {
         $response = array('code' => - 1, 'status' => false, 'message' => '');
-        // echo"<pre>";
-        // print_r($_POST);die;
-        $id = $_POST['id'];
-        $city = $_POST['city'];
-        $vehicle = $_POST['vehicle'];
-        $date_from = $_POST['date_from'];
-        $date_to = $_POST['date_to'];
-        // $validate = validateToken();
-        // if($validate){
         if ($_SERVER["REQUEST_METHOD"] == "POST") {
-            if (empty($_POST['id'])) {
-                $response['message'] = 'Driver id is required';
+            $id = $_POST['id'];
+            $city = $_POST['city'];
+            $vehicle = $_POST['vehicle'];
+            $date_from = $_POST['date_from'];
+            $date_to = $_POST['date_to'];
+        
+            if (empty($id)) {
+                $response['message'] = 'Id is required.';
                 $response['code'] = 201;
-            } else {
-                $select = '*';
-                if (!empty($_POST['select']) && isset($_POST['select'])) {
-                    $select = $_POST['select'];
-                    unset($_POST['select']);
-                }
-                $manifest = $this->model->get_manifest_details($city, $vehicle, $date_from, $date_to, $id);
-                if (!empty($manifest)) {
-                    foreach ($manifest as $key => $value) {
-                        $manifest[$key]['pickup_city'] = $this->model->getValue('customer_contacts', 'city', ['id' => $value['shipper_contact']]);
-                        $manifest[$key]['drop_city'] = $this->model->getValue('customer_contacts', 'city', ['id' => $value['shipper_contact']]);
-                    }
-                }
-                $response['manifest'] = $manifest;
-                $response['message'] = 'success';
-                $response['code'] = 200;
-                $response['status'] = true;
-            }
+            }else if(empty($city)){
+                $response['message'] = 'City is required.';
+                $response['code'] = 201;
+            }else if(empty($vehicle)){
+                $response['message'] = 'Vechile is required.';
+                $response['code'] = 201;
+            }else if(empty($date_from)){
+                $response['message'] = 'Date From is required.';
+                $response['code'] = 201;
+            }else if(empty($date_to)){
+                $response['message'] = 'Date To is required.';
+                $response['code'] = 201;
+            }else{
+                $response = $this->Admin_Model->get_manifest_details($city, $vehicle, $date_from, $date_to, $id);
+            }           
         } else {
             $response['message'] = 'Invalid Request';
             $response['code'] = 204;
