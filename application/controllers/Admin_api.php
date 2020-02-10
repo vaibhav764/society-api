@@ -1349,6 +1349,7 @@ class Admin_api extends CI_Controller {
         // }
         // unset($_POST['customer_contacts']);
         $_POST['autoid'] = $this->model->generate_next_id('customer', 'autoid', 'CUST', '3');
+
         $volumetric_weight = json_decode($_POST['volumetric_weight'], true);
         if (!empty($volumetric_weight)) {
             foreach ($volumetric_weight as $key => $value) {
@@ -1358,6 +1359,7 @@ class Admin_api extends CI_Controller {
             }
         }
         $_POST['volumetric_weight'] = json_encode($volumetric_weight);
+
         $cft = json_decode($_POST['cft'], true);
         if (!empty($cft)) {
             foreach ($cft as $key => $value) {
@@ -1367,7 +1369,47 @@ class Admin_api extends CI_Controller {
             }
         }
         $_POST['cft'] = json_encode($cft);
-        // echo "<pre>";print_r($_POST);die;
+
+        $insurance_charges = json_decode($_POST['insurance_charges'], true);
+        if (!empty($insurance_charges)) {
+            foreach ($insurance_charges as $key => $value) {
+                if (empty($value)) {
+                    $insurance_charges[$key] = 1;
+                }
+            }
+        }
+        $_POST['insurance_charges'] = json_encode($insurance_charges);
+
+        $bilty_charges = json_decode($_POST['bilty_charges'], true);
+        if (!empty($bilty_charges)) {
+            foreach ($bilty_charges as $key => $value) {
+                if (empty($value)) {
+                    $bilty_charges[$key] = 1;
+                }
+            }
+        }
+        $_POST['bilty_charges'] = json_encode($bilty_charges);
+
+        $toll_charges = json_decode($_POST['toll_charges'], true);
+        if (!empty($toll_charges)) {
+            foreach ($toll_charges as $key => $value) {
+                if (empty($value)) {
+                    $toll_charges[$key] = 1;
+                }
+            }
+        }
+        $_POST['toll_charges'] = json_encode($toll_charges);
+
+        $fuel_charges = json_decode($_POST['fuel_charges'], true);
+        if (!empty($fuel_charges)) {
+            foreach ($fuel_charges as $key => $value) {
+                if (empty($value)) {
+                    $fuel_charges[$key] = 1;
+                }
+            }
+        }
+        $_POST['fuel_charges'] = json_encode($fuel_charges);
+
         $customer_id = $this->model->insertData('customer', $_POST);
         if (empty($customer_id)) {
             $response['message'] = 'System Error';
@@ -1545,6 +1587,18 @@ class Admin_api extends CI_Controller {
                         if (!empty($value['cft'])) {
                             $customer[$key]['cft'] = json_decode($value['cft'], true);
                         }
+                        if (!empty($value['insurance_charges'])) {
+                            $customer[$key]['insurance_charges'] = json_decode($value['insurance_charges'], true);
+                        }
+                        if (!empty($value['bilty_charges'])) {
+                            $customer[$key]['bilty_charges'] = json_decode($value['bilty_charges'], true);
+                        }
+                        if (!empty($value['toll_charges'])) {
+                            $customer[$key]['toll_charges'] = json_decode($value['toll_charges'], true);
+                        }
+                        if (!empty($value['fuel_charges'])) {
+                            $customer[$key]['fuel_charges'] = json_decode($value['fuel_charges'], true);
+                        }
                         $customer[$key]['contacts'] = $this->model->getData('customer_contacts', ['customer_id' => $value['id']], $select2);
                     }
                 }
@@ -1609,6 +1663,47 @@ class Admin_api extends CI_Controller {
             }
         }
         $_POST['cft'] = json_encode($cft);
+
+        $insurance_charges = json_decode($_POST['insurance_charges'], true);
+        if (!empty($insurance_charges)) {
+            foreach ($insurance_charges as $key => $value) {
+                if (empty($value)) {
+                    $insurance_charges[$key] = 1;
+                }
+            }
+        }
+        $_POST['insurance_charges'] = json_encode($insurance_charges);
+
+        $bilty_charges = json_decode($_POST['bilty_charges'], true);
+        if (!empty($bilty_charges)) {
+            foreach ($bilty_charges as $key => $value) {
+                if (empty($value)) {
+                    $bilty_charges[$key] = 1;
+                }
+            }
+        }
+        $_POST['bilty_charges'] = json_encode($bilty_charges);
+
+        $toll_charges = json_decode($_POST['toll_charges'], true);
+        if (!empty($toll_charges)) {
+            foreach ($toll_charges as $key => $value) {
+                if (empty($value)) {
+                    $toll_charges[$key] = 1;
+                }
+            }
+        }
+        $_POST['toll_charges'] = json_encode($toll_charges);
+
+        $fuel_charges = json_decode($_POST['fuel_charges'], true);
+        if (!empty($fuel_charges)) {
+            foreach ($fuel_charges as $key => $value) {
+                if (empty($value)) {
+                    $fuel_charges[$key] = 1;
+                }
+            }
+        }
+        $_POST['fuel_charges'] = json_encode($fuel_charges);
+
         $customer = $this->model->updateData('customer', $_POST, ['id' => $_POST['id']]);
         // if(!empty($v_customer_contacts)) {
         // 	$v_ids = array_column($v_customer_contacts, 'id');
@@ -4883,7 +4978,42 @@ class Admin_api extends CI_Controller {
             echo json_encode($response);
             return;
         }
-        $response['customer'] = $customer[0];
+        // $response['customer'] = $customer[0];
+
+        if (!empty($customer)) {
+            
+            foreach ($customer as $key => $value) {
+
+                
+                // if (!empty($value['volumetric_weight'])) {
+                //     $customer[$key]['volumetric_weight'] = json_decode($value['volumetric_weight'], true);
+                // }
+                // if (!empty($value['cft'])) {
+                //     $customer[$key]['cft'] = json_decode($value['cft'], true);
+                // }
+                if (!empty($value['insurance_charges'])) {
+                    $response[$key]['insurance_charges'] = json_decode($value['insurance_charges'], true);
+                    // $response['customer'] =  $response[$key]['insurance_charges'];
+                }
+                if (!empty($value['bilty_charges'])) {
+                    $response[$key]['bilty_charges'] = json_decode($value['bilty_charges'], true);
+                    // $response['customer'] =  $response[$key]['bilty_charges'];
+
+                }
+                if (!empty($value['toll_charges'])) {
+                    $response[$key]['toll_charges'] = json_decode($value['toll_charges'], true);
+                    // $response['customer'] =  $response[$key]['toll_charges'];
+
+                }
+                if (!empty($value['fuel_charges'])) {
+                    $response[$key]['fuel_charges'] = json_decode($value['fuel_charges'], true);
+                    // $response['customer'] =  $response[$key]['fuel_charges'];
+
+                }
+                // $customer[$key]['contacts'] = $this->model->getData('customer_contacts', ['customer_id' => $value['id']], $select2);
+            }
+        }
+        $response['customer'] = $response[0];
         $response['gst_per'] = $gst_per;
         $is_prime = false;
         $start_date = $this->model->getValue('customer', 'start_date', ['id' => $customer_id]);
@@ -6872,7 +7002,7 @@ class Admin_api extends CI_Controller {
                     $response['code'] = 200;
                     $response['status'] = true;
                 } else {
-                    $response['message'] = 'Alredy Exist';
+                    $response['message'] = 'Already Exist';
                     $response['code'] = 201;
                 }
             }

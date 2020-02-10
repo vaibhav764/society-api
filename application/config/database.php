@@ -80,7 +80,7 @@ $db['default'] = array(
 	'password' => '',
 	'database' => 'logistics',
 
- //    'hostname' => 'localhost',
+ 	//'hostname' => 'localhost',
 	// 'username' => 'apexworl_apex',
 	// 'password' => 'x%rEKQ[A6^rE',
 	// 'database' => 'apexworl_newapex',
