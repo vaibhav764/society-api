@@ -6918,13 +6918,13 @@ class Admin_api extends CI_Controller {
                 $response['code'] = 201;
             }else{
                 $response = $this->model->get_manifest_details($city, $vehicle, $date_from, $date_to, $id);
-                    // if($response['status']==1){
-                    //     $response['message']="Susscess";
-                    //     $response['code']=200;
-                    // }else{
-                    //     $response['message']="Data Not Found";
-                    //     $response['code']=201;
-                    // }
+                    if($response['status']==1){
+                        $response['message']="success";
+                        $response['code']=200;
+                    }else{
+                        $response['message']="Data Not Found";
+                        $response['code']=201;
+                    }
             }           
         } else {
             $response['message'] = 'Invalid Request';
