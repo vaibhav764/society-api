@@ -6735,14 +6735,9 @@ class Admin_api extends CI_Controller {
     //***************************************Manifest Report****************************************/
     function get_all_manifest() {
         $response = array('code' => - 1, 'status' => false, 'message' => '');
-        // $validate = validateToken();
-        // if($validate){
+       
         if ($_SERVER["REQUEST_METHOD"] == "POST") {
-            // if (empty($_POST['id'])){
-            // 	$response['message'] = 'Vehicle id is required';
-            // 	$response['code'] = 201;
-            // }
-            // else{
+          
             $select = '*';
             if (!empty($_POST['select']) && isset($_POST['select'])) {
                 $select = $_POST['select'];
@@ -6764,11 +6759,7 @@ class Admin_api extends CI_Controller {
             $response['message'] = 'Invalid Request';
             $response['code'] = 204;
         }
-        // }
-        // else{
-        // 	$response['message'] = 'Authentication required';
-        // 	$response['code'] = 203;
-        // }
+       
         echo json_encode($response);
     }
     function get_manifest_details() {
@@ -6796,7 +6787,7 @@ class Admin_api extends CI_Controller {
                 $response['message'] = 'Date To is required.';
                 $response['code'] = 201;
             }else{
-                $response = $this->Admin_Model->get_manifest_details($city, $vehicle, $date_from, $date_to, $id);
+                $response = $this->model->get_manifest_details($city, $vehicle, $date_from, $date_to, $id);
             }           
         } else {
             $response['message'] = 'Invalid Request';

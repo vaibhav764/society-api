@@ -582,26 +582,32 @@ class Model extends CI_Model {
 	// }
 	
 	public function get_manifest_details($city, $vehicle, $date_from, $date_to, $id) {
+        
         $response = array();
-        $this->db->select('source_outscan.*,source_outscan.created_at as outscan_date,GROUP_CONCAT(source_outscan.scan_count)scan_count,ship.*,ship.id as order_id, vehicle.*, vehicle.id as vehicle_id,company.id as company_id,company.name as company_name,company.address as c_address,city as c_city,company.pincode as c_pincode,company.email as c_email,company.contact as c_contact');
+        $this->db->select('source_outscan.*,GROUP_CONCAT(source_outscan.scan_count)scan_count,ship.*,ship.id as ship_id, vehicle.*, vehicle.id as v_id,company.contact,company.email,company.address,company.pincode,company.city_id,company.state_id,company.country_id,company.name as company_name,company.id as comp_id,customer_contacts.name, ToCustomer.name as to_customer,countries.name as country_name,states.name as state_name,cities.city as city_name');
         $this->db->from('source_outscan');
-		$this->db->join('ship', 'source_outscan.awb_no=ship.AWBno', 'left');
-		$this->db->join('vehicle', 'source_outscan.vehicle_id=vehicle.id', 'left');
-		$this->db->join('company', 'ship.company_id=company.id', 'left');
+        $this->db->join('ship', 'source_outscan.awb_no=ship.AWBno', 'left');
+        $this->db->join('vehicle', 'source_outscan.vehicle_id=vehicle.id', 'left');
+        $this->db->join('company', 'ship.company_id=company.id', 'left');
+        $this->db->join('customer_contacts', 'ship.shipper_id=customer_contacts.customer_id', 'left');
+        $this->db->join('customer_contacts AS ToCustomer', 'ship.recepient_id=ToCustomer.customer_id', 'left');
+        $this->db->join('countries', 'company.country_id=countries.id', 'left');
+        $this->db->join('states', 'company.state_id=states.id', 'left');
+        $this->db->join('cities', 'company.city_id=cities.id', 'left');
         $this->db->where('source_outscan.city', $city);
         $this->db->where('source_outscan.vehicle_id', $vehicle);
         $this->db->where('source_outscan.date >=', $date_from);
         $this->db->where('source_outscan.date <=', $date_to);
-        // $this->db->where('tbl_order_booking.c_id',$id);
+        $this->db->where('ship.company_id',$id);
         $this->db->group_by('ship.AWBno');
         $this->db->order_by('ship.ship_date', 'ASC');
-        //  $this->db->order_by('source_outscan.id','DESC');
+         $this->db->order_by('source_outscan.id','DESC');
         $query = $this->db->get();
         $result = $query->result_array();
-        // $response['status'] = 1;
-        // $response['message'] = 'success';
-        // $response['data'] = $result;
-        return $result;
+        $response['status'] = 1;
+        $response['message'] = 'success';
+        $response['data'] = $result;
+        return $response;
     }
 
 }//class ends here	
