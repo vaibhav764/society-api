@@ -561,7 +561,7 @@ class Model extends CI_Model {
 	public function get_manifest_details($city, $vehicle, $date_from, $date_to, $id) {
         
         $response = array();
-        $this->db->select('source_outscan.*,GROUP_CONCAT(source_outscan.scan_count)scan_count,ship.*,ship.id as ship_id, vehicle.*, vehicle.id as v_id,company.contact,company.email,company.address,company.pincode,company.city_id,company.state_id,company.country_id,company.name as company_name,company.id as comp_id,customer_contacts.name, ToCustomer.name as to_customer,countries.name as country_name,states.name as state_name,cities.city as city_name');
+        $this->db->select('source_outscan.*,GROUP_CONCAT(source_outscan.scan_count)scan_count,ship.*,ship.id as ship_id, vehicle.*, vehicle.id as v_id,company.contact,company.email,company.address,company.pincode,company.city_id,company.state_id,company.country_id,company.name as company_name,company.id as comp_id,customer_contacts.customer_name, ToCustomer.customer_name as to_customer,countries.name as country_name,states.name as state_name,cities.city as city_name');
         $this->db->from('source_outscan');
         $this->db->join('ship', 'source_outscan.awb_no=ship.AWBno', 'left');
         $this->db->join('vehicle', 'source_outscan.vehicle_id=vehicle.id', 'left');
