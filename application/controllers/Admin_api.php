@@ -6972,55 +6972,7 @@ class Admin_api extends CI_Controller {
         // }
         echo json_encode($response);
     }
-    // ******************************************Challan Report**************************************/
-    public function get_challan_details()
-    {
-        $response = array('code' => - 1, 'status' => false, 'message' => '');
-        if ($_SERVER["REQUEST_METHOD"] == "POST") {
-            $id = $_POST['id'];
-            $from_city = $_POST['from_city'];
-            $to_city = $_POST['to_city'];
-            $vehicle = $_POST['vehicle'];
-            $date_from = $_POST['date_from'];
-            $date_to = $_POST['date_to'];
-            // $rate_rs = $_POST['rate_rs'];
-            // $total_fright = $_POST['total_fright'];
-            // $advanced_rs = $_POST['advanced_rs'];
-
-            if (empty($id)) {
-                $response['message'] = 'Id is required.';
-                $response['code'] = 201;
-            }else if(empty($from_city)){
-                $response['message'] = 'Source City is required.';
-                $response['code'] = 201;
-            }else if(empty($to_city)){
-                $response['message'] = 'Destination City is required.';
-                $response['code'] = 201;
-            }else if(empty($vehicle)){
-                $response['message'] = 'Vechile is required.';
-                $response['code'] = 201;
-            }else if(empty($date_from)){
-                $response['message'] = 'Date From is required.';
-                $response['code'] = 201;
-            }else if(empty($date_to)){
-                $response['message'] = 'Date To is required.';
-                $response['code'] = 201;
-            }else{
-                $response = $this->model->get_challan_details($vehicle, $date_from, $date_to, $id);
-                    if($response['status']==1){
-                        $response['message']="success";
-                        $response['code']=200;
-                    }else{
-                        $response['message']="Data Not Found";
-                        $response['code']=201;
-                    }
-            }
-        } else {
-            $response['message'] = 'Invalid Request';
-            $response['code'] = 204;
-        }
-        echo json_encode($response);
-    }
+ 
     //********************************************Sac Code*******************************************/
     function addSacCode() {
         $response = array('code' => - 1, 'status' => false, 'message' => '');
@@ -7227,4 +7179,54 @@ class Admin_api extends CI_Controller {
         }
         echo json_encode($response);
     }
+
+       // ******************************************Challan Report**************************************/
+       public function get_challan_details()
+       {
+           $response = array('code' => - 1, 'status' => false, 'message' => '');
+           if ($_SERVER["REQUEST_METHOD"] == "POST") {
+               $id = $_POST['id'];
+               $from_city = $_POST['from_city'];
+               $to_city = $_POST['to_city'];
+               $vehicle = $_POST['vehicle'];
+               $date_from = $_POST['date_from'];
+               $date_to = $_POST['date_to'];
+               // $rate_rs = $_POST['rate_rs'];
+               // $total_fright = $_POST['total_fright'];
+               // $advanced_rs = $_POST['advanced_rs'];
+   
+               if (empty($id)) {
+                   $response['message'] = 'Id is required.';
+                   $response['code'] = 201;
+               }else if(empty($from_city)){
+                   $response['message'] = 'Source City is required.';
+                   $response['code'] = 201;
+               }else if(empty($to_city)){
+                   $response['message'] = 'Destination City is required.';
+                   $response['code'] = 201;
+               }else if(empty($vehicle)){
+                   $response['message'] = 'Vechile is required.';
+                   $response['code'] = 201;
+               }else if(empty($date_from)){
+                   $response['message'] = 'Date From is required.';
+                   $response['code'] = 201;
+               }else if(empty($date_to)){
+                   $response['message'] = 'Date To is required.';
+                   $response['code'] = 201;
+               }else{
+                   $response = $this->model->get_challan_details($vehicle, $date_from, $date_to, $id);
+                       if($response['status']==1){
+                           $response['message']="success";
+                           $response['code']=200;
+                       }else{
+                           $response['message']="Data Not Found";
+                           $response['code']=201;
+                       }
+               }
+           } else {
+               $response['message'] = 'Invalid Request';
+               $response['code'] = 204;
+           }
+           echo json_encode($response);
+       }
 }
