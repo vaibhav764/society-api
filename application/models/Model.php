@@ -593,6 +593,25 @@ class Model extends CI_Model {
 		$response['message'] = 'Data not Found';
 		return $response;
 	   }
-    }
+	}
+	
+	public function get_challan_details($vehicle,$date_from,$date_to){
+		$response = array();
+        $this->db->select('source_outscan.*,source_outscan.awb_no as awb,source_outscan.date,ship.*,ship.created_at as order_date,ship.id as order_id, vehicle.*, vehicle.id as vehicle_id,tbl_manifest_reports.*,tbl_manifest_reports.id as manifest_id');
+        $this->db->from('source_outscan');
+        $this->db->join('ship', 'source_outscan.awb_no=ship.AWBno', 'left');
+        $this->db->join('vehicle', 'source_outscan.vehicle_id=vehicle.id', 'left');
+        $this->db->join('tbl_manifest_reports', 'tbl_manifest_reports.vechile_id=vehicle.id', 'left');
+        // $this->db->where('source_outscan.city',$city);
+        $this->db->where('source_outscan.vehicle_id', $vehicle);
+        $this->db->where('source_outscan.date >=', $date_from);
+        $this->db->where('source_outscan.date <=', $date_to);
+        $query = $this->db->get();
+        $result = $query->result_array();
+        $response['status'] = 1;
+        $response['message'] = 'success';
+        $response['data'] = $result;
+        return $response;
+	}
 
 }//class ends here	
