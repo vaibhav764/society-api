@@ -4577,6 +4577,7 @@ class Admin_api extends CI_Controller {
             $id = $this->model->insertData('customer_contacts', $recepient);
         }
         $_POST['recepient_contact'] = $id;
+
         if (!empty($_POST['id'])) {
             $ship_id = decrypt_password($_POST['id']);
             $_POST['id'] = decrypt_password($_POST['id']);
@@ -4605,6 +4606,11 @@ class Admin_api extends CI_Controller {
             }
             $response['message'] = 'Order Updated';
         } else {
+            
+            $_POST['source_city'] = $shipper['city'] = !empty($shipper['city']) ? $shipper['city'] : '';
+            $_POST['destination_city'] = $recepient['city'] = !empty($recepient['city']) ? $recepient['city'] : '';
+            // echo"<pre>";
+            // print_r($_POST);die;
             $ship_id = $this->model->insertData('ship', $_POST);
             if (!empty($ship_dimensions)) {
                 foreach ($ship_dimensions as $key => $ship_dimension) {
@@ -6353,12 +6359,14 @@ class Admin_api extends CI_Controller {
         // }
         echo json_encode($response);
     }
+
     public function add_map_barcode() {
         $response = array('code' => - 1, 'status' => false, 'message' => '');
         if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $awb_no['AWBno'] = $this->input->post('awb_no');
             $o_id = $this->model->getData('ship', ['AWBno' => $_POST['awb_no']], 'id');
             $o_id = $o_id[0]['id'];
+            $company_id = $_POST['company_id'];
             $awb_no = $awb_no['AWBno'];
             $barcode_no = json_decode($_POST['barcode_no'], true);
             $emp_id = $this->input->post('emp_id');
@@ -6382,7 +6390,7 @@ class Admin_api extends CI_Controller {
                         $response['is_submit'] = true;
                         $response['code'] = 201;
                     } else {
-                        $data = array('o_id' => $o_id, 'emp_id' => $emp_id, 'awb_no' => $awb_no, 'barcode_no' => $barcode_no[$i], 'total_order' => $order_data['total_order'], 'scan_count' => $order_data['scan_count'] + 1, 'pickup_date' => $date);
+                        $data = array('o_id' => $o_id,'company_id'=>$company_id, 'emp_id' => $emp_id, 'awb_no' => $awb_no, 'barcode_no' => $barcode_no[$i], 'total_order' => $order_data['total_order'], 'scan_count' => $order_data['scan_count'] + 1, 'pickup_date' => $date);
                         $response1 = $this->Adminapi_Model->check_data($barcode_no[$i]);
                         if ($response1['status'] == 0) {
                             $response = $this->Adminapi_Model->common_data_ins('map_barcode', $data);
@@ -6618,6 +6626,7 @@ class Admin_api extends CI_Controller {
         $response = array('code' => - 1, 'status' => false, 'message' => '');
         if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $emp_id = $this->input->post('emp_id');
+            $company_id = $_POST['company_id'];
             $barcode_no = json_decode($_POST['barcode_no'], true);
             $vehicle_no = $this->input->post('vehicle_id');
             $type = $this->input->post('type');
@@ -6650,7 +6659,7 @@ class Admin_api extends CI_Controller {
                         }
                         // echo"<pre>";
                         // print_r($order_data);die;
-                        $data1 = array('emp_id' => $emp_id, 'barcode_no' => $barcode_no[$i], 'awb_no' => $result['awb_no'], 'vehicle_id' => $data['id'], 'source_city' => $city['pickup_city'], 'city' => $city['drop_city'], 'date' => $date, 'total_order' => $order_data['no_of_boxes'], 'scan_count' => $order_data['scan_count'] + 1);
+                        $data1 = array('emp_id' => $emp_id,'company_id'=>$company_id, 'barcode_no' => $barcode_no[$i], 'awb_no' => $result['awb_no'], 'vehicle_id' => $data['id'], 'source_city' => $city['pickup_city'], 'city' => $city['drop_city'], 'date' => $date, 'total_order' => $order_data['no_of_boxes'], 'scan_count' => $order_data['scan_count'] + 1);
                         $response1 = $this->Adminapi_Model->check_data2($barcode_no[$i], $type);
                         if ($response1['status'] == 0) {
                             if ($type == 'Source') {
@@ -6930,6 +6939,45 @@ class Admin_api extends CI_Controller {
         // }
         echo json_encode($response);
     }
+
+    function get_drs_details() {
+        $response = array('code' => - 1, 'status' => false, 'message' => '');
+        if ($_SERVER["REQUEST_METHOD"] == "POST") {
+            $id = $_POST['id'];
+            $city = $_POST['city'];
+            $vehicle = $_POST['vehicle'];
+            $date_from = $_POST['date_from'];
+            $date_to = $_POST['date_to'];
+        
+            if (empty($id)) {
+                $response['message'] = 'Id is required.';
+                $response['code'] = 201;
+            }else if(empty($city)){
+                $response['message'] = 'City is required.';
+                $response['code'] = 201;
+            }else if(empty($vehicle)){
+                $response['message'] = 'Vechile is required.';
+                $response['code'] = 201;
+            }else if(empty($date_from)){
+                $response['message'] = 'Date From is required.';
+                $response['code'] = 201;
+            }else if(empty($date_to)){
+                $response['message'] = 'Date To is required.';
+                $response['code'] = 201;
+            }else{
+                $response = $this->model->get_drs_details($city, $vehicle, $date_from, $date_to, $id);
+            }           
+        } else {
+            $response['message'] = 'Invalid Request';
+            $response['code'] = 204;
+        }
+        // }
+        // else{
+        // 	$response['message'] = 'Authentication required';
+        // 	$response['code'] = 203;
+        // }
+        echo json_encode($response);
+    }
     function add_manifest_report() {
         $response = array('code' => - 1, 'status' => false, 'message' => '');
         // echo"<pre>";
@@ -6965,6 +7013,237 @@ class Admin_api extends CI_Controller {
         // }
         echo json_encode($response);
     }
+
+    function get_all_drs() {
+        $response = array('code' => - 1, 'status' => false, 'message' => '');
+       
+        if ($_SERVER["REQUEST_METHOD"] == "POST") {
+          
+            $select = '*';
+            if (!empty($_POST['select']) && isset($_POST['select'])) {
+                $select = $_POST['select'];
+                unset($_POST['select']);
+            }
+            $drs_report = $this->model->getData('tbl_drs_reports', $_POST, $select);
+           
+            if (!empty($drs_report)) {
+                foreach ($drs_report as $key => $value) {
+                    $drs_report[$key]['vehicle_name'] = $this->model->getValue('vehicle', 'name', ['id' => $value['vechile_id']]);
+                }
+            }
+            $response['drs_report'] = $drs_report;
+            $response['message'] = 'success';
+            $response['code'] = 200;
+            $response['status'] = true;
+            // }
+            
+        } else {
+            $response['message'] = 'Invalid Request';
+            $response['code'] = 204;
+        }
+       
+        echo json_encode($response);
+    }
+    function add_drs_report() {
+        $response = array('code' => - 1, 'status' => false, 'message' => '');
+        // echo"<pre>";
+        // print_r($_POST);die;
+        // $validate = validateToken();
+        // if($validate){
+        if ($_SERVER["REQUEST_METHOD"] == "POST") {
+            if (empty($_POST['city'])) {
+                $response['message'] = 'Please fill required fields';
+                $response['code'] = 201;
+            } else {
+                $isExist = $this->model->isExist('tbl_manifest_reports', 'manifest_no', $_POST['manifest_no']);
+                // $isExist2 = $this->model->isExist('login','email',$_POST['prsn_email']);
+                if (!$isExist) {
+                    $manifest_id = $this->model->insertData('tbl_drs_reports', $_POST);
+                    // echo"hi";die;
+                    $response['message'] = 'success';
+                    $response['code'] = 200;
+                    $response['status'] = true;
+                } else {
+                    $response['message'] = 'Manifest Number is already exist';
+                    $response['code'] = 201;
+                }
+            }
+        } else {
+            $response['message'] = 'Invalid Request';
+            $response['code'] = 204;
+        }
+        // }
+        // else{
+        // 	$response['message'] = 'Authentication required';
+        // 	$response['code'] = 203;
+        // }
+        echo json_encode($response);
+    }
+    //*********************************************Daily Reports************************************/
+    function get_daily_reports_cities() {
+        $response = array('code' => - 1, 'status' => false, 'message' => '');
+        $cities = $this->model->get_daily_reports_cities();
+        if (empty($cities)) {
+            $response['message'] = 'No Data';
+            $response['code'] = 201;
+            echo json_encode($response);
+            return;
+        }
+        $response['cities'] = $cities;
+        $response['message'] = 'success';
+        $response['code'] = 200;
+        $response['status'] = true;
+        echo json_encode($response);
+    }
+    function get_all_daily_reports() {
+        $response = array('code' => - 1, 'status' => false, 'message' => '');
+       
+        if ($_SERVER["REQUEST_METHOD"] == "POST") {
+          
+            $select = '*';
+            if (!empty($_POST['select']) && isset($_POST['select'])) {
+                $select = $_POST['select'];
+                unset($_POST['select']);
+            }
+            $daily_report = $this->model->getData('daily_report', $_POST, $select);
+           
+            if (!empty($daily_report)) {
+                foreach ($daily_report as $key => $value) {
+                    $daily_report[$key]['customer_name'] = $this->model->getValue('customer', 'name', ['id' => $value['customer_id']]);
+                }
+            }
+            $response['daily_report'] = $daily_report;
+            $response['message'] = 'success';
+            $response['code'] = 200;
+            $response['status'] = true;
+            // }
+            
+        } else {
+            $response['message'] = 'Invalid Request';
+            $response['code'] = 204;
+        }
+       
+        echo json_encode($response);
+    }
+    function getDailyReports() {
+        $response = array('code' => - 1, 'status' => false, 'message' => '');
+        if ($_SERVER["REQUEST_METHOD"] == "POST") {
+            $id = $_POST['id'];
+            $source_city = $_POST['source_city'];
+            $destination_city = $_POST['destination_city'];
+            $date_from = $_POST['date_from'];
+            $date_to = $_POST['date_to'];
+            $customer_id = $_POST['customer_id'];
+        
+        $select = '*';
+        if (!empty($_POST['select']) && isset($_POST['select'])) {
+            $select = $_POST['select'];
+            unset($_POST['select']);
+        }
+        $ship_history = $this->model->getDailyReports($date_from, $date_to,$source_city,$destination_city,$customer_id, $id);
+        if (!empty($ship_history)) {
+            foreach ($ship_history as $key => $value) {
+                if (isset($value['shipper_contact'])) {
+                    $ship_history[$key]['shipper'] = $this->model->getValue('customer_contacts', 'customer_name', ['id' => $value['shipper_contact']]);
+                }
+                if (isset($value['recepient_contact'])) {
+                    $ship_history[$key]['recepient'] = $this->model->getValue('customer_contacts', 'customer_name', ['id' => $value['recepient_contact']]);
+                }
+            }
+        } else {
+            $ship_history = [];
+        }
+        // echo"<pre>";
+        // print_r($ship_history);die;
+        $response['ship_history'] = $ship_history;
+        $response['message'] = 'success';
+        $response['code'] = 200;
+        $response['status'] = true;
+        echo json_encode($response);
+    }
+    }
+    function scanDetails()
+    {
+        $response = array('code' => - 1, 'status' => false, 'message' => '');
+        if ($_SERVER["REQUEST_METHOD"] == "POST") {
+            $id = $_POST['id'];
+            // $source_city = $_POST['source_city'];
+            // $destination_city = $_POST['destination_city'];
+            $date_from = $_POST['date_from'];
+            $date_to = $_POST['date_to'];
+        
+        $select = '*';
+        if (!empty($_POST['select']) && isset($_POST['select'])) {
+            $select = $_POST['select'];
+            unset($_POST['select']);
+        }
+        $scanDetails['pickup_scan'] = $this->model->pickupScanDetails($date_from, $date_to, $id);
+        $scanDetails['inscan'] = $this->model->inscanDetails($date_from, $date_to, $id);
+        $scanDetails['outscan'] = $this->model->outscanDetails($date_from, $date_to, $id);
+        // echo"<pre>";
+        // print_r($scanDetails);die;
+        // if (!empty($ship_history)) {
+        //     foreach ($ship_history as $key => $value) {
+        //         if (isset($value['shipper_contact'])) {
+        //             $ship_history[$key]['shipper'] = $this->model->getValue('customer_contacts', 'customer_name', ['id' => $value['shipper_contact']]);
+        //         }
+        //         if (isset($value['recepient_contact'])) {
+        //             $ship_history[$key]['recepient'] = $this->model->getValue('customer_contacts', 'customer_name', ['id' => $value['recepient_contact']]);
+        //         }
+        //     }
+        // } else {
+        //     $ship_history = [];
+        // }
+        // echo"<pre>";
+        // print_r($ship_history);die;
+        $response['scanDetails'] = $scanDetails;
+        $response['message'] = 'success';
+        $response['code'] = 200;
+        $response['status'] = true;
+        echo json_encode($response);
+        }
+    }
+
+    function add_daily_report() {
+        $response = array('code' => - 1, 'status' => false, 'message' => '');
+        // echo"<pre>";
+        // print_r($_POST);die;
+        // $validate = validateToken();
+        // if($validate){
+        if ($_SERVER["REQUEST_METHOD"] == "POST") {
+            if (empty($_POST['date_from'])) {
+                $response['message'] = 'Please fill required fields';
+                $response['code'] = 201;
+            }
+            else if (empty($_POST['date_to'])) {
+                $response['message'] = 'Please fill required fields';
+                $response['code'] = 201;
+            } else {
+                // $isExist = $this->model->isExist('tbl_manifest_reports', 'manifest_no', $_POST['manifest_no']);
+                // $isExist2 = $this->model->isExist('login','email',$_POST['prsn_email']);
+                // if (!$isExist) {
+                    $daily_reports = $this->model->insertData('daily_report', $_POST);
+                    // echo"hi";die;
+                    $response['message'] = 'success';
+                    $response['code'] = 200;
+                    $response['status'] = true;
+                // } else {
+                //     $response['message'] = 'Manifest Number is already exist';
+                //     $response['code'] = 201;
+                // }
+            }
+        } else {
+            $response['message'] = 'Invalid Request';
+            $response['code'] = 204;
+        }
+        // }
+        // else{
+        // 	$response['message'] = 'Authentication required';
+        // 	$response['code'] = 203;
+        // }
+        echo json_encode($response);
+    }
+
     //********************************************Sac Code*******************************************/
     function addSacCode() {
         $response = array('code' => - 1, 'status' => false, 'message' => '');

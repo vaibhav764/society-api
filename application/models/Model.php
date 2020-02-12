@@ -608,6 +608,133 @@ class Model extends CI_Model {
         $response['message'] = 'success';
         $response['data'] = $result;
         return $response;
+	}
+	
+	public function get_drs_details($city, $vehicle, $date_from, $date_to, $id) {
+        
+        $response = array();
+        $this->db->select('destination_outscan.*,GROUP_CONCAT(destination_outscan.scan_count)scan_count,ship.*,ship.id as ship_id, vehicle.*, vehicle.id as v_id,company.contact,company.email,company.address,company.pincode,company.city_id,company.state_id,company.country_id,company.name as company_name,company.id as comp_id,customer_contacts.name, ToCustomer.name as to_customer,countries.name as country_name,states.name as state_name,cities.city as city_name');
+        $this->db->from('destination_outscan');
+        $this->db->join('ship', 'destination_outscan.awb_no=ship.AWBno', 'left');
+        $this->db->join('vehicle', 'destination_outscan.vehicle_id=vehicle.id', 'left');
+        $this->db->join('company', 'ship.company_id=company.id', 'left');
+        $this->db->join('customer_contacts', 'ship.shipper_id=customer_contacts.customer_id', 'left');
+        $this->db->join('customer_contacts AS ToCustomer', 'ship.recepient_id=ToCustomer.customer_id', 'left');
+        $this->db->join('countries', 'company.country_id=countries.id', 'left');
+        $this->db->join('states', 'company.state_id=states.id', 'left');
+        $this->db->join('cities', 'company.city_id=cities.id', 'left');
+        $this->db->where('destination_outscan.city', $city);
+        $this->db->where('destination_outscan.vehicle_id', $vehicle);
+        $this->db->where('destination_outscan.date >=', $date_from);
+        $this->db->where('destination_outscan.date <=', $date_to);
+        $this->db->where('ship.company_id',$id);
+        $this->db->group_by('ship.AWBno');
+        $this->db->order_by('ship.ship_date', 'ASC');
+         $this->db->order_by('destination_outscan.id','DESC');
+        $query = $this->db->get();
+        $result = $query->result_array();
+        $response['status'] = 1;
+        $response['message'] = 'success';
+        $response['data'] = $result;
+        return $response;
     }
 
+	//***************************************Daily Reports******************************************/
+	public function getDailyReports($date_from='', $date_to='',$source_city='',$destination_city='',$customer_id='',$id) {
+        
+        $response = array();
+        $this->db->select('ship.*,company.*');
+		$this->db->from('ship');
+		$this->db->join('company','company.id=ship.company_id', 'left');
+		$this->db->where('ship.company_id',$id);
+		
+		if(!empty($date_from)){
+			$this->db->where('ship.ship_date >=', $date_from);
+		}
+		if(!empty($date_to)){
+			$this->db->where('ship.ship_date <=', $date_to);
+		}
+		if(!empty($source_city)){
+			$this->db->where('ship.source_city', $source_city);
+		}
+		if(!empty($destination_city)){
+			$this->db->where('ship.destination_city', $destination_city);
+		}
+		if(!empty($customer_id)){
+			$this->db->where('ship.shipper_id', $customer_id);
+		}
+        $query = $this->db->get();
+        $result = $query->result_array();
+        $response['status'] = 1;
+        $response['message'] = 'success';
+        $response = $result;
+        return $response;
+	}
+	
+	public function get_daily_reports_cities()
+	{
+		$response = array();
+        $this->db->select('*');
+		$this->db->from('cities');
+		$this->db->group_by('city'); 
+		$query = $this->db->get();
+        $result = $query->result_array();
+        $response['status'] = 1;
+        $response['message'] = 'success';
+        $response = $result;
+        return $response;
+	}
+
+	public function pickupScanDetails($date_from, $date_to,$id) {
+        
+        $response = array();
+        $this->db->select('*');
+		$this->db->from('map_barcode');
+		$this->db->where('map_barcode.company_id',$id);
+		$this->db->where('map_barcode.pickup_date >=', $date_from);
+		$this->db->where('map_barcode.pickup_date <=', $date_to);
+
+        $query = $this->db->get();
+        $result = $query->result_array();
+        $response['status'] = 1;
+        $response['message'] = 'success';
+        $response = $result;
+        return $response;
+	}
+
+	public function inscanDetails($date_from, $date_to,$id) {
+        
+        $response = array();
+        $this->db->select('source_inscan.*,employee.name');
+		$this->db->from('source_inscan');
+		$this->db->join('employee', 'employee.id=source_inscan.emp_id', 'left');
+		$this->db->where('source_inscan.c_id',$id);
+		$this->db->where('source_inscan.inscan_date >=', $date_from);
+		$this->db->where('source_inscan.inscan_date <=', $date_to);
+
+        $query = $this->db->get();
+        $result = $query->result_array();
+        $response['status'] = 1;
+        $response['message'] = 'success';
+        $response = $result;
+        return $response;
+	}
+
+	public function outscanDetails($date_from, $date_to,$id) {
+        
+        $response = array();
+        $this->db->select('source_outscan.*,employee.name');
+		$this->db->from('source_outscan');
+		$this->db->join('employee', 'employee.id=source_outscan.emp_id', 'left');
+		$this->db->where('source_outscan.company_id',$id);
+		$this->db->where('source_outscan.date >=', $date_from);
+		$this->db->where('source_outscan.date <=', $date_to);
+
+        $query = $this->db->get();
+        $result = $query->result_array();
+        $response['status'] = 1;
+        $response['message'] = 'success';
+        $response = $result;
+        return $response;
+	}
 }//class ends here	
