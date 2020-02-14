@@ -2982,7 +2982,7 @@ class Admin_api extends CI_Controller {
                 $this->model->updateData('zone', $zone, ['id' => $key]);
             }
         }
-        $response['message'] = $_POST['total'] . ' Zones Added';
+        $response['message'] = ' Zones Added';
         $response['code'] = 200;
         $response['status'] = true;
         echo json_encode($response);
