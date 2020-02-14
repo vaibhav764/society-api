@@ -581,10 +581,18 @@ class Model extends CI_Model {
          $this->db->order_by('source_outscan.id','DESC');
         $query = $this->db->get();
         $result = $query->result_array();
-        $response['status'] = 1;
-        $response['message'] = 'success';
-        $response['data'] = $result;
-        return $response;
+		if($query->num_rows() >= 1) {
+			$response['status'] = 1;
+			$response['message'] = 'success';
+			$response['data'] = $result;
+			return $response;
+	   }
+	   else
+	   {
+		$response['status'] = 0;
+		$response['message'] = 'Data Not Found';
+		return $response;
+	   }
 	}
 	
 	public function get_drs_details($city, $vehicle, $date_from, $date_to, $id) {
@@ -610,10 +618,18 @@ class Model extends CI_Model {
          $this->db->order_by('destination_outscan.id','DESC');
         $query = $this->db->get();
         $result = $query->result_array();
-        $response['status'] = 1;
-        $response['message'] = 'success';
-        $response['data'] = $result;
-        return $response;
+        if($query->num_rows() >= 1) {
+			$response['status'] = 1;
+			$response['message'] = 'success';
+			$response['data'] = $result;
+			return $response;
+	   }
+	   else
+	   {
+		$response['status'] = 0;
+		$response['message'] = 'Data Not Found';
+		return $response;
+	   }
     }
 
 	//***************************************Daily Reports******************************************/
@@ -717,7 +733,7 @@ class Model extends CI_Model {
 	
 	public function get_challan_details($vehicle,$date_from,$date_to){
 		$response = array();
-        $this->db->select('source_outscan.*,GROUP_CONCAT(source_outscan.awb_no)awb,source_outscan.date,ship.*,ship.created_at as order_date,ship.id as order_id, vehicle.*, vehicle.id as vehicle_id,tbl_manifest_reports.manifest_no,tbl_manifest_reports.vechile_id,tbl_manifest_reports.id as manifest_id,company.contact,company.email,company.address,company.pincode,company.city_id,company.state_id,company.country_id,company.name as company_name,company.id as comp_id,company.logo');
+        $this->db->select('source_outscan.*,source_outscan.date,ship.*,ship.created_at as order_date,ship.id as order_id, vehicle.*, vehicle.id as vehicle_id,tbl_manifest_reports.manifest_no,tbl_manifest_reports.vechile_id,tbl_manifest_reports.id as manifest_id,company.contact,company.email,company.address,company.pincode,company.city_id,company.state_id,company.country_id,company.name as company_name,company.id as comp_id,company.logo');
         $this->db->from('source_outscan');
 		$this->db->join('ship', 'source_outscan.awb_no=ship.AWBno', 'left');
 		$this->db->join('company', 'ship.company_id=company.id', 'left');

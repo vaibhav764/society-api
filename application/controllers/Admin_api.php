@@ -6964,6 +6964,13 @@ class Admin_api extends CI_Controller {
                 $response['code'] = 201;
             }else{
                 $response = $this->model->get_drs_details($city, $vehicle, $date_from, $date_to, $id);
+                if($response['status']==1){
+                    $response['message']="success";
+                    $response['code']=200;
+                }else{
+                    $response['message']="Data Not Found";
+                    $response['code']=201;
+                }
             }           
         } else {
             $response['message'] = 'Invalid Request';
@@ -7053,7 +7060,7 @@ class Admin_api extends CI_Controller {
                 $response['message'] = 'Please fill required fields';
                 $response['code'] = 201;
             } else {
-                $isExist = $this->model->isExist('tbl_manifest_reports', 'manifest_no', $_POST['manifest_no']);
+                $isExist = $this->model->isExist('tbl_drs_reports', 'drs_no', $_POST['drs_no']);
                 // $isExist2 = $this->model->isExist('login','email',$_POST['prsn_email']);
                 if (!$isExist) {
                     $manifest_id = $this->model->insertData('tbl_drs_reports', $_POST);
@@ -7495,4 +7502,50 @@ class Admin_api extends CI_Controller {
            }
            echo json_encode($response);
        }
+
+        function add_challan_report() {
+            $response = array('code' => - 1, 'status' => false, 'message' => '');
+            if ($_SERVER["REQUEST_METHOD"] == "POST") {
+                
+                        $this->model->insertData('tbl_challan', $_POST);
+                        $response['message'] = 'success';
+                        $response['code'] = 200;
+                        $response['status'] = true;
+            } else {
+                $response['message'] = 'Invalid Request';
+                $response['code'] = 204;
+            }
+        
+            echo json_encode($response);
+        }
+
+        function get_all_challan() {
+            $response = array('code' => - 1, 'status' => false, 'message' => '');
+           
+            if ($_SERVER["REQUEST_METHOD"] == "POST") {
+              
+                $select = '*';
+                if (!empty($_POST['select']) && isset($_POST['select'])) {
+                    $select = $_POST['select'];
+                    unset($_POST['select']);
+                }
+                $challan_report = $this->model->getData('tbl_challan', $_POST, $select);
+                if (!empty($challan_report)) {
+                    foreach ($challan_report as $key => $value) {
+                        $challan_report[$key]['vehicle_name'] = $this->model->getValue('vehicle', 'name', ['id' => $value['vehicle_id']]);
+                    }
+                }
+                $response['challan_report'] = $challan_report;
+                $response['message'] = 'success';
+                $response['code'] = 200;
+                $response['status'] = true;
+                // }
+                
+            } else {
+                $response['message'] = 'Invalid Request';
+                $response['code'] = 204;
+            }
+           
+            echo json_encode($response);
+        }
 }
