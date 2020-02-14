@@ -4577,7 +4577,6 @@ class Admin_api extends CI_Controller {
             $id = $this->model->insertData('customer_contacts', $recepient);
         }
         $_POST['recepient_contact'] = $id;
-
         if (!empty($_POST['id'])) {
             $ship_id = decrypt_password($_POST['id']);
             $_POST['id'] = decrypt_password($_POST['id']);
@@ -4606,11 +4605,6 @@ class Admin_api extends CI_Controller {
             }
             $response['message'] = 'Order Updated';
         } else {
-            
-            $_POST['source_city'] = $shipper['city'] = !empty($shipper['city']) ? $shipper['city'] : '';
-            $_POST['destination_city'] = $recepient['city'] = !empty($recepient['city']) ? $recepient['city'] : '';
-            // echo"<pre>";
-            // print_r($_POST);die;
             $ship_id = $this->model->insertData('ship', $_POST);
             if (!empty($ship_dimensions)) {
                 foreach ($ship_dimensions as $key => $ship_dimension) {
@@ -6378,14 +6372,12 @@ class Admin_api extends CI_Controller {
         // }
         echo json_encode($response);
     }
-
     public function add_map_barcode() {
         $response = array('code' => - 1, 'status' => false, 'message' => '');
         if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $awb_no['AWBno'] = $this->input->post('awb_no');
             $o_id = $this->model->getData('ship', ['AWBno' => $_POST['awb_no']], 'id');
             $o_id = $o_id[0]['id'];
-            $company_id = $_POST['company_id'];
             $awb_no = $awb_no['AWBno'];
             $barcode_no = json_decode($_POST['barcode_no'], true);
             $emp_id = $this->input->post('emp_id');
@@ -6409,7 +6401,7 @@ class Admin_api extends CI_Controller {
                         $response['is_submit'] = true;
                         $response['code'] = 201;
                     } else {
-                        $data = array('o_id' => $o_id,'company_id'=>$company_id, 'emp_id' => $emp_id, 'awb_no' => $awb_no, 'barcode_no' => $barcode_no[$i], 'total_order' => $order_data['total_order'], 'scan_count' => $order_data['scan_count'] + 1, 'pickup_date' => $date);
+                        $data = array('o_id' => $o_id, 'emp_id' => $emp_id, 'awb_no' => $awb_no, 'barcode_no' => $barcode_no[$i], 'total_order' => $order_data['total_order'], 'scan_count' => $order_data['scan_count'] + 1, 'pickup_date' => $date);
                         $response1 = $this->Adminapi_Model->check_data($barcode_no[$i]);
                         if ($response1['status'] == 0) {
                             $response = $this->Adminapi_Model->common_data_ins('map_barcode', $data);
@@ -6645,7 +6637,6 @@ class Admin_api extends CI_Controller {
         $response = array('code' => - 1, 'status' => false, 'message' => '');
         if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $emp_id = $this->input->post('emp_id');
-            $company_id = $_POST['company_id'];
             $barcode_no = json_decode($_POST['barcode_no'], true);
             $vehicle_no = $this->input->post('vehicle_id');
             $type = $this->input->post('type');
@@ -6678,7 +6669,7 @@ class Admin_api extends CI_Controller {
                         }
                         // echo"<pre>";
                         // print_r($order_data);die;
-                        $data1 = array('emp_id' => $emp_id,'company_id'=>$company_id, 'barcode_no' => $barcode_no[$i], 'awb_no' => $result['awb_no'], 'vehicle_id' => $data['id'], 'source_city' => $city['pickup_city'], 'city' => $city['drop_city'], 'date' => $date, 'total_order' => $order_data['no_of_boxes'], 'scan_count' => $order_data['scan_count'] + 1);
+                        $data1 = array('emp_id' => $emp_id, 'barcode_no' => $barcode_no[$i], 'awb_no' => $result['awb_no'], 'vehicle_id' => $data['id'], 'source_city' => $city['pickup_city'], 'city' => $city['drop_city'], 'date' => $date, 'total_order' => $order_data['no_of_boxes'], 'scan_count' => $order_data['scan_count'] + 1);
                         $response1 = $this->Adminapi_Model->check_data2($barcode_no[$i], $type);
                         if ($response1['status'] == 0) {
                             if ($type == 'Source') {
@@ -6991,6 +6982,13 @@ class Admin_api extends CI_Controller {
                 $response['code'] = 201;
             }else{
                 $response = $this->model->get_drs_details($city, $vehicle, $date_from, $date_to, $id);
+                if($response['status']==1){
+                    $response['message']="success";
+                    $response['code']=200;
+                }else{
+                    $response['message']="Data Not Found";
+                    $response['code']=201;
+                }
             }           
         } else {
             $response['message'] = 'Invalid Request';
@@ -7079,7 +7077,7 @@ class Admin_api extends CI_Controller {
                 $response['message'] = 'Please fill required fields';
                 $response['code'] = 201;
             } else {
-                $isExist = $this->model->isExist('tbl_manifest_reports', 'manifest_no', $_POST['manifest_no']);
+                $isExist = $this->model->isExist('tbl_drs_reports', 'drs_no', $_POST['drs_no']);
                 // $isExist2 = $this->model->isExist('login','email',$_POST['prsn_email']);
                 if (!$isExist) {
                     $manifest_id = $this->model->insertData('tbl_drs_reports', $_POST);
@@ -7266,7 +7264,7 @@ class Admin_api extends CI_Controller {
         // }
         echo json_encode($response);
     }
-
+ 
     //********************************************Sac Code*******************************************/
     function addSacCode() {
         $response = array('code' => - 1, 'status' => false, 'message' => '');
@@ -7504,4 +7502,96 @@ class Admin_api extends CI_Controller {
        
         echo json_encode($response);
     }
+       // ******************************************Challan Report**************************************/
+       public function get_challan_details()
+       {
+           $response = array('code' => - 1, 'status' => false, 'message' => '');
+           if ($_SERVER["REQUEST_METHOD"] == "POST") {
+               $id = $_POST['id'];
+               $from_city = $_POST['from_city'];
+               $to_city = $_POST['to_city'];
+               $vehicle = $_POST['vehicle'];
+               $date_from = $_POST['date_from'];
+               $date_to = $_POST['date_to'];
+                
+               if (empty($id)) {
+                   $response['message'] = 'Id is required.';
+                   $response['code'] = 201;
+               }else if(empty($from_city)){
+                   $response['message'] = 'Source City is required.';
+                   $response['code'] = 201;
+               }else if(empty($to_city)){
+                   $response['message'] = 'Destination City is required.';
+                   $response['code'] = 201;
+               }else if(empty($vehicle)){
+                   $response['message'] = 'Vechile is required.';
+                   $response['code'] = 201;
+               }else if(empty($date_from)){
+                   $response['message'] = 'Date From is required.';
+                   $response['code'] = 201;
+               }else if(empty($date_to)){
+                   $response['message'] = 'Date To is required.';
+                   $response['code'] = 201;
+               }else{
+                   $response = $this->model->get_challan_details($vehicle, $date_from, $date_to, $id);
+                       if($response['status']==1){
+                           $response['message']="success";
+                           $response['code']=200;
+                       }else{
+                           $response['message']="Data Not Found";
+                           $response['code']=201;
+                       }
+               }
+           } else {
+               $response['message'] = 'Invalid Request';
+               $response['code'] = 204;
+           }
+           echo json_encode($response);
+       }
+
+        function add_challan_report() {
+            $response = array('code' => - 1, 'status' => false, 'message' => '');
+            if ($_SERVER["REQUEST_METHOD"] == "POST") {
+                
+                        $this->model->insertData('tbl_challan', $_POST);
+                        $response['message'] = 'success';
+                        $response['code'] = 200;
+                        $response['status'] = true;
+            } else {
+                $response['message'] = 'Invalid Request';
+                $response['code'] = 204;
+            }
+        
+            echo json_encode($response);
+        }
+
+        function get_all_challan() {
+            $response = array('code' => - 1, 'status' => false, 'message' => '');
+           
+            if ($_SERVER["REQUEST_METHOD"] == "POST") {
+              
+                $select = '*';
+                if (!empty($_POST['select']) && isset($_POST['select'])) {
+                    $select = $_POST['select'];
+                    unset($_POST['select']);
+                }
+                $challan_report = $this->model->getData('tbl_challan', $_POST, $select);
+                if (!empty($challan_report)) {
+                    foreach ($challan_report as $key => $value) {
+                        $challan_report[$key]['vehicle_name'] = $this->model->getValue('vehicle', 'name', ['id' => $value['vehicle_id']]);
+                    }
+                }
+                $response['challan_report'] = $challan_report;
+                $response['message'] = 'success';
+                $response['code'] = 200;
+                $response['status'] = true;
+                // }
+                
+            } else {
+                $response['message'] = 'Invalid Request';
+                $response['code'] = 204;
+            }
+           
+            echo json_encode($response);
+        }
 }
