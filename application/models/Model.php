@@ -580,7 +580,6 @@ class Model extends CI_Model {
         $this->db->order_by('ship.ship_date', 'ASC');
          $this->db->order_by('source_outscan.id','DESC');
         $query = $this->db->get();
-<<<<<<< HEAD
         $result = $query->result_array();
         $response['status'] = 1;
         $response['message'] = 'success';
@@ -615,21 +614,6 @@ class Model extends CI_Model {
         $response['message'] = 'success';
         $response['data'] = $result;
         return $response;
-=======
-		$result = $query->result_array();
-		if($query->num_rows() >= 1) {
-			$response['status'] = 1;
-			$response['message'] = 'success';
-			$response['data'] = $result;
-			return $response;
-	   }
-	   else
-	   {
-		$response['status'] = 0;
-		$response['message'] = 'Data not Found';
-		return $response;
-	   }
->>>>>>> 34bc44d307a8d23ab984c4ef12d10c4ec6392fab
     }
 
 	//***************************************Daily Reports******************************************/

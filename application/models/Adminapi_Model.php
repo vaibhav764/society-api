@@ -768,7 +768,7 @@ class Adminapi_Model extends CI_Model
             $box_count=$this->get_total_order($o_id);
             $query = $this->db->get_where('map_barcode',array('o_id'=>$o_id,'awb_no'=>$awb_no));
             $count = $query->num_rows();
-            $response['total_order']=$box_count;
+            $response['no_of_boxes']=$box_count;
             $response['scan_count']=$count;
             if($count==$box_count)
             {
@@ -810,11 +810,11 @@ class Adminapi_Model extends CI_Model
       }
      public function check_data1($barcode_no,$type)
       {
-            if($type=='Source')
+            if($type=='source')
             {
                 $table='source_inscan';
             }
-            else if($type=='Destination')
+            else if($type=='destination')
             {
                 $table='destination_inscan';
             }
@@ -822,6 +822,7 @@ class Adminapi_Model extends CI_Model
             $response = array();
 
             $query = $this->db->get_where($table, array('barcode_no'=>$barcode_no));
+            
             if ($query->num_rows() > 0){
                 $response['status'] = 1;
                 $response['message'] = 'Already Exist';
@@ -838,11 +839,11 @@ class Adminapi_Model extends CI_Model
 
       public function check_data2($barcode_no,$type)
       {
-        if($type=='Source')
+        if($type=='source')
         {
             $table='source_outscan';
         }
-        else if($type=='Destination')
+        else if($type=='destination')
         {
             $table='destination_outscan';
         }
