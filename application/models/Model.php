@@ -750,18 +750,22 @@ class Model extends CI_Model {
         $response['data'] = $result;
         return $response;
 	}
-	public function get_mis_report() {
+	public function get_mis_report($id) {
         $end_date = date('Y-m-d', strtotime("-60 days"));
         //@$newformat = date('d/m/Y',$end_date);
         $response = array();
-		$this->db->select('ship.*, ship.id as order_id,source_outscan.*,source_outscan.id as source_outscan,GROUP_CONCAT(source_outscan.date)out_scan_date,source_outscan.awb_no as out_scan_awb_no,destination_outscan.*,destination_outscan.awb_no as des_outscan_awb,GROUP_CONCAT(destination_outscan.date)out_destination_scan_date,destination_outscan.id as destination_outscan,GROUP_CONCAT(tbl_order_status.order_status) order_status,GROUP_CONCAT(tbl_status_master.status_name)status_name,tbl_forwarding.vendor2');
-		// 
+		$this->db->select('ship.*, ship.id as order_id,source_outscan.*,source_outscan.id as source_outscan,GROUP_CONCAT(source_outscan.date)out_scan_date,source_outscan.awb_no as out_scan_awb_no,destination_outscan.*,destination_outscan.awb_no as des_outscan_awb,GROUP_CONCAT(destination_outscan.date)out_destination_scan_date,destination_outscan.id as destination_outscan,GROUP_CONCAT(tbl_order_status.order_status) order_status,GROUP_CONCAT(tbl_status_master.status_name)status_name,tbl_forwarding.vendor2,customer_contacts.customer_id,customer_contacts.city as source_city_name, Drop_city.city as destination_city_name,customer_contacts.city_id as source_city_id, Drop_city.city_id as destination_city_id,company.id as comp_id,FromCustomer.customer_name from_customer_name, ToCustomer.customer_name as to_customer_name');
         $this->db->from('ship');
         $this->db->join('source_outscan', 'source_outscan.awb_no=ship.AWBno', 'left');
         $this->db->join('destination_outscan', 'destination_outscan.awb_no=ship.AWBno', 'left');
         $this->db->join('tbl_forwarding', 'tbl_forwarding.awb_no=ship.AWBno', 'left');
         $this->db->join('tbl_order_status', 'tbl_order_status.fk_oid=ship.id', 'left');
-        $this->db->join('tbl_status_master', 'tbl_order_status.order_status=tbl_status_master.id', 'left');
+		$this->db->join('tbl_status_master', 'tbl_order_status.order_status=tbl_status_master.id', 'left');
+		$this->db->join('customer_contacts', 'customer_contacts.customer_id=ship.shipper_id', 'left');
+        $this->db->join('customer_contacts AS Drop_city', 'Drop_city.customer_id=ship.recepient_id', 'left');
+		$this->db->join('company', 'ship.company_id=company.id', 'left');
+		$this->db->join('customer_contacts AS FromCustomer', 'ship.shipper_id=FromCustomer.customer_id', 'left');
+        $this->db->join('customer_contacts AS ToCustomer', 'ship.recepient_id=ToCustomer.customer_id', 'left');
         $this->db->where("date_format(STR_TO_DATE(ship_date,'%d/%m/%Y'),'%Y-%m-%d') >", $end_date);
         $this->db->group_by('ship.AWBno');
         $query = $this->db->get();
@@ -769,6 +773,21 @@ class Model extends CI_Model {
         $response['status'] = 1;
         $response['message'] = 'success';
         $response['data'] = $result;
+        return $response;
+	}
+	public function get_mis_on_cities($comp_id,$transport_type,$transport_speed,$transport_mode) {
+        $response = array();
+        $this->db->select('*');
+        $this->db->from('tat');
+        $this->db->where('transport_type', $transport_type);
+        $this->db->where('transport_speed', $transport_speed);
+        $this->db->where('transport_mode', $transport_mode);
+        $this->db->where('company_id', $comp_id);
+        $query = $this->db->get();
+        $result = $query->result_array();
+        $response['status'] = 1;
+        $response['message'] = 'success';
+        $response = $result;
         return $response;
     }
 

@@ -6394,6 +6394,7 @@ class Admin_api extends CI_Controller {
                     $response['code'] = 201;
                 } else {
                     $order_data = $this->Adminapi_Model->get_scan_count($o_id, $awb_no);
+                    // print_r($order_data);die;
                     $status_name = "Pickup Scan";
                     $status_details = $this->Adminapi_Model->get_status_info($status_name);
                     if ($order_data['is_submit']) {
@@ -6401,7 +6402,7 @@ class Admin_api extends CI_Controller {
                         $response['is_submit'] = true;
                         $response['code'] = 201;
                     } else {
-                        $data = array('o_id' => $o_id, 'emp_id' => $emp_id, 'awb_no' => $awb_no, 'barcode_no' => $barcode_no[$i], 'total_order' => $order_data['total_order'], 'scan_count' => $order_data['scan_count'] + 1, 'pickup_date' => $date);
+                        $data = array('o_id' => $o_id, 'emp_id' => $emp_id, 'awb_no' => $awb_no, 'barcode_no' => $barcode_no[$i], 'total_order' => $order_data['no_of_boxes'], 'scan_count' => $order_data['scan_count'] + 1, 'pickup_date' => $date);
                         $response1 = $this->Adminapi_Model->check_data($barcode_no[$i]);
                         if ($response1['status'] == 0) {
                             $response = $this->Adminapi_Model->common_data_ins('map_barcode', $data);
@@ -6410,17 +6411,17 @@ class Admin_api extends CI_Controller {
                             $order_data_latest = $this->Adminapi_Model->get_scan_count($o_id, $awb_no);
                             $location = $this->Adminapi_Model->get_pickup_scan_location($awb_no);
                             if ($order_data_latest['is_submit'] == true) {
-                                if ($order_data_latest['total_order'] == $order_data_latest['scan_count']) {
-                                    if ($order_data_latest['total_order'] == 1) {
+                                if ($order_data_latest['no_of_boxes'] == $order_data_latest['scan_count']) {
+                                    if ($order_data_latest['no_of_boxes'] == 1) {
                                         // $date = date('d/m/Y');
-                                        $pickupscan_status = array('fk_oid' => $location['id'], 'fk_userid' => $location['shipper_id'], 'awb_no' => $awb_no, 'order_status' => $status_details['id'], 'status_description' => "Pickup Scanning", 'order_location' => $location['pickup_city'], 'expected_date' => $date, 'total_order' => $order_data_latest['total_order'], 'scan_count' => $order_data_latest['scan_count']);
+                                        $pickupscan_status = array('fk_oid' => $location['id'], 'fk_userid' => $location['shipper_id'], 'awb_no' => $awb_no, 'order_status' => $status_details['id'], 'status_description' => "Pickup Scanning", 'order_location' => $location['pickup_city'], 'expected_date' => $date, 'total_order' => $order_data_latest['no_of_boxes'], 'scan_count' => $order_data_latest['scan_count']);
                                         $response = $this->Adminapi_Model->common_data_ins('tbl_order_status', $pickupscan_status);
                                         $response['message1'] = "Scanning completed";
                                         $response['status'] = true;
                                         $response['code'] = 200;
                                         $response['message'] = "success";
                                         $response['scanning_count'] = $order_data_latest['scan_count'];
-                                        $response['total_count'] = $order_data_latest['total_order'];
+                                        $response['total_count'] = $order_data_latest['no_of_boxes'];
                                         $response['is_submit'] = $order_data_latest['is_submit'];
                                     } else {
                                         $update = array('status_description' => "Pickup Scanning Completed", 'scan_count' => $order_data_latest['scan_count']);
@@ -6430,7 +6431,7 @@ class Admin_api extends CI_Controller {
                                         $response['code'] = 200;
                                         $response['message'] = "success";
                                         $response['scanning_count'] = $order_data_latest['scan_count'];
-                                        $response['total_count'] = $order_data_latest['total_order'];
+                                        $response['total_count'] = $order_data_latest['no_of_boxes'];
                                         $response['is_submit'] = $order_data_latest['is_submit'];
                                     }
                                 }
@@ -6446,14 +6447,14 @@ class Admin_api extends CI_Controller {
                                     $this->db->update('tbl_order_status', $update, array('fk_oid' => $o_id));
                                 } else {
                                     $date = date('d/m/Y');
-                                    $pickupscan_status = array('fk_oid' => $location['id'], 'fk_userid' => $location['shipper_id'], 'awb_no' => $awb_no, 'order_status' => $status_details['id'], 'status_description' => "Pickup Scanning", 'order_location' => $location['pickup_city'], 'expected_date' => $date, 'total_order' => $order_data_latest['total_order'], 'scan_count' => $order_data_latest['scan_count']);
+                                    $pickupscan_status = array('fk_oid' => $location['id'], 'fk_userid' => $location['shipper_id'], 'awb_no' => $awb_no, 'order_status' => $status_details['id'], 'status_description' => "Pickup Scanning", 'order_location' => $location['pickup_city'], 'expected_date' => $date, 'total_order' => $order_data_latest['no_of_boxes'], 'scan_count' => $order_data_latest['scan_count']);
                                     $response = $this->Adminapi_Model->common_data_ins('tbl_order_status', $pickupscan_status);
                                 }
                                 $response['status'] = true;
                                 $response['code'] = 200;
                                 $response['message'] = "success";
                                 $response['scanning_count'] = $order_data_latest['scan_count'];
-                                $response['total_count'] = $order_data_latest['total_order'];
+                                $response['total_count'] = $order_data_latest['no_of_boxes'];
                                 $response['is_submit'] = $order_data_latest['is_submit'];
                             }
                         } else {
@@ -6499,7 +6500,7 @@ class Admin_api extends CI_Controller {
                         $awb_no = $result['awb_no'];
                         $data = $this->Adminapi_Model->get_details_on_awb_no($awb_no);
                         $employee = $this->Adminapi_Model->get_employee_details($emp_id);
-                        if ($type == "Source") {
+                        if ($type == "source") {
                             $order_data = $this->Adminapi_Model->get_inscan_count($awb_no);
                         } else {
                             $order_data = $this->Adminapi_Model->get_destination_count($awb_no);
@@ -6509,7 +6510,7 @@ class Admin_api extends CI_Controller {
                         $data1 = array('emp_id' => $emp_id, 'c_id' => $data['company_id'], 'barcode_no' => $barcode_no[$i], 'awb_no' => $result['awb_no'], 'total_order' => $order_data['no_of_boxes'], 'scan_count' => $order_data['scan_count'] + 1, 'inscan_date' => $date);
                         $response1 = $this->Adminapi_Model->check_data1($barcode_no[$i], $type);
                         if ($response1['status'] == 0) {
-                            if ($type == 'Source') {
+                            if ($type == 'source') {
                                 $response = $this->Adminapi_Model->common_data_ins('source_inscan', $data1);
                                 $order_data_latest = $this->Adminapi_Model->get_inscan_count($awb_no);
                                 // echo"<pre>";
@@ -6561,7 +6562,7 @@ class Admin_api extends CI_Controller {
                                     $response['total_count'] = $order_data_latest['no_of_boxes'];
                                     $response['is_submit'] = $order_data_latest['is_submit'];
                                 }
-                            } else if ($type == 'Destination') {
+                            } else if ($type == 'destination') {
                                 $response = $this->Adminapi_Model->common_data_ins('destination_inscan', $data1);
                                 $order_data_latest1 = $this->Adminapi_Model->get_destination_count($awb_no);
                                 $status_name = "Shipment Received In Destination";
@@ -6672,7 +6673,7 @@ class Admin_api extends CI_Controller {
                         $data1 = array('emp_id' => $emp_id, 'barcode_no' => $barcode_no[$i], 'awb_no' => $result['awb_no'], 'vehicle_id' => $data['id'], 'source_city' => $city['pickup_city'], 'city' => $city['drop_city'], 'date' => $date, 'total_order' => $order_data['no_of_boxes'], 'scan_count' => $order_data['scan_count'] + 1);
                         $response1 = $this->Adminapi_Model->check_data2($barcode_no[$i], $type);
                         if ($response1['status'] == 0) {
-                            if ($type == 'Source') {
+                            if ($type == 'source') {
                                 $response = $this->Adminapi_Model->common_data_ins('source_outscan', $data1);
                                 $this->db->update('source_inscan', array('status' => '0'), array('id' => $result['id']));
                                 $order_data_latest = $this->Adminapi_Model->get_outscan_count($awb_no);
@@ -6724,7 +6725,7 @@ class Admin_api extends CI_Controller {
                                     $response['total_count'] = $order_data_latest['no_of_boxes'];
                                     $response['is_submit'] = $order_data_latest['is_submit'];
                                 }
-                            } else if ($type == 'Destination') {
+                            } else if ($type == 'destination') {
                                 $response = $this->Adminapi_Model->common_data_ins('destination_outscan', $data1);
                                 $this->db->update('destination_inscan', array('status' => '0'), array('id' => $result['id']));
                                 $order_data_latest1 = $this->Adminapi_Model->get_destination_outscan_count($awb_no);
@@ -7599,11 +7600,75 @@ class Admin_api extends CI_Controller {
 
             $response = array('code' => - 1, 'status' => false, 'message' => '');
             if ($_SERVER["REQUEST_METHOD"] == "POST") {
-                $response = $this->model->get_mis_report();
+                $id = $this->input->post('id');
+                $response = $this->model->get_mis_report($id);
+                // $transport_type = $response['data'][0]['transport_type'];
+                // $transport_speed = $response['data'][0]['transport_speed'];
+                // $delivery_type = $response['data'][0]['delivery_type'];
+                // $transport_mode = $response['data'][0]['transport_mode'];
+
+                // $tat_details = $this->model->getData('tat', ['company_id' => $id, 'transport_type' => $transport_type ,'transport_mode' => $transport_mode]);
+
+                // $time = $tat_details[0]['time'];
+
+                // echo"<pre>";
+                // print_r($time);die;
             } else {
                 $response['message'] = 'Invalid Request';
                 $response['code'] = 204;
             }
             echo json_encode($response);
         }
+
+        public function get_mis_on_cities(){
+            $response = array('code' => - 1, 'status' => false, 'message' => '');
+            if ($_SERVER["REQUEST_METHOD"] == "POST") {
+                $transport_type = $this->input->post('transport_type');
+                $transport_speed = $this->input->post('transport_speed');
+                $transport_mode = $this->input->post('transport_mode');
+                $comp_id = $this->input->post('comp_id');
+                
+                $response = $this->model->get_mis_on_cities($comp_id,$transport_type,$transport_speed,$transport_mode);
+                $tat = unserialize($response[0]['time']);
+
+                // $zone_ids = [];
+                // foreach($tat as $from_zone=>$value){
+                //     if(!in_array($from_zone,$zone_ids)){
+                //         $zone_ids[] = $from_zone;
+                //     }
+                //     foreach($value as $to_zone=>$tat){
+                //         if(!in_array($to_zone,$zone_ids)){
+                //             $zone_ids[] = $to_zone;
+                //         }
+                //     }
+                // }
+
+                // foreach ($tat as $from_zone => $value) {
+                //     foreach ($value as $to_zone => $rate) {
+                //         if ((int)$rate > 0) {
+                //             $customer_prime_charges2 = array('tat' => $tat);
+                //         }
+                //     }
+                // }
+
+                // print_r($customer_prime_charges2);die;
+                
+                // $all_zones = $this->model->getData('zone');
+                // $zone_cities = null;
+                // foreach($all_zones as $value){
+                //     $zone_cities[$value['id']] = $this->model->getValue('zone','cities',['id'=>$value['id']]);
+                // }
+
+                $response['tat'] =$tat;
+                // $response['zone_cities'] =$zone_cities;
+
+
+            } else {
+                $response['message'] = 'Invalid Request';
+                $response['code'] = 204;
+            }
+            echo json_encode($response);
+        }
+
+
 }
