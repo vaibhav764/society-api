@@ -7594,4 +7594,16 @@ class Admin_api extends CI_Controller {
            
             echo json_encode($response);
         }
+
+        function mis_report(){
+
+            $response = array('code' => - 1, 'status' => false, 'message' => '');
+            if ($_SERVER["REQUEST_METHOD"] == "POST") {
+                $response = $this->model->get_mis_report();
+            } else {
+                $response['message'] = 'Invalid Request';
+                $response['code'] = 204;
+            }
+            echo json_encode($response);
+        }
 }

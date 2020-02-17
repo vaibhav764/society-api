@@ -750,5 +750,26 @@ class Model extends CI_Model {
         $response['data'] = $result;
         return $response;
 	}
+	public function get_mis_report() {
+        $end_date = date('Y-m-d', strtotime("-60 days"));
+        //@$newformat = date('d/m/Y',$end_date);
+        $response = array();
+		$this->db->select('ship.*, ship.id as order_id,source_outscan.*,source_outscan.id as source_outscan,GROUP_CONCAT(source_outscan.date)out_scan_date,source_outscan.awb_no as out_scan_awb_no,destination_outscan.*,destination_outscan.awb_no as des_outscan_awb,GROUP_CONCAT(destination_outscan.date)out_destination_scan_date,destination_outscan.id as destination_outscan,GROUP_CONCAT(tbl_order_status.order_status) order_status,GROUP_CONCAT(tbl_status_master.status_name)status_name,tbl_forwarding.vendor2');
+		// 
+        $this->db->from('ship');
+        $this->db->join('source_outscan', 'source_outscan.awb_no=ship.AWBno', 'left');
+        $this->db->join('destination_outscan', 'destination_outscan.awb_no=ship.AWBno', 'left');
+        $this->db->join('tbl_forwarding', 'tbl_forwarding.awb_no=ship.AWBno', 'left');
+        $this->db->join('tbl_order_status', 'tbl_order_status.fk_oid=ship.id', 'left');
+        $this->db->join('tbl_status_master', 'tbl_order_status.order_status=tbl_status_master.id', 'left');
+        $this->db->where("date_format(STR_TO_DATE(ship_date,'%d/%m/%Y'),'%Y-%m-%d') >", $end_date);
+        $this->db->group_by('ship.AWBno');
+        $query = $this->db->get();
+        $result = $query->result_array();
+        $response['status'] = 1;
+        $response['message'] = 'success';
+        $response['data'] = $result;
+        return $response;
+    }
 
 }//class ends here	
