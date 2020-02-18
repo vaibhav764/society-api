@@ -919,5 +919,37 @@ function encyrpt_password($password='')
     return $output;
 }
 
+function getUserIP()
+{
+    // Get real visitor IP behind CloudFlare network
+    if (isset($_SERVER["HTTP_CF_CONNECTING_IP"])) {
+              $_SERVER['REMOTE_ADDR'] = $_SERVER["HTTP_CF_CONNECTING_IP"];
+              $_SERVER['HTTP_CLIENT_IP'] = $_SERVER["HTTP_CF_CONNECTING_IP"];
+    }
+    $client  = @$_SERVER['HTTP_CLIENT_IP'];
+    $forward = @$_SERVER['HTTP_X_FORWARDED_FOR'];
+    $remote  = $_SERVER['REMOTE_ADDR'];
+
+    if(filter_var($client, FILTER_VALIDATE_IP))
+    {
+        $ip = $client;
+    }
+    elseif(filter_var($forward, FILTER_VALIDATE_IP))
+    {
+        $ip = $forward;
+    }
+    else
+    {
+        $ip = $remote;
+    }
+
+    return $ip;
+}
+function emaillog($sender_id='',$receiver_id='',$receiver_email='',$content='',$subject='',$attachment_type='',$attachment_data='',$date_time='',$ip_address='')
+{
+   $data = array('sender_id'=>$sender_id,'receiver_id'=>$receiver_id,'receiver_email' =>$receiver_email,'content'=>$content,'subject'=>$subject,'attachment_type'=>$attachment_type,'attachment_data'=>$attachment_data,'date_time'=>$date_time,'ip_address'=>$ip_address);
+   return $data;
+}
+
 
 ?>

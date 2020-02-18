@@ -6912,6 +6912,7 @@ class Admin_api extends CI_Controller {
        
         echo json_encode($response);
     }
+   
     function get_manifest_details() {
         $response = array('code' => - 1, 'status' => false, 'message' => '');
         if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -7630,43 +7631,90 @@ class Admin_api extends CI_Controller {
                 
                 $response = $this->model->get_mis_on_cities($comp_id,$transport_type,$transport_speed,$transport_mode);
                 $tat = unserialize($response[0]['time']);
-
-                // $zone_ids = [];
-                // foreach($tat as $from_zone=>$value){
-                //     if(!in_array($from_zone,$zone_ids)){
-                //         $zone_ids[] = $from_zone;
-                //     }
-                //     foreach($value as $to_zone=>$tat){
-                //         if(!in_array($to_zone,$zone_ids)){
-                //             $zone_ids[] = $to_zone;
-                //         }
-                //     }
-                // }
-
-                // foreach ($tat as $from_zone => $value) {
-                //     foreach ($value as $to_zone => $rate) {
-                //         if ((int)$rate > 0) {
-                //             $customer_prime_charges2 = array('tat' => $tat);
-                //         }
-                //     }
-                // }
-
-                // print_r($customer_prime_charges2);die;
-                
-                // $all_zones = $this->model->getData('zone');
-                // $zone_cities = null;
-                // foreach($all_zones as $value){
-                //     $zone_cities[$value['id']] = $this->model->getValue('zone','cities',['id'=>$value['id']]);
-                // }
-
                 $response['tat'] =$tat;
-                // $response['zone_cities'] =$zone_cities;
-
-
             } else {
                 $response['message'] = 'Invalid Request';
                 $response['code'] = 204;
             }
+            echo json_encode($response);
+        }
+        public function add_mis_report(){
+            $response = array('code' => - 1, 'status' => false, 'message' => '');
+            if ($_SERVER["REQUEST_METHOD"] == "POST") {
+                
+                    $this->model->insertData('tbl_mis_report', $_POST);
+                    $response['message'] = 'success';
+                    $response['code'] = 200;
+                    $response['status'] = true;
+            } else {
+                $response['message'] = 'Invalid Request';
+                $response['code'] = 204;
+            }
+            echo json_encode($response);
+        }
+        function get_all_mis_report(){
+            $response = array('code' => - 1, 'status' => false, 'message' => '');
+           
+            if ($_SERVER["REQUEST_METHOD"] == "POST") {
+              
+                $select = '*';
+                if (!empty($_POST['select']) && isset($_POST['select'])) {
+                    $select = $_POST['select'];
+                    unset($_POST['select']);
+                }
+                $mis_report = $this->model->getData('tbl_mis_report', $_POST, $select);
+                // if (!empty($manifest_report)) {
+                //     foreach ($manifest_report as $key => $value) {
+                //         $manifest_report[$key]['vehicle_name'] = $this->model->getValue('vehicle', 'name', ['id' => $value['vechile_id']]);
+                //     }
+                // }
+                $response['mis_report'] = $mis_report;
+                $response['message'] = 'success';
+                $response['code'] = 200;
+                $response['status'] = true;
+                // }
+                
+            } else {
+                $response['message'] = 'Invalid Request';
+                $response['code'] = 204;
+            }
+           
+            echo json_encode($response);
+        }
+
+        function generate_mis_mail_superadmin(){
+            $date = date('d-m-Y H:i:s'); 
+            $ip_server = getUserIP();
+            $attach = $_POST['pdfFilePaths'];
+            $isExistEmail = $this->model->isExist('login', 'email', $_POST['email']);
+            if (!$isExistEmail) {
+                $response['message'] = 'Email incorrect';
+                $response['code'] = 201;
+                echo json_encode($response);
+                return;
+            }
+
+            $isExist = $this->model->getData('login', ['email' => $_POST['email']]);
+            if (empty($isExist)) {
+                $response['message'] = 'Email incorrect';
+                $response['code'] = 201;
+                echo json_encode($response);
+                return;
+            }
+            $subject = 'MIS Report';
+            $message = '';
+            $message.= '<p>Hello,' . $isExist[0]['username'] . '.</p>';
+            $message.= '<p>MIS Report</p>';
+            $message.= '<p>Team Softonauts</p>';
+            if ($isExist[0]['usertype'] == 'company') {
+                sendEmail('info@softonauts.com', $isExistEmail[0]['email'], $subject, $message,$attach);
+            }
+            $login_id = $isExist[0]['fk_id'];
+            $email_data = emaillog($login_id,$receiver_id='',$_POST['email'],$message,$subject,'Excel File',$attach,$date,$ip_server);
+            $this->model->insertData('tbl_email_logs', $email_data);
+            $response['message'] = 'Email Send Successfully';
+            $response['code'] = 200;
+            $response['status'] = true;
             echo json_encode($response);
         }
 
