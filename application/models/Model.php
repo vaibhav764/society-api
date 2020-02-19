@@ -791,24 +791,38 @@ class Model extends CI_Model {
         return $response;
 	}
 	
-	public function get_track_details($awb_no) {
+	public function get_track_details($awb_no,$id) {
         $response = array();
         $this->db->select('ship.ship_date,customer_contacts.city');
 		$this->db->from('ship');
 		$this->db->join('customer_contacts','ship.shipper_id=customer_contacts.customer_id','left');
         $this->db->where('ship.AWBno', $awb_no);
+        $this->db->where('ship.company_id', $id);
         $query = $this->db->get();
         $result = $query->row_array();
-       
-        return $result;
+		// return $result;
+		if ($query->num_rows() > 0){
+			$response['status'] = 1;
+			$response['message'] = 'success';
+			$response['data'] = $result;
+			return $response;
+		}
+		else
+		{
+			$response['status'] = 0;
+			$response['message'] = 'AWB No does not exist';
+			return $response;
+		}
 	}
-	public function get_forwarding_details() {
+	public function get_forwarding_details($id) {
         $response = array();
         $this->db->select('tbl_forwarding.awb_no,tbl_forwarding.booking_date,tbl_forwarding.destination,GROUP_CONCAT(tbl_forwarding.id)id,GROUP_CONCAT(tbl_forwarding.vendor1) forwarding_name,GROUP_CONCAT(tbl_forwarding.vendor2)forwarding_awb,GROUP_CONCAT(tbl_forwarding_master.name) name,GROUP_CONCAT(tbl_forwarding_master.forward_link) link,GROUP_CONCAT(tbl_forwarding_master.id) master_id');
         $this->db->from('tbl_forwarding');
         $this->db->join('tbl_forwarding_master', 'tbl_forwarding.vendor1=tbl_forwarding_master.id', 'left');
         $this->db->group_by('tbl_forwarding.awb_no');
-        $this->db->where('tbl_forwarding.status', '1');
+       
+		$this->db->where('tbl_forwarding.company_id', $id);
+		$this->db->where('tbl_forwarding.status', "1");
         // $this->db->order_by('tbl_forwarding.id', 'DESC');
         $query = $this->db->get();
         $result = $query->result_array();

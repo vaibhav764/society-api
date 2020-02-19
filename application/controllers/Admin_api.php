@@ -7864,8 +7864,13 @@ class Admin_api extends CI_Controller {
             $response = array('code' => - 1, 'status' => false, 'message' => '');
             if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $awb_no = $this->input->post('awb_no');
-                // print_r($awb_no);die;
-                $response = $this->model->get_track_details($awb_no);
+                $id = $this->input->post('id');
+                $track_data = $this->model->get_track_details($awb_no,$id);
+               
+                    $response = $track_data;
+                    // $response['message']= "success";
+                    // $response['code'] = 200;
+                    // $response['status'] = true;
 
             } else {
                 $response['message'] = 'Invalid Request';
@@ -7944,8 +7949,8 @@ class Admin_api extends CI_Controller {
             // $validate = validateToken();
             // if($validate){
             if ($_SERVER["REQUEST_METHOD"] == "POST") {
-               
-                $forwarding_details = $this->model->get_forwarding_details();
+               $id = $this->input->post('id');
+                $forwarding_details = $this->model->get_forwarding_details($id);
                 $response = $forwarding_details;
                 $response['message'] = 'success';
                 $response['code'] = 200;
