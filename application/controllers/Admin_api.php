@@ -7732,7 +7732,6 @@ class Admin_api extends CI_Controller {
                     $isExist = $this->model->getValue('tbl_forwarding_master', 'name', ['name' => $_POST['name']]);
                     if (empty($isExist)) {
                        
-                        // $_POST['zone'] = ucwords(strtolower($_POST['zone']));
                         $forwarding_id = $this->model->insertData('tbl_forwarding_master', $_POST);
                         $response['message'] = 'success';
                         $response['code'] = 200;
@@ -7765,16 +7764,12 @@ class Admin_api extends CI_Controller {
                     unset($_POST['select']);
                 }
                 $forwarding_master = $this->model->getData('tbl_forwarding_master', $_POST, $select);
-                // if (!empty($manifest_report)) {
-                //     foreach ($manifest_report as $key => $value) {
-                //         $manifest_report[$key]['vehicle_name'] = $this->model->getValue('vehicle', 'name', ['id' => $value['vechile_id']]);
-                //     }
-                // }
+              
                 $response['forwarding_master'] = $forwarding_master;
                 $response['message'] = 'success';
                 $response['code'] = 200;
                 $response['status'] = true;
-                // }
+                
                 
             } else {
                 $response['message'] = 'Invalid Request';
@@ -7881,26 +7876,162 @@ class Admin_api extends CI_Controller {
         }
         public function get_name_forwarding_master(){
             $response = array('code' => - 1, 'status' => false, 'message' => '');
-        // $validate = validateToken();
-        // if($validate){
-        if ($_SERVER["REQUEST_METHOD"] == "POST") {
-            $select = 'id,name';
-            if (!empty($_POST['select']) && isset($_POST['select'])) {
-                $select = $_POST['select'];
-                unset($_POST['select']);
+            // $validate = validateToken();
+            // if($validate){
+            if ($_SERVER["REQUEST_METHOD"] == "POST") {
+                $select = 'id,name';
+                if (!empty($_POST['select']) && isset($_POST['select'])) {
+                    $select = $_POST['select'];
+                    unset($_POST['select']);
+                }
+                $forwarding_name = $this->model->getData('tbl_forwarding_master', $_POST,$select);
+                $response['forwarding_name'] = $forwarding_name;
+                $response['message'] = 'success';
+                $response['code'] = 200;
+                $response['status'] = true;
+            } else {
+                $response['message'] = 'Invalid Request';
+                $response['code'] = 204;
             }
-            $forwarding_name = $this->model->getData('tbl_forwarding_master', $_POST,$select);
-        //  print_r($forwarding_name);die;
-            $response['forwarding_name'] = $forwarding_name;
-            $response['message'] = 'success';
-            $response['code'] = 200;
-            $response['status'] = true;
-        } else {
-            $response['message'] = 'Invalid Request';
-            $response['code'] = 204;
-        }
-        echo json_encode($response);
+            echo json_encode($response);
 
+        }
+
+        public function add_forwaring(){
+            $response = array('code' => - 1, 'status' => false, 'message' => '');
+            if ($_SERVER["REQUEST_METHOD"] == "POST") {
+                $company_id = $this->input->post('company_id');
+                $awb_no = $this->input->post('awb_no');
+                $booking_date = $this->input->post('booking_date');
+                $destination = $this->input->post('destination');
+                $vendor1 = json_decode($this->input->post('vendor1'));
+                $vendor2 = json_decode($this->input->post('vendor2'));
+               
+                if (empty($awb_no)){
+                    $response['message'] = 'AWB No. is Required';
+                    $response['code'] = 201;
+                }else if(empty($booking_date)){
+                    $response['message'] = 'Booking Date is required';
+                    $response['code'] = 201;
+                }else if(empty($destination)){
+                    $response['message'] = 'Destination is required';
+                    $response['code'] = 201;
+                }else {
+                    $data = [];
+                    for ($i = 0;$i < count($vendor2);$i++) {
+                        if ($vendor2[$i] != '') {
+                            $data[] = array( 'company_id' => $company_id,'awb_no' => $awb_no, 'booking_date' => $booking_date, 'destination' => $destination, 'vendor1' => $vendor1[$i], 'vendor2' => $vendor2[$i]);
+                        }
+                    }
+                    for ($i = 0;$i < count($data);$i++) {
+                         $this->model->insertData('tbl_forwarding', $data[$i]);
+                    }
+                    $response['message'] = 'success';
+                    $response['code'] = 200;
+                    $response['status'] = true;
+                    
+                }
+            } else {
+                $response['message'] = 'Invalid Request';
+                $response['code'] = 204;
+            }
+            echo json_encode($response);
+        }
+
+        public function get_forwarding_details()
+        {
+            $response = array('code' => - 1, 'status' => false, 'message' => '');
+            // $validate = validateToken();
+            // if($validate){
+            if ($_SERVER["REQUEST_METHOD"] == "POST") {
+               
+                $forwarding_details = $this->model->get_forwarding_details();
+                $response = $forwarding_details;
+                $response['message'] = 'success';
+                $response['code'] = 200;
+                $response['status'] = true;
+            } else {
+                $response['message'] = 'Invalid Request';
+                $response['code'] = 204;
+            }
+            echo json_encode($response);
+        }
+
+        function view_forward_details(){
+            $response = array('code' => - 1, 'status' => false, 'message' => '');
+            
+            if ($_SERVER["REQUEST_METHOD"] == "POST") {
+                if (empty($_POST['id'])) {
+                    $response['message'] = 'Forwarding id is required';
+                    $response['code'] = 201;
+                } else {
+                    $select = '*';
+                    if (!empty($_POST['select']) && isset($_POST['select'])) {
+                        $select = $_POST['select'];
+                        unset($_POST['select']);
+                    }
+                    $edit_forwarding = $this->model->getData('tbl_forwarding', $_POST, $select);
+                   
+                    $response['edit_forwarding'] = $edit_forwarding;
+                    $response['message'] = 'success';
+                    $response['code'] = 200;
+                    $response['status'] = true;
+                }
+            } else {
+                $response['message'] = 'Invalid Request';
+                $response['code'] = 204;
+            }
+           
+            echo json_encode($response);
+        }
+
+        function update_forwarding(){
+            $response = array('code' => - 1, 'status' => false, 'message' => '');
+            if ($_SERVER["REQUEST_METHOD"] == "POST") {
+                $id = $this->input->post('id');
+                $vendor2 = $this->input->post('vendor2');
+                if (empty($id)) {
+                    $response['message'] = 'Forwarding id is required';
+                    $response['code'] = 201;
+                }else  if (empty($vendor2)) {
+                    $response['message'] = 'Forwarding AWB No. is required';
+                    $response['code'] = 201;
+                } else {
+                    $data = array(
+                        'vendor2'=>$vendor2
+                    );
+                    $pincode = $this->model->updateData('tbl_forwarding', $data, ['id' => $id]);
+                    $response['message'] = 'success';
+                    $response['code'] = 200;
+                    $response['status'] = true;
+                }
+            } else {
+                $response['message'] = 'Invalid Request';
+                $response['code'] = 204;
+            }
+           
+            echo json_encode($response);
+        }
+
+        function delete_forwarding(){
+            $response = array('code' => - 1, 'status' => false, 'message' => '');
+          
+            if ($_SERVER["REQUEST_METHOD"] == "POST") {
+                if (empty($_POST['id'])) {
+                    $response['message'] = 'Wrong Parameters';
+                    $response['code'] = 201;
+                } else {
+                    $company = $this->model->deleteData('tbl_forwarding', ['id' => $_POST['id']]);
+                    $response['message'] = 'Forwarding Deleted';
+                    $response['code'] = 200;
+                    $response['status'] = true;
+                }
+            } else {
+                $response['message'] = 'Invalid Request';
+                $response['code'] = 204;
+            }
+          
+            echo json_encode($response);
         }
 
 
