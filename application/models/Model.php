@@ -789,6 +789,18 @@ class Model extends CI_Model {
         $response['message'] = 'success';
         $response = $result;
         return $response;
+	}
+	
+	public function get_track_details($awb_no) {
+        $response = array();
+        $this->db->select('ship.ship_date,customer_contacts.city');
+		$this->db->from('ship');
+		$this->db->join('customer_contacts','ship.shipper_id=customer_contacts.customer_id','left');
+        $this->db->where('ship.AWBno', $awb_no);
+        $query = $this->db->get();
+        $result = $query->row_array();
+       
+        return $result;
     }
 
 }//class ends here	

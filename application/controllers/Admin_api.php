@@ -7718,5 +7718,190 @@ class Admin_api extends CI_Controller {
             echo json_encode($response);
         }
 
+        public function add_forwarding_master(){
+            $response = array('code' => - 1, 'status' => false, 'message' => '');
+          
+            if ($_SERVER["REQUEST_METHOD"] == "POST") {
+                if (empty($_POST['name'])){
+                    $response['message'] = 'Name is Required';
+                    $response['code'] = 201;
+                }else if(empty($_POST['forward_link'])){
+                    $response['message'] = 'Forward Link is required';
+                    $response['code'] = 201;
+                } else {
+                    $isExist = $this->model->getValue('tbl_forwarding_master', 'name', ['name' => $_POST['name']]);
+                    if (empty($isExist)) {
+                       
+                        // $_POST['zone'] = ucwords(strtolower($_POST['zone']));
+                        $forwarding_id = $this->model->insertData('tbl_forwarding_master', $_POST);
+                        $response['message'] = 'success';
+                        $response['code'] = 200;
+                        $response['status'] = true;
+                    } else {
+                        $response['message'] = 'Forwarding Name is already exist';
+                        $response['code'] = 201;
+                    }
+                }
+            } else {
+                $response['message'] = 'Invalid Request';
+                $response['code'] = 204;
+            }
+            // }
+            // else{
+            // 	$response['message'] = 'Authentication required';
+            // 	$response['code'] = 203;
+            // }
+            echo json_encode($response);
+        }
+
+        public function get_all_forwarding_master(){
+            $response = array('code' => - 1, 'status' => false, 'message' => '');
+           
+            if ($_SERVER["REQUEST_METHOD"] == "POST") {
+              
+                $select = '*';
+                if (!empty($_POST['select']) && isset($_POST['select'])) {
+                    $select = $_POST['select'];
+                    unset($_POST['select']);
+                }
+                $forwarding_master = $this->model->getData('tbl_forwarding_master', $_POST, $select);
+                // if (!empty($manifest_report)) {
+                //     foreach ($manifest_report as $key => $value) {
+                //         $manifest_report[$key]['vehicle_name'] = $this->model->getValue('vehicle', 'name', ['id' => $value['vechile_id']]);
+                //     }
+                // }
+                $response['forwarding_master'] = $forwarding_master;
+                $response['message'] = 'success';
+                $response['code'] = 200;
+                $response['status'] = true;
+                // }
+                
+            } else {
+                $response['message'] = 'Invalid Request';
+                $response['code'] = 204;
+            }
+           
+            echo json_encode($response);
+        }
+
+
+        function get_forwarding_master() {
+            $response = array('code' => - 1, 'status' => false, 'message' => '');
+            
+            if ($_SERVER["REQUEST_METHOD"] == "POST") {
+                if (empty($_POST['id'])) {
+                    $response['message'] = 'Forwarding id is required';
+                    $response['code'] = 201;
+                } else {
+                    $select = '*';
+                    if (!empty($_POST['select']) && isset($_POST['select'])) {
+                        $select = $_POST['select'];
+                        unset($_POST['select']);
+                    }
+                    $edit_forwarding_master = $this->model->getData('tbl_forwarding_master', $_POST, $select);
+                   
+                    $response['edit_forwarding_master'] = $edit_forwarding_master;
+                    $response['message'] = 'success';
+                    $response['code'] = 200;
+                    $response['status'] = true;
+                }
+            } else {
+                $response['message'] = 'Invalid Request';
+                $response['code'] = 204;
+            }
+           
+            echo json_encode($response);
+        }
+
+        function update_forwarding_master(){
+            $response = array('code' => - 1, 'status' => false, 'message' => '');
+            
+            if ($_SERVER["REQUEST_METHOD"] == "POST") {
+                if (empty($_POST['id'])) {
+                    $response['message'] = 'Forwarding Master id is required';
+                    $response['code'] = 201;
+                }else if (empty($_POST['name'])) {
+                    $response['message'] = 'Name is required';
+                    $response['code'] = 201;
+                }else  if (empty($_POST['forward_link'])) {
+                    $response['message'] = 'Link is required';
+                    $response['code'] = 201;
+                } else {
+                    $pincode = $this->model->updateData('tbl_forwarding_master', $_POST, ['id' => $_POST['id']]);
+                    $response['message'] = 'success';
+                    $response['code'] = 200;
+                    $response['status'] = true;
+                }
+            } else {
+                $response['message'] = 'Invalid Request';
+                $response['code'] = 204;
+            }
+           
+            echo json_encode($response);
+        }
+        function delete_forwarding_master(){
+            $response = array('code' => - 1, 'status' => false, 'message' => '');
+            // $validate = validateToken();
+            // if($validate){
+            if ($_SERVER["REQUEST_METHOD"] == "POST") {
+                if (empty($_POST['id'])) {
+                    $response['message'] = 'Wrong Parameters';
+                    $response['code'] = 201;
+                } else {
+                    $company = $this->model->deleteData('tbl_forwarding_master', ['id' => $_POST['id']]);
+                    $response['message'] = 'Forwarding Master Deleted';
+                    $response['code'] = 200;
+                    $response['status'] = true;
+                }
+            } else {
+                $response['message'] = 'Invalid Request';
+                $response['code'] = 204;
+            }
+            // }
+            // else{
+            // 	$response['message'] = 'Authentication required';
+            // 	$response['code'] = 203;
+            // }
+            echo json_encode($response);
+        }
+
+        public function get_track_details(){
+            $response = array('code' => - 1, 'status' => false, 'message' => '');
+            if ($_SERVER["REQUEST_METHOD"] == "POST") {
+                $awb_no = $this->input->post('awb_no');
+                // print_r($awb_no);die;
+                $response = $this->model->get_track_details($awb_no);
+
+            } else {
+                $response['message'] = 'Invalid Request';
+                $response['code'] = 204;
+            }
+           
+            echo json_encode($response);
+        }
+        public function get_name_forwarding_master(){
+            $response = array('code' => - 1, 'status' => false, 'message' => '');
+        // $validate = validateToken();
+        // if($validate){
+        if ($_SERVER["REQUEST_METHOD"] == "POST") {
+            $select = 'id,name';
+            if (!empty($_POST['select']) && isset($_POST['select'])) {
+                $select = $_POST['select'];
+                unset($_POST['select']);
+            }
+            $forwarding_name = $this->model->getData('tbl_forwarding_master', $_POST,$select);
+        //  print_r($forwarding_name);die;
+            $response['forwarding_name'] = $forwarding_name;
+            $response['message'] = 'success';
+            $response['code'] = 200;
+            $response['status'] = true;
+        } else {
+            $response['message'] = 'Invalid Request';
+            $response['code'] = 204;
+        }
+        echo json_encode($response);
+
+        }
+
 
 }
