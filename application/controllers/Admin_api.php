@@ -6945,6 +6945,7 @@ class Admin_api extends CI_Controller {
                     }else{
                         $response['message']="Data Not Found";
                         $response['code']=201;
+                        
                     }
             }           
         } else {
