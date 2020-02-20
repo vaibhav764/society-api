@@ -7911,7 +7911,6 @@ class Admin_api extends CI_Controller {
                 $destination = $this->input->post('destination');
                 $vendor1 = json_decode($this->input->post('vendor1'));
                 $vendor2 = json_decode($this->input->post('vendor2'));
-               
                 if (empty($awb_no)){
                     $response['message'] = 'AWB No. is Required';
                     $response['code'] = 201;
@@ -7922,19 +7921,23 @@ class Admin_api extends CI_Controller {
                     $response['message'] = 'Destination is required';
                     $response['code'] = 201;
                 }else {
+                   
                     $data = [];
                     for ($i = 0;$i < count($vendor2);$i++) {
                         if ($vendor2[$i] != '') {
                             $data[] = array( 'company_id' => $company_id,'awb_no' => $awb_no, 'booking_date' => $booking_date, 'destination' => $destination, 'vendor1' => $vendor1[$i], 'vendor2' => $vendor2[$i]);
                         }
-                    }
-                    for ($i = 0;$i < count($data);$i++) {
-                         $this->model->insertData('tbl_forwarding', $data[$i]);
-                    }
-                    $response['message'] = 'success';
-                    $response['code'] = 200;
-                    $response['status'] = true;
-                    
+                        $isExist = $this->model->getValue('tbl_forwarding', 'vendor1', ['awb_no' => $awb_no, 'vendor1' => $vendor1[$i]]);
+                        if (empty($isExist)) {
+                            $this->model->insertData('tbl_forwarding', $data[$i]);
+                            $response['message'] = 'success';
+                            $response['code'] = 200;
+                            $response['status'] = true;
+                        }else{
+                                $response['message'] = 'Already Exist';
+                                $response['code'] = 201;
+                        }
+                    }                      
                 }
             } else {
                 $response['message'] = 'Invalid Request';
