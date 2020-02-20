@@ -731,7 +731,7 @@ class Model extends CI_Model {
         return $response;
 	}
 	
-	public function get_challan_details($vehicle,$date_from,$date_to){
+	public function get_challan_details($vehicle, $date_from, $date_to,$from_city,$to_city, $id){
 		$response = array();
         $this->db->select('source_outscan.*,source_outscan.date,ship.*,ship.created_at as order_date,ship.id as order_id, vehicle.*, vehicle.id as vehicle_id,tbl_manifest_reports.manifest_no,tbl_manifest_reports.vechile_id,tbl_manifest_reports.id as manifest_id,company.contact,company.email,company.address,company.pincode,company.city_id,company.state_id,company.country_id,company.name as company_name,company.id as comp_id,company.logo');
         $this->db->from('source_outscan');
@@ -742,7 +742,11 @@ class Model extends CI_Model {
         // $this->db->where('source_outscan.city',$city);
         $this->db->where('source_outscan.vehicle_id', $vehicle);
         $this->db->where('source_outscan.date >=', $date_from);
-        $this->db->where('source_outscan.date <=', $date_to);
+		$this->db->where('source_outscan.date <=', $date_to);
+        $this->db->where('source_outscan.source_city', $from_city);
+        $this->db->where('source_outscan.city', $to_city);
+        $this->db->where('source_outscan.company_id', $id);
+		$this->db->group_by('source_outscan.awb_no');
         $query = $this->db->get();
         $result = $query->result_array();
         $response['status'] = 1;

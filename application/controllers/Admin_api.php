@@ -7535,7 +7535,7 @@ class Admin_api extends CI_Controller {
                    $response['message'] = 'Date To is required.';
                    $response['code'] = 201;
                }else{
-                   $response = $this->model->get_challan_details($vehicle, $date_from, $date_to, $id);
+                   $response = $this->model->get_challan_details($vehicle, $date_from, $date_to,$from_city,$to_city, $id);
                        if($response['status']==1){
                            $response['message']="success";
                            $response['code']=200;
