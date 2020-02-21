@@ -7318,11 +7318,18 @@ class Admin_api extends CI_Controller {
         // $validate = validateToken();
         // if($validate){
         if ($_SERVER["REQUEST_METHOD"] == "POST") {
+            $sac_code = $_POST['sac_code'];
+            $gst_per = $_POST['gst_per'];
             if (empty($_POST['id'])) {
                 $response['message'] = 'Wrong Parameters';
                 $response['code'] = 201;
             } else {
-                $sacCode = $this->model->updateData('sac_code', $_POST, ['id' => $_POST['id']]);
+                $data =array(
+                    'sac_code' =>$sac_code,
+                    'gst_per' =>$gst_per,
+                );
+
+                $sacCode = $this->model->updateData('sac_code', $data, ['id' => $_POST['id']]);
                 // $employee = $this->model->updateData('login', ['logo' => $_POST['photo']], ['fk_id' => $_POST['id'], 'usertype' => 'employee']);
                 $response['message'] = 'Sac Code Updated';
                 $response['code'] = 200;
