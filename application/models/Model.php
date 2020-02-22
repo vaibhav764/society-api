@@ -561,7 +561,7 @@ class Model extends CI_Model {
 	public function get_manifest_details($city, $vehicle, $date_from, $date_to, $id) {
         
         $response = array();
-        $this->db->select('source_outscan.*,GROUP_CONCAT(source_outscan.scan_count)scan_count,ship.*,ship.id as ship_id, vehicle.*, vehicle.id as v_id,company.contact,company.email,company.address,company.pincode,company.city_id,company.state_id,company.country_id,company.name as company_name,company.id as comp_id,customer_contacts.customer_name, ToCustomer.customer_name as to_customer,countries.name as country_name,states.name as state_name,cities.city as city_name');
+        $this->db->select('source_outscan.*,source_outscan.source_city as city_source,GROUP_CONCAT(source_outscan.scan_count)scan_count,ship.*,ship.id as ship_id, vehicle.*, vehicle.id as v_id,company.contact,company.email,company.address,company.pincode,company.city_id,company.state_id,company.country_id,company.name as company_name,company.id as comp_id,customer_contacts.customer_name, ToCustomer.customer_name as to_customer,countries.name as country_name,states.name as state_name,cities.city as city_name');
         $this->db->from('source_outscan');
         $this->db->join('ship', 'source_outscan.awb_no=ship.AWBno', 'left');
         $this->db->join('vehicle', 'source_outscan.vehicle_id=vehicle.id', 'left');
@@ -598,7 +598,7 @@ class Model extends CI_Model {
 	public function get_drs_details($city, $vehicle, $date_from, $date_to, $id) {
         
         $response = array();
-        $this->db->select('destination_outscan.*,GROUP_CONCAT(destination_outscan.scan_count)scan_count,ship.*,ship.id as ship_id, vehicle.*, vehicle.id as v_id,company.contact,company.email,company.address,company.pincode,company.city_id,company.state_id,company.country_id,company.name as company_name,company.id as comp_id,customer_contacts.name, ToCustomer.name as to_customer,countries.name as country_name,states.name as state_name,cities.city as city_name');
+        $this->db->select('destination_outscan.*,destination_outscan.source_city as city_source,GROUP_CONCAT(destination_outscan.scan_count)scan_count,ship.*,ship.id as ship_id, vehicle.*, vehicle.id as v_id,company.contact,company.email,company.address,company.pincode,company.city_id,company.state_id,company.country_id,company.name as company_name,company.id as comp_id,customer_contacts.name, ToCustomer.name as to_customer,countries.name as country_name,states.name as state_name,cities.city as city_name');
         $this->db->from('destination_outscan');
         $this->db->join('ship', 'destination_outscan.awb_no=ship.AWBno', 'left');
         $this->db->join('vehicle', 'destination_outscan.vehicle_id=vehicle.id', 'left');
@@ -731,7 +731,7 @@ class Model extends CI_Model {
         return $response;
 	}
 	
-	public function get_challan_details($vehicle,$date_from,$date_to){
+	public function get_challan_details($vehicle, $date_from, $date_to,$from_city,$to_city, $id){
 		$response = array();
         $this->db->select('source_outscan.*,source_outscan.date,ship.*,ship.created_at as order_date,ship.id as order_id, vehicle.*, vehicle.id as vehicle_id,tbl_manifest_reports.manifest_no,tbl_manifest_reports.vechile_id,tbl_manifest_reports.id as manifest_id,company.contact,company.email,company.address,company.pincode,company.city_id,company.state_id,company.country_id,company.name as company_name,company.id as comp_id,company.logo');
         $this->db->from('source_outscan');
@@ -742,7 +742,11 @@ class Model extends CI_Model {
         // $this->db->where('source_outscan.city',$city);
         $this->db->where('source_outscan.vehicle_id', $vehicle);
         $this->db->where('source_outscan.date >=', $date_from);
-        $this->db->where('source_outscan.date <=', $date_to);
+		$this->db->where('source_outscan.date <=', $date_to);
+        $this->db->where('source_outscan.source_city', $from_city);
+        $this->db->where('source_outscan.city', $to_city);
+        $this->db->where('source_outscan.company_id', $id);
+		$this->db->group_by('source_outscan.awb_no');
         $query = $this->db->get();
         $result = $query->result_array();
         $response['status'] = 1;
@@ -750,5 +754,84 @@ class Model extends CI_Model {
         $response['data'] = $result;
         return $response;
 	}
+	public function get_mis_report($id) {
+        $end_date = date('Y-m-d', strtotime("-60 days"));
+        //@$newformat = date('d/m/Y',$end_date);
+        $response = array();
+		$this->db->select('ship.*, ship.id as order_id,source_outscan.*,source_outscan.id as source_outscan,GROUP_CONCAT(source_outscan.date)out_scan_date,source_outscan.awb_no as out_scan_awb_no,destination_outscan.*,destination_outscan.awb_no as des_outscan_awb,GROUP_CONCAT(destination_outscan.date)out_destination_scan_date,destination_outscan.id as destination_outscan,GROUP_CONCAT(tbl_order_status.order_status) order_status,GROUP_CONCAT(tbl_status_master.status_name)status_name,tbl_forwarding.vendor2,customer_contacts.customer_id,customer_contacts.city as source_city_name, Drop_city.city as destination_city_name,customer_contacts.city_id as source_city_id, Drop_city.city_id as destination_city_id,company.id as comp_id,FromCustomer.customer_name from_customer_name, ToCustomer.customer_name as to_customer_name');
+        $this->db->from('ship');
+        $this->db->join('source_outscan', 'source_outscan.awb_no=ship.AWBno', 'left');
+        $this->db->join('destination_outscan', 'destination_outscan.awb_no=ship.AWBno', 'left');
+        $this->db->join('tbl_forwarding', 'tbl_forwarding.awb_no=ship.AWBno', 'left');
+        $this->db->join('tbl_order_status', 'tbl_order_status.fk_oid=ship.id', 'left');
+		$this->db->join('tbl_status_master', 'tbl_order_status.order_status=tbl_status_master.id', 'left');
+		$this->db->join('customer_contacts', 'customer_contacts.customer_id=ship.shipper_id', 'left');
+        $this->db->join('customer_contacts AS Drop_city', 'Drop_city.customer_id=ship.recepient_id', 'left');
+		$this->db->join('company', 'ship.company_id=company.id', 'left');
+		$this->db->join('customer_contacts AS FromCustomer', 'ship.shipper_id=FromCustomer.customer_id', 'left');
+        $this->db->join('customer_contacts AS ToCustomer', 'ship.recepient_id=ToCustomer.customer_id', 'left');
+        $this->db->where("date_format(STR_TO_DATE(ship_date,'%d/%m/%Y'),'%Y-%m-%d') >", $end_date);
+        $this->db->group_by('ship.AWBno');
+        $query = $this->db->get();
+        $result = $query->result_array();
+        $response['status'] = 1;
+        $response['message'] = 'success';
+        $response['data'] = $result;
+        return $response;
+	}
+	public function get_mis_on_cities($comp_id,$transport_type,$transport_speed,$transport_mode) {
+        $response = array();
+        $this->db->select('*');
+        $this->db->from('tat');
+        $this->db->where('transport_type', $transport_type);
+        $this->db->where('transport_speed', $transport_speed);
+        $this->db->where('transport_mode', $transport_mode);
+        $this->db->where('company_id', $comp_id);
+        $query = $this->db->get();
+        $result = $query->result_array();
+        $response['status'] = 1;
+        $response['message'] = 'success';
+        $response = $result;
+        return $response;
+	}
+	
+	public function get_track_details($awb_no,$id) {
+        $response = array();
+        $this->db->select('ship.ship_date,customer_contacts.city');
+		$this->db->from('ship');
+		$this->db->join('customer_contacts','ship.shipper_id=customer_contacts.customer_id','left');
+        $this->db->where('ship.AWBno', $awb_no);
+        $this->db->where('ship.company_id', $id);
+        $query = $this->db->get();
+        $result = $query->row_array();
+		// return $result;
+		if ($query->num_rows() > 0){
+			$response['status'] = 1;
+			$response['message'] = 'success';
+			$response['data'] = $result;
+			return $response;
+		}
+		else
+		{
+			$response['status'] = 0;
+			$response['message'] = 'AWB No does not exist';
+			return $response;
+		}
+	}
+	public function get_forwarding_details($id) {
+        $response = array();
+        $this->db->select('tbl_forwarding.awb_no,tbl_forwarding.booking_date,tbl_forwarding.destination,GROUP_CONCAT(tbl_forwarding.id)id,GROUP_CONCAT(tbl_forwarding.vendor1) forwarding_name,GROUP_CONCAT(tbl_forwarding.vendor2)forwarding_awb,GROUP_CONCAT(tbl_forwarding_master.name) name,GROUP_CONCAT(tbl_forwarding_master.forward_link) link,GROUP_CONCAT(tbl_forwarding_master.id) master_id');
+        $this->db->from('tbl_forwarding');
+        $this->db->join('tbl_forwarding_master', 'tbl_forwarding.vendor1=tbl_forwarding_master.id', 'left');
+        $this->db->group_by('tbl_forwarding.awb_no');
+       
+		$this->db->where('tbl_forwarding.company_id', $id);
+		$this->db->where('tbl_forwarding.status', "1");
+        // $this->db->order_by('tbl_forwarding.id', 'DESC');
+        $query = $this->db->get();
+        $result = $query->result_array();
+        $response['data'] = $result;
+        return $response;
+    }
 
 }//class ends here	

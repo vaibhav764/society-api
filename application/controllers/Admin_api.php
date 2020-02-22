@@ -3080,7 +3080,7 @@ class Admin_api extends CI_Controller {
                 $this->model->updateData('zone', $zone, ['id' => $key]);
             }
         }
-        $response['message'] = $_POST['total'] . ' Zones Added';
+        $response['message'] = ' Zones Added';
         $response['code'] = 200;
         $response['status'] = true;
         echo json_encode($response);
@@ -6576,6 +6576,7 @@ class Admin_api extends CI_Controller {
                     $response['code'] = 201;
                 } else {
                     $order_data = $this->Adminapi_Model->get_scan_count($o_id, $awb_no);
+                    // print_r($order_data);die;
                     $status_name = "Pickup Scan";
                     $status_details = $this->Adminapi_Model->get_status_info($status_name);
                     if ($order_data['is_submit']) {
@@ -6595,7 +6596,7 @@ class Admin_api extends CI_Controller {
                                 if ($order_data_latest['no_of_boxes'] == $order_data_latest['scan_count']) {
                                     if ($order_data_latest['no_of_boxes'] == 1) {
                                         // $date = date('d/m/Y');
-                                        $pickupscan_status = array('fk_oid' => $location['id'], 'fk_userid' => $location['shipper_id'], 'awb_no' => $awb_no, 'order_status' => $status_details['id'], 'status_description' => "Pickup Scanning", 'order_location' => $location['pickup_city'], 'expected_date' => $date, 'total_order' => $order_data_latest['total_order'], 'scan_count' => $order_data_latest['scan_count']);
+                                        $pickupscan_status = array('fk_oid' => $location['id'], 'fk_userid' => $location['shipper_id'], 'awb_no' => $awb_no, 'order_status' => $status_details['id'], 'status_description' => "Pickup Scanning", 'order_location' => $location['pickup_city'], 'expected_date' => $date, 'total_order' => $order_data_latest['no_of_boxes'], 'scan_count' => $order_data_latest['scan_count']);
                                         $response = $this->Adminapi_Model->common_data_ins('tbl_order_status', $pickupscan_status);
                                         $response['message1'] = "Scanning completed";
                                         $response['status'] = true;
@@ -6681,7 +6682,7 @@ class Admin_api extends CI_Controller {
                         $awb_no = $result['awb_no'];
                         $data = $this->Adminapi_Model->get_details_on_awb_no($awb_no);
                         $employee = $this->Adminapi_Model->get_employee_details($emp_id);
-                        if ($type == "Source") {
+                        if ($type == "source") {
                             $order_data = $this->Adminapi_Model->get_inscan_count($awb_no);
                         } else {
                             $order_data = $this->Adminapi_Model->get_destination_count($awb_no);
@@ -6691,7 +6692,7 @@ class Admin_api extends CI_Controller {
                         $data1 = array('emp_id' => $emp_id, 'c_id' => $data['company_id'], 'barcode_no' => $barcode_no[$i], 'awb_no' => $result['awb_no'], 'total_order' => $order_data['no_of_boxes'], 'scan_count' => $order_data['scan_count'] + 1, 'inscan_date' => $date);
                         $response1 = $this->Adminapi_Model->check_data1($barcode_no[$i], $type);
                         if ($response1['status'] == 0) {
-                            if ($type == 'Source') {
+                            if ($type == 'source') {
                                 $response = $this->Adminapi_Model->common_data_ins('source_inscan', $data1);
                                 $order_data_latest = $this->Adminapi_Model->get_inscan_count($awb_no);
                                 // echo"<pre>";
@@ -6743,7 +6744,7 @@ class Admin_api extends CI_Controller {
                                     $response['total_count'] = $order_data_latest['no_of_boxes'];
                                     $response['is_submit'] = $order_data_latest['is_submit'];
                                 }
-                            } else if ($type == 'Destination') {
+                            } else if ($type == 'destination') {
                                 $response = $this->Adminapi_Model->common_data_ins('destination_inscan', $data1);
                                 $order_data_latest1 = $this->Adminapi_Model->get_destination_count($awb_no);
                                 $status_name = "Shipment Received In Destination";
@@ -6854,7 +6855,7 @@ class Admin_api extends CI_Controller {
                         $data1 = array('emp_id' => $emp_id, 'barcode_no' => $barcode_no[$i], 'awb_no' => $result['awb_no'], 'vehicle_id' => $data['id'], 'source_city' => $city['pickup_city'], 'city' => $city['drop_city'], 'date' => $date, 'total_order' => $order_data['no_of_boxes'], 'scan_count' => $order_data['scan_count'] + 1);
                         $response1 = $this->Adminapi_Model->check_data2($barcode_no[$i], $type);
                         if ($response1['status'] == 0) {
-                            if ($type == 'Source') {
+                            if ($type == 'source') {
                                 $response = $this->Adminapi_Model->common_data_ins('source_outscan', $data1);
                                 $this->db->update('source_inscan', array('status' => '0'), array('id' => $result['id']));
                                 $order_data_latest = $this->Adminapi_Model->get_outscan_count($awb_no);
@@ -6906,7 +6907,7 @@ class Admin_api extends CI_Controller {
                                     $response['total_count'] = $order_data_latest['no_of_boxes'];
                                     $response['is_submit'] = $order_data_latest['is_submit'];
                                 }
-                            } else if ($type == 'Destination') {
+                            } else if ($type == 'destination') {
                                 $response = $this->Adminapi_Model->common_data_ins('destination_outscan', $data1);
                                 $this->db->update('destination_inscan', array('status' => '0'), array('id' => $result['id']));
                                 $order_data_latest1 = $this->Adminapi_Model->get_destination_outscan_count($awb_no);
@@ -7093,6 +7094,7 @@ class Admin_api extends CI_Controller {
        
         echo json_encode($response);
     }
+   
     function get_manifest_details() {
         $response = array('code' => - 1, 'status' => false, 'message' => '');
         if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -7125,6 +7127,7 @@ class Admin_api extends CI_Controller {
                     }else{
                         $response['message']="Data Not Found";
                         $response['code']=201;
+                        
                     }
             }           
         } else {
@@ -7497,11 +7500,18 @@ class Admin_api extends CI_Controller {
         // $validate = validateToken();
         // if($validate){
         if ($_SERVER["REQUEST_METHOD"] == "POST") {
+            $sac_code = $_POST['sac_code'];
+            $gst_per = $_POST['gst_per'];
             if (empty($_POST['id'])) {
                 $response['message'] = 'Wrong Parameters';
                 $response['code'] = 201;
             } else {
-                $sacCode = $this->model->updateData('sac_code', $_POST, ['id' => $_POST['id']]);
+                $data =array(
+                    'sac_code' =>$sac_code,
+                    'gst_per' =>$gst_per,
+                );
+
+                $sacCode = $this->model->updateData('sac_code', $data, ['id' => $_POST['id']]);
                 // $employee = $this->model->updateData('login', ['logo' => $_POST['photo']], ['fk_id' => $_POST['id'], 'usertype' => 'employee']);
                 $response['message'] = 'Sac Code Updated';
                 $response['code'] = 200;
@@ -7715,7 +7725,7 @@ class Admin_api extends CI_Controller {
                    $response['message'] = 'Date To is required.';
                    $response['code'] = 201;
                }else{
-                   $response = $this->model->get_challan_details($vehicle, $date_from, $date_to, $id);
+                   $response = $this->model->get_challan_details($vehicle, $date_from, $date_to,$from_city,$to_city, $id);
                        if($response['status']==1){
                            $response['message']="success";
                            $response['code']=200;
@@ -7776,4 +7786,451 @@ class Admin_api extends CI_Controller {
            
             echo json_encode($response);
         }
+
+        function mis_report(){
+
+            $response = array('code' => - 1, 'status' => false, 'message' => '');
+            if ($_SERVER["REQUEST_METHOD"] == "POST") {
+                $id = $this->input->post('id');
+                $response = $this->model->get_mis_report($id);
+                // $transport_type = $response['data'][0]['transport_type'];
+                // $transport_speed = $response['data'][0]['transport_speed'];
+                // $delivery_type = $response['data'][0]['delivery_type'];
+                // $transport_mode = $response['data'][0]['transport_mode'];
+
+                // $tat_details = $this->model->getData('tat', ['company_id' => $id, 'transport_type' => $transport_type ,'transport_mode' => $transport_mode]);
+
+                // $time = $tat_details[0]['time'];
+
+                // echo"<pre>";
+                // print_r($time);die;
+            } else {
+                $response['message'] = 'Invalid Request';
+                $response['code'] = 204;
+            }
+            echo json_encode($response);
+        }
+
+        public function get_mis_on_cities(){
+            $response = array('code' => - 1, 'status' => false, 'message' => '');
+            if ($_SERVER["REQUEST_METHOD"] == "POST") {
+                $transport_type = $this->input->post('transport_type');
+                $transport_speed = $this->input->post('transport_speed');
+                $transport_mode = $this->input->post('transport_mode');
+                $comp_id = $this->input->post('comp_id');
+                
+                $response = $this->model->get_mis_on_cities($comp_id,$transport_type,$transport_speed,$transport_mode);
+                $tat = unserialize($response[0]['time']);
+                $response['tat'] =$tat;
+            } else {
+                $response['message'] = 'Invalid Request';
+                $response['code'] = 204;
+            }
+            echo json_encode($response);
+        }
+        public function add_mis_report(){
+            $response = array('code' => - 1, 'status' => false, 'message' => '');
+            if ($_SERVER["REQUEST_METHOD"] == "POST") {
+                
+                    $this->model->insertData('tbl_mis_report', $_POST);
+                    $response['message'] = 'success';
+                    $response['code'] = 200;
+                    $response['status'] = true;
+            } else {
+                $response['message'] = 'Invalid Request';
+                $response['code'] = 204;
+            }
+            echo json_encode($response);
+        }
+        function get_all_mis_report(){
+            $response = array('code' => - 1, 'status' => false, 'message' => '');
+           
+            if ($_SERVER["REQUEST_METHOD"] == "POST") {
+              
+                $select = '*';
+                if (!empty($_POST['select']) && isset($_POST['select'])) {
+                    $select = $_POST['select'];
+                    unset($_POST['select']);
+                }
+                $mis_report = $this->model->getData('tbl_mis_report', $_POST, $select);
+                // if (!empty($manifest_report)) {
+                //     foreach ($manifest_report as $key => $value) {
+                //         $manifest_report[$key]['vehicle_name'] = $this->model->getValue('vehicle', 'name', ['id' => $value['vechile_id']]);
+                //     }
+                // }
+                $response['mis_report'] = $mis_report;
+                $response['message'] = 'success';
+                $response['code'] = 200;
+                $response['status'] = true;
+                // }
+                
+            } else {
+                $response['message'] = 'Invalid Request';
+                $response['code'] = 204;
+            }
+           
+            echo json_encode($response);
+        }
+
+        function generate_mis_mail_superadmin(){
+            $date = date('d-m-Y H:i:s'); 
+            $ip_server = getUserIP();
+            $attach = $_POST['pdfFilePaths'];
+            $isExistEmail = $this->model->isExist('login', 'email', $_POST['email']);
+            if (!$isExistEmail) {
+                $response['message'] = 'Email incorrect';
+                $response['code'] = 201;
+                echo json_encode($response);
+                return;
+            }
+
+            $isExist = $this->model->getData('login', ['email' => $_POST['email']]);
+            if (empty($isExist)) {
+                $response['message'] = 'Email incorrect';
+                $response['code'] = 201;
+                echo json_encode($response);
+                return;
+            }
+            $subject = 'MIS Report';
+            $message = '';
+            $message.= '<p>Hello,' . $isExist[0]['username'] . '.</p>';
+            $message.= '<p>MIS Report</p>';
+            $message.= '<p>Team Softonauts</p>';
+            if ($isExist[0]['usertype'] == 'company') {
+                sendEmail('info@softonauts.com', $isExistEmail[0]['email'], $subject, $message,$attach);
+            }
+            $login_id = $isExist[0]['fk_id'];
+            $email_data = emaillog($login_id,$receiver_id='',$_POST['email'],$message,$subject,'Excel File',$attach,$date,$ip_server);
+            $this->model->insertData('tbl_email_logs', $email_data);
+            $response['message'] = 'Email Send Successfully';
+            $response['code'] = 200;
+            $response['status'] = true;
+            echo json_encode($response);
+        }
+
+        public function add_forwarding_master(){
+            $response = array('code' => - 1, 'status' => false, 'message' => '');
+          
+            if ($_SERVER["REQUEST_METHOD"] == "POST") {
+                if (empty($_POST['name'])){
+                    $response['message'] = 'Name is Required';
+                    $response['code'] = 201;
+                }else if(empty($_POST['forward_link'])){
+                    $response['message'] = 'Forward Link is required';
+                    $response['code'] = 201;
+                } else {
+                    $isExist = $this->model->getValue('tbl_forwarding_master', 'name', ['name' => $_POST['name']]);
+                    if (empty($isExist)) {
+                       
+                        $forwarding_id = $this->model->insertData('tbl_forwarding_master', $_POST);
+                        $response['message'] = 'success';
+                        $response['code'] = 200;
+                        $response['status'] = true;
+                    } else {
+                        $response['message'] = 'Forwarding Name is already exist';
+                        $response['code'] = 201;
+                    }
+                }
+            } else {
+                $response['message'] = 'Invalid Request';
+                $response['code'] = 204;
+            }
+            // }
+            // else{
+            // 	$response['message'] = 'Authentication required';
+            // 	$response['code'] = 203;
+            // }
+            echo json_encode($response);
+        }
+
+        public function get_all_forwarding_master(){
+            $response = array('code' => - 1, 'status' => false, 'message' => '');
+           
+            if ($_SERVER["REQUEST_METHOD"] == "POST") {
+              
+                $select = '*';
+                if (!empty($_POST['select']) && isset($_POST['select'])) {
+                    $select = $_POST['select'];
+                    unset($_POST['select']);
+                }
+                $forwarding_master = $this->model->getData('tbl_forwarding_master', $_POST, $select);
+              
+                $response['forwarding_master'] = $forwarding_master;
+                $response['message'] = 'success';
+                $response['code'] = 200;
+                $response['status'] = true;
+                
+                
+            } else {
+                $response['message'] = 'Invalid Request';
+                $response['code'] = 204;
+            }
+           
+            echo json_encode($response);
+        }
+
+
+        function get_forwarding_master() {
+            $response = array('code' => - 1, 'status' => false, 'message' => '');
+            
+            if ($_SERVER["REQUEST_METHOD"] == "POST") {
+                if (empty($_POST['id'])) {
+                    $response['message'] = 'Forwarding id is required';
+                    $response['code'] = 201;
+                } else {
+                    $select = '*';
+                    if (!empty($_POST['select']) && isset($_POST['select'])) {
+                        $select = $_POST['select'];
+                        unset($_POST['select']);
+                    }
+                    $edit_forwarding_master = $this->model->getData('tbl_forwarding_master', $_POST, $select);
+                   
+                    $response['edit_forwarding_master'] = $edit_forwarding_master;
+                    $response['message'] = 'success';
+                    $response['code'] = 200;
+                    $response['status'] = true;
+                }
+            } else {
+                $response['message'] = 'Invalid Request';
+                $response['code'] = 204;
+            }
+           
+            echo json_encode($response);
+        }
+
+        function update_forwarding_master(){
+            $response = array('code' => - 1, 'status' => false, 'message' => '');
+            
+            if ($_SERVER["REQUEST_METHOD"] == "POST") {
+                if (empty($_POST['id'])) {
+                    $response['message'] = 'Forwarding Master id is required';
+                    $response['code'] = 201;
+                }else if (empty($_POST['name'])) {
+                    $response['message'] = 'Name is required';
+                    $response['code'] = 201;
+                }else  if (empty($_POST['forward_link'])) {
+                    $response['message'] = 'Link is required';
+                    $response['code'] = 201;
+                } else {
+                    $pincode = $this->model->updateData('tbl_forwarding_master', $_POST, ['id' => $_POST['id']]);
+                    $response['message'] = 'success';
+                    $response['code'] = 200;
+                    $response['status'] = true;
+                }
+            } else {
+                $response['message'] = 'Invalid Request';
+                $response['code'] = 204;
+            }
+           
+            echo json_encode($response);
+        }
+        function delete_forwarding_master(){
+            $response = array('code' => - 1, 'status' => false, 'message' => '');
+            // $validate = validateToken();
+            // if($validate){
+            if ($_SERVER["REQUEST_METHOD"] == "POST") {
+                if (empty($_POST['id'])) {
+                    $response['message'] = 'Wrong Parameters';
+                    $response['code'] = 201;
+                } else {
+                    $company = $this->model->deleteData('tbl_forwarding_master', ['id' => $_POST['id']]);
+                    $response['message'] = 'Forwarding Master Deleted';
+                    $response['code'] = 200;
+                    $response['status'] = true;
+                }
+            } else {
+                $response['message'] = 'Invalid Request';
+                $response['code'] = 204;
+            }
+            // }
+            // else{
+            // 	$response['message'] = 'Authentication required';
+            // 	$response['code'] = 203;
+            // }
+            echo json_encode($response);
+        }
+
+        public function get_track_details(){
+            $response = array('code' => - 1, 'status' => false, 'message' => '');
+            if ($_SERVER["REQUEST_METHOD"] == "POST") {
+                $awb_no = $this->input->post('awb_no');
+                $id = $this->input->post('id');
+                $track_data = $this->model->get_track_details($awb_no,$id);
+               
+                    $response = $track_data;
+                    // $response['message']= "success";
+                    // $response['code'] = 200;
+                    // $response['status'] = true;
+
+            } else {
+                $response['message'] = 'Invalid Request';
+                $response['code'] = 204;
+            }
+           
+            echo json_encode($response);
+        }
+        public function get_name_forwarding_master(){
+            $response = array('code' => - 1, 'status' => false, 'message' => '');
+            // $validate = validateToken();
+            // if($validate){
+            if ($_SERVER["REQUEST_METHOD"] == "POST") {
+                $select = 'id,name';
+                if (!empty($_POST['select']) && isset($_POST['select'])) {
+                    $select = $_POST['select'];
+                    unset($_POST['select']);
+                }
+                $forwarding_name = $this->model->getData('tbl_forwarding_master', $_POST,$select);
+                $response['forwarding_name'] = $forwarding_name;
+                $response['message'] = 'success';
+                $response['code'] = 200;
+                $response['status'] = true;
+            } else {
+                $response['message'] = 'Invalid Request';
+                $response['code'] = 204;
+            }
+            echo json_encode($response);
+
+        }
+
+        public function add_forwaring(){
+            $response = array('code' => - 1, 'status' => false, 'message' => '');
+            if ($_SERVER["REQUEST_METHOD"] == "POST") {
+                $company_id = $this->input->post('company_id');
+                $awb_no = $this->input->post('awb_no');
+                $booking_date = $this->input->post('booking_date');
+                $destination = $this->input->post('destination');
+                $vendor1 = json_decode($this->input->post('vendor1'));
+                $vendor2 = json_decode($this->input->post('vendor2'));
+                if (empty($awb_no)){
+                    $response['message'] = 'AWB No. is Required';
+                    $response['code'] = 201;
+                }else if(empty($booking_date)){
+                    $response['message'] = 'Booking Date is required';
+                    $response['code'] = 201;
+                }else if(empty($destination)){
+                    $response['message'] = 'Destination is required';
+                    $response['code'] = 201;
+                }else {
+                   
+                    $data = [];
+                    for ($i = 0;$i < count($vendor2);$i++) {
+                        if ($vendor2[$i] != '') {
+                            $data[] = array( 'company_id' => $company_id,'awb_no' => $awb_no, 'booking_date' => $booking_date, 'destination' => $destination, 'vendor1' => $vendor1[$i], 'vendor2' => $vendor2[$i]);
+                        }
+                        $isExist = $this->model->getValue('tbl_forwarding', 'vendor1', ['awb_no' => $awb_no, 'vendor1' => $vendor1[$i]]);
+                        if (empty($isExist)) {
+                            $this->model->insertData('tbl_forwarding', $data[$i]);
+                            $response['message'] = 'success';
+                            $response['code'] = 200;
+                            $response['status'] = true;
+                        }else{
+                                $response['message'] = 'Already Exist';
+                                $response['code'] = 201;
+                        }
+                    }                      
+                }
+            } else {
+                $response['message'] = 'Invalid Request';
+                $response['code'] = 204;
+            }
+            echo json_encode($response);
+        }
+
+        public function get_forwarding_details()
+        {
+            $response = array('code' => - 1, 'status' => false, 'message' => '');
+            // $validate = validateToken();
+            // if($validate){
+            if ($_SERVER["REQUEST_METHOD"] == "POST") {
+               $id = $this->input->post('id');
+                $forwarding_details = $this->model->get_forwarding_details($id);
+                $response = $forwarding_details;
+                $response['message'] = 'success';
+                $response['code'] = 200;
+                $response['status'] = true;
+            } else {
+                $response['message'] = 'Invalid Request';
+                $response['code'] = 204;
+            }
+            echo json_encode($response);
+        }
+
+        function view_forward_details(){
+            $response = array('code' => - 1, 'status' => false, 'message' => '');
+            
+            if ($_SERVER["REQUEST_METHOD"] == "POST") {
+                if (empty($_POST['id'])) {
+                    $response['message'] = 'Forwarding id is required';
+                    $response['code'] = 201;
+                } else {
+                    $select = '*';
+                    if (!empty($_POST['select']) && isset($_POST['select'])) {
+                        $select = $_POST['select'];
+                        unset($_POST['select']);
+                    }
+                    $edit_forwarding = $this->model->getData('tbl_forwarding', $_POST, $select);
+                   
+                    $response['edit_forwarding'] = $edit_forwarding;
+                    $response['message'] = 'success';
+                    $response['code'] = 200;
+                    $response['status'] = true;
+                }
+            } else {
+                $response['message'] = 'Invalid Request';
+                $response['code'] = 204;
+            }
+           
+            echo json_encode($response);
+        }
+
+        function update_forwarding(){
+            $response = array('code' => - 1, 'status' => false, 'message' => '');
+            if ($_SERVER["REQUEST_METHOD"] == "POST") {
+                $id = $this->input->post('id');
+                $vendor2 = $this->input->post('vendor2');
+                if (empty($id)) {
+                    $response['message'] = 'Forwarding id is required';
+                    $response['code'] = 201;
+                }else  if (empty($vendor2)) {
+                    $response['message'] = 'Forwarding AWB No. is required';
+                    $response['code'] = 201;
+                } else {
+                    $data = array(
+                        'vendor2'=>$vendor2
+                    );
+                    $pincode = $this->model->updateData('tbl_forwarding', $data, ['id' => $id]);
+                    $response['message'] = 'success';
+                    $response['code'] = 200;
+                    $response['status'] = true;
+                }
+            } else {
+                $response['message'] = 'Invalid Request';
+                $response['code'] = 204;
+            }
+           
+            echo json_encode($response);
+        }
+
+        function delete_forwarding(){
+            $response = array('code' => - 1, 'status' => false, 'message' => '');
+          
+            if ($_SERVER["REQUEST_METHOD"] == "POST") {
+                if (empty($_POST['id'])) {
+                    $response['message'] = 'Wrong Parameters';
+                    $response['code'] = 201;
+                } else {
+                    $company = $this->model->deleteData('tbl_forwarding', ['id' => $_POST['id']]);
+                    $response['message'] = 'Forwarding Deleted';
+                    $response['code'] = 200;
+                    $response['status'] = true;
+                }
+            } else {
+                $response['message'] = 'Invalid Request';
+                $response['code'] = 204;
+            }
+          
+            echo json_encode($response);
+        }
+
+
 }
