@@ -2221,6 +2221,104 @@ class Admin_api extends CI_Controller {
         // }
         echo json_encode($response);
     }
+    function uploadEmployeeXls() {
+        // error_reporting(0);
+        $response = array('code' => - 1, 'status' => false, 'message' => '');
+        // $validate = validateToken();
+        // if(!$validate){
+        // 	$response['message'] = 'Authentication required';
+        // 	$response['code'] = 203;
+        //  	echo json_encode($response);
+        //  	return;
+        // }
+        if ($_SERVER["REQUEST_METHOD"] != "POST") {
+            $response['message'] = 'Invalid Request';
+            $response['code'] = 204;
+            echo json_encode($response);
+            return;
+        }
+        $_POST = unserialize($_POST['upload_data']);
+        if (empty($_POST)) {
+            $response['message'] = 'Empty Data';
+            $response['code'] = 201;
+            echo json_encode($response);
+            return;
+        }
+        $employee = [];
+
+        // echo"<pre>";
+        // print_r($_POST);die;
+
+        foreach ($_POST as $key => $value) {
+            if (empty($value)) continue;
+            if ($key == 0) continue;
+
+           $name = $value[0]; 
+           $contact = $value[1];
+           $alternate_contact = $value[2];
+           $email = $value[3];
+           $dob = $value[4];
+           $address = $value[5];
+           $pincode = $value[6];
+           $city_name = $value[7];
+           $state = $value[8];
+           $country = $value[9];
+           $designation = $value[10];
+           $work_area_location = $value[11];
+           $pancard = $value[12];
+           $aadharcard = $value[13];
+           $doj = $value[14];
+           $dol = $value[15];
+           $branch_name = $value[15];
+
+           $city_id = $this->model->getValue('cities', 'id', ['pincode' => $pincode]);
+           $state_id = $this->model->getValue('cities', 'state_id', ['pincode' => $pincode]);
+           $country_id = $this->model->getValue('cities', 'country_id', ['pincode' => $pincode]);
+           $country_id = $this->model->getValue('cities', 'country_id', ['pincode' => $pincode]);
+           $branch_id = $this->model->getValue('branch', 'id', ['name' => $branch_name]);
+
+           $autoid = $this->model->generate_next_id('employee', 'autoid', 'EMP', '3');
+           
+        //    print_r($autoid);die;
+            if (!empty($email_id)) {
+
+                $response['message'] ='Employee Exist';
+                $response['code'] = 201;
+                $response['status'] = false;
+            }
+            else{
+
+                $employee = [];
+                $employee['company_id'] = $_POST['company_id'];
+                $employee['branch_id'] = $branch_id;
+                $employee['autoid'] = $autoid;
+                $employee['name'] = $name;
+                $employee['contact'] = $contact;
+                $employee['alternate_contact'] = $alternate_contact;
+                $employee['email'] = $email;
+                $employee['dob'] = $dob;
+                $employee['address'] = $address;
+                $employee['pincode'] = $pincode;
+                $employee['city_id'] = $city_id;
+                $employee['state_id'] = $state_id;
+                $employee['country_id'] = $country_id;
+                $employee['designation_id'] = $designation;
+                $employee['work_area_location'] = $work_area_location;
+                $employee['pancard'] = $pancard;
+                $employee['adhaarcard'] = $aadharcard;
+                $employee['doj'] = $doj;
+                $employee['dol'] = $dol;
+                $employee = $this->model->insertData('employee', $employee);
+
+                $response['message'] ='Employee Added';
+                $response['code'] = 200;
+                $response['status'] = true;
+            }
+        }
+        
+        
+        echo json_encode($response);
+    }
     /********************************** Vendor Types *****************************************/
     function vendor_types() {
         $response = array('code' => - 1, 'status' => false, 'message' => '');
@@ -3510,6 +3608,90 @@ class Admin_api extends CI_Controller {
                     }
                 }
                 $response['message'] = 'success';
+                $response['code'] = 200;
+                $response['status'] = true;
+            }
+        } else {
+            $response['message'] = 'Invalid Request';
+            $response['code'] = 204;
+        }
+        // }
+        // else{
+        // 	$response['message'] = 'Authentication required';
+        // 	$response['code'] = 203;
+        // }
+        echo json_encode($response);
+    }
+    /*************************************Weight**********************************************/
+    function get_all_weight() {
+        $response = array('code' => - 1, 'status' => false, 'message' => '');
+        // $validate = validateToken();
+        // if($validate){
+        if ($_SERVER["REQUEST_METHOD"] == "POST") {
+            $select = '*';
+            if (!empty($_POST['select']) && isset($_POST['select'])) {
+                $select = $_POST['select'];
+                unset($_POST['select']);
+            }
+            $weight = $this->model->getData('weight', $_POST, $select);
+            $response['weight'] = $weight;
+            $response['message'] = 'success';
+            $response['code'] = 200;
+            $response['status'] = true;
+        } else {
+            $response['message'] = 'Invalid Request';
+            $response['code'] = 204;
+        }
+        // }
+        // else{
+        // 	$response['message'] = 'Authentication required';
+        // 	$response['code'] = 203;
+        // }
+        echo json_encode($response);
+    }
+    function weight_types() {
+        $response = array('code' => - 1, 'status' => false, 'message' => '');
+        $_POST['weight_name'] = json_decode($_POST['weight_name'], true);
+        $_POST['weight_ids'] = json_decode($_POST['weight_ids'], true);
+        // $validate = validateToken();
+        // if($validate){
+        if ($_SERVER["REQUEST_METHOD"] == "POST") {
+            if (empty($_POST['created_by']) || empty($_POST['weight_name'])) {
+                $response['message'] = 'Less Parameters';
+                $response['code'] = 201;
+            } else {
+                $weight = $this->model->getData('weight', [], 'id');
+                if (!empty($weight)) {
+                    $db_ids = array_column($weight, 'id');
+                    if (!empty($db_ids)) {
+                        foreach ($db_ids as $key => $id) {
+                            if (!in_array($id, $_POST['weight_ids'])) {
+                                $this->model->deleteData2('weight', ['id' => $id]);
+                            }
+                        }
+                    }
+                }
+                if (!empty($_POST['weight_name'])) {
+                    foreach ($_POST['weight_name'] as $key => $weight) {
+                        if (isset($_POST['weight_ids'][$key]) && !empty($_POST['weight_ids'][$key])) {
+                            if (empty($weight)) {
+                                $this->model->deleteData2('weight', ['id' => $_POST['weight_ids'][$key]]);
+                            }
+                            $this->model->updateData('weight', ['updated_by' => $_POST['updated_by'], 'weight_name' => trim($weight) ], ['id' => $_POST['weight_ids'][$key]]);
+                        } else {
+                            $isExist = $this->model->getValue('weight', 'weight_name', ['created_by' => $_POST['created_by'], 'weight_name' => $weight]);
+                            if (empty($isExist)) {
+                                if (!empty($weight)) {
+                                    $this->model->insertData('weight', ['created_by' => $_POST['created_by'], 'weight_name' => trim($weight)]);
+                                }
+                            } else {
+                                $response['message'] = 'Already Exist';
+                                $response['code'] = 201;
+                            }
+                        }
+                    }
+                }
+                $response['message'] = 'Data Updated';
                 $response['code'] = 200;
                 $response['status'] = true;
             }
@@ -6401,7 +6583,7 @@ class Admin_api extends CI_Controller {
                         $response['is_submit'] = true;
                         $response['code'] = 201;
                     } else {
-                        $data = array('o_id' => $o_id, 'emp_id' => $emp_id, 'awb_no' => $awb_no, 'barcode_no' => $barcode_no[$i], 'total_order' => $order_data['total_order'], 'scan_count' => $order_data['scan_count'] + 1, 'pickup_date' => $date);
+                        $data = array('o_id' => $o_id, 'emp_id' => $emp_id, 'awb_no' => $awb_no, 'barcode_no' => $barcode_no[$i], 'total_order' => $order_data['no_of_boxes'], 'scan_count' => $order_data['scan_count'] + 1, 'pickup_date' => $date);
                         $response1 = $this->Adminapi_Model->check_data($barcode_no[$i]);
                         if ($response1['status'] == 0) {
                             $response = $this->Adminapi_Model->common_data_ins('map_barcode', $data);
@@ -6410,8 +6592,8 @@ class Admin_api extends CI_Controller {
                             $order_data_latest = $this->Adminapi_Model->get_scan_count($o_id, $awb_no);
                             $location = $this->Adminapi_Model->get_pickup_scan_location($awb_no);
                             if ($order_data_latest['is_submit'] == true) {
-                                if ($order_data_latest['total_order'] == $order_data_latest['scan_count']) {
-                                    if ($order_data_latest['total_order'] == 1) {
+                                if ($order_data_latest['no_of_boxes'] == $order_data_latest['scan_count']) {
+                                    if ($order_data_latest['no_of_boxes'] == 1) {
                                         // $date = date('d/m/Y');
                                         $pickupscan_status = array('fk_oid' => $location['id'], 'fk_userid' => $location['shipper_id'], 'awb_no' => $awb_no, 'order_status' => $status_details['id'], 'status_description' => "Pickup Scanning", 'order_location' => $location['pickup_city'], 'expected_date' => $date, 'total_order' => $order_data_latest['total_order'], 'scan_count' => $order_data_latest['scan_count']);
                                         $response = $this->Adminapi_Model->common_data_ins('tbl_order_status', $pickupscan_status);
@@ -6420,7 +6602,7 @@ class Admin_api extends CI_Controller {
                                         $response['code'] = 200;
                                         $response['message'] = "success";
                                         $response['scanning_count'] = $order_data_latest['scan_count'];
-                                        $response['total_count'] = $order_data_latest['total_order'];
+                                        $response['total_count'] = $order_data_latest['no_of_boxes'];
                                         $response['is_submit'] = $order_data_latest['is_submit'];
                                     } else {
                                         $update = array('status_description' => "Pickup Scanning Completed", 'scan_count' => $order_data_latest['scan_count']);
@@ -6430,7 +6612,7 @@ class Admin_api extends CI_Controller {
                                         $response['code'] = 200;
                                         $response['message'] = "success";
                                         $response['scanning_count'] = $order_data_latest['scan_count'];
-                                        $response['total_count'] = $order_data_latest['total_order'];
+                                        $response['total_count'] = $order_data_latest['no_of_boxes'];
                                         $response['is_submit'] = $order_data_latest['is_submit'];
                                     }
                                 }
@@ -6446,14 +6628,14 @@ class Admin_api extends CI_Controller {
                                     $this->db->update('tbl_order_status', $update, array('fk_oid' => $o_id));
                                 } else {
                                     $date = date('d/m/Y');
-                                    $pickupscan_status = array('fk_oid' => $location['id'], 'fk_userid' => $location['shipper_id'], 'awb_no' => $awb_no, 'order_status' => $status_details['id'], 'status_description' => "Pickup Scanning", 'order_location' => $location['pickup_city'], 'expected_date' => $date, 'total_order' => $order_data_latest['total_order'], 'scan_count' => $order_data_latest['scan_count']);
+                                    $pickupscan_status = array('fk_oid' => $location['id'], 'fk_userid' => $location['shipper_id'], 'awb_no' => $awb_no, 'order_status' => $status_details['id'], 'status_description' => "Pickup Scanning", 'order_location' => $location['pickup_city'], 'expected_date' => $date, 'total_order' => $order_data_latest['no_of_boxes'], 'scan_count' => $order_data_latest['scan_count']);
                                     $response = $this->Adminapi_Model->common_data_ins('tbl_order_status', $pickupscan_status);
                                 }
                                 $response['status'] = true;
                                 $response['code'] = 200;
                                 $response['message'] = "success";
                                 $response['scanning_count'] = $order_data_latest['scan_count'];
-                                $response['total_count'] = $order_data_latest['total_order'];
+                                $response['total_count'] = $order_data_latest['no_of_boxes'];
                                 $response['is_submit'] = $order_data_latest['is_submit'];
                             }
                         } else {
