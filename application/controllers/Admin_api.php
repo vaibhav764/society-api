@@ -8050,5 +8050,28 @@ class Admin_api extends CI_Controller {
             echo json_encode($response);
         }
 
+        public function get_customer_name_data()
+        {
+            $response = array('code' => - 1, 'status' => false, 'message' => '');
+            // $validate = validateToken();
+            // if($validate){
+            if ($_SERVER["REQUEST_METHOD"] == "POST") {
+                $select = 'id,name';
+                if (!empty($_POST['select']) && isset($_POST['select'])) {
+                    $select = $_POST['select'];
+                    unset($_POST['select']);
+                }
+                $customer = $this->model->getData('customer', $_POST,$select);
+                $response['customer'] = $customer;
+                $response['message'] = 'success';
+                $response['code'] = 200;
+                $response['status'] = true;
+            } else {
+                $response['message'] = 'Invalid Request';
+                $response['code'] = 204;
+            }
+            echo json_encode($response);
+        }
+
 
 }
