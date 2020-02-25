@@ -8255,5 +8255,40 @@ class Admin_api extends CI_Controller {
             echo json_encode($response);
         }
 
+        public function mis_report_new(){
+            $response = array('code' => - 1, 'status' => false, 'message' => '');
+            if ($_SERVER["REQUEST_METHOD"] == "POST") {
+                $id = $this->input->post('id');
+                $customer_name = $this->input->post('customer_name');
+                $from_date = $this->input->post('from_date');
+                $to_date = $this->input->post('to_date');
+                $source_city = $this->input->post('source_city');
+                $destination_city = $this->input->post('destination_city');
+                $status = $this->input->post('status');
+                $emp_id = $this->input->post('emp_id');
+                $vehicle_id = $this->input->post('vehicle_id');
+                $branch_id = $this->input->post('branch_id');
+
+                $data = array(
+                    'id' => $id,
+                    'customer_name' => $customer_name,
+                    'from_date' => $from_date,
+                    'to_date' => $to_date,
+                    'source_city' => $source_city,
+                    'destination_city' => $destination_city,
+                    'status' => $status,
+                    'emp_id' => $emp_id,
+                    'vehicle_id' => $vehicle_id,
+                    'branch_id' => $branch_id,
+                );
+                $response = $this->model->get_mis_report_new($data);
+               
+            } else {
+                $response['message'] = 'Invalid Request';
+                $response['code'] = 204;
+            }
+            echo json_encode($response);
+        }
+
 
 }
