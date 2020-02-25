@@ -8343,6 +8343,7 @@ class Admin_api extends CI_Controller {
                 $emp_id = $this->input->post('emp_id');
                 $vehicle_id = $this->input->post('vehicle_id');
                 $branch_id = $this->input->post('branch_id');
+                $modes = $this->input->post('modes');
 
                 $data = array(
                     'id' => $id,
@@ -8355,13 +8356,67 @@ class Admin_api extends CI_Controller {
                     'emp_id' => $emp_id,
                     'vehicle_id' => $vehicle_id,
                     'branch_id' => $branch_id,
+                    'modes' => $modes,
                 );
                 $response = $this->model->get_mis_report_new($data);
+                if($response['status']==1){
+                    $response['message']="success";
+                    $response['code']=200;
+                }else{
+                    $response['message']="Data Not Found";
+                    $response['code']=201;
+                    
+                }
                
             } else {
                 $response['message'] = 'Invalid Request';
                 $response['code'] = 204;
             }
+            echo json_encode($response);
+        }
+
+        public function add_mis_report_new(){
+            $response = array('code' => - 1, 'status' => false, 'message' => '');
+            if ($_SERVER["REQUEST_METHOD"] == "POST") {
+                
+                    $this->model->insertData('tbl_manuall_mis_report', $_POST);
+                    $response['message'] = 'success';
+                    $response['code'] = 200;
+                    $response['status'] = true;
+            } else {
+                $response['message'] = 'Invalid Request';
+                $response['code'] = 204;
+            }
+            echo json_encode($response);
+        }
+        function get_all_mis_report_new(){
+            $response = array('code' => - 1, 'status' => false, 'message' => '');
+           
+            if ($_SERVER["REQUEST_METHOD"] == "POST") {
+              
+                $select = '*';
+                if (!empty($_POST['select']) && isset($_POST['select'])) {
+                    $select = $_POST['select'];
+                    unset($_POST['select']);
+                }
+                $mis_report = $this->model->getData('tbl_manuall_mis_report', $_POST, $select, ['id' => 'DESC']);
+
+                // if (!empty($manifest_report)) {
+                //     foreach ($manifest_report as $key => $value) {
+                //         $manifest_report[$key]['vehicle_name'] = $this->model->getValue('vehicle', 'name', ['id' => $value['vechile_id']]);
+                //     }
+                // }
+                $response['mis_report'] = $mis_report;
+                $response['message'] = 'success';
+                $response['code'] = 200;
+                $response['status'] = true;
+                // }
+                
+            } else {
+                $response['message'] = 'Invalid Request';
+                $response['code'] = 204;
+            }
+           
             echo json_encode($response);
         }
 
