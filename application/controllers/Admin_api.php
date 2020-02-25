@@ -4263,23 +4263,29 @@ class Admin_api extends CI_Controller {
             echo json_encode($response);
             return;
         }
-        $insert = $_POST;
+
+        $postData = unserialize($_POST['postData']);
+        $TesrmConditionData = unserialize($_POST['TesrmConditionData']);
         $where = [];
         $where['company_id'] = $_POST['company_id'];
         // $where['customer_type'] = $_POST['customer_type'];
-        $where['quotation_number'] = $_POST['quotation_number'];
-        $where['customer_name'] = $_POST['customer_name'];
-        if (strtolower($_POST['customer_type']) != 'normal') {
-            $where['transport_type'] = $_POST['transport_type'];
-            $where['transport_mode'] = $_POST['transport_mode'];
-            $where['transport_speed'] = $_POST['transport_speed'];
-            $where['delivery_type'] = $_POST['delivery_type'];
-            $where['kg_or_box'] = $_POST['kg_or_box'];
+        $where['quotation_number'] = $postData['quotation_number'];
+        $where['customer_name'] = $postData['customer_name'];
+        if (strtolower($postData['customer_type']) != 'normal') {
+            $where['transport_type'] = $postData['transport_type'];
+            $where['transport_mode'] = $postData['transport_mode'];
+            $where['transport_speed'] = $postData['transport_speed'];
+            $where['delivery_type'] = $postData['delivery_type'];
+            $where['kg_or_box'] = $postData['kg_or_box'];
         }
         $quotation = $this->model->getData('quotation', $where);
-        $insert = $_POST;
+        $postData['company_id'] = $_POST['company_id'];
+        $insert = $postData;
+        $insert2 = $TesrmConditionData;
+        //  echo"<pre>";
+        // print_r($insert);die;
         $insert['agree_status'] = '';
-        if (strtolower($_POST['customer_type']) == 'normal') {
+        if (strtolower($postData['customer_type']) == 'normal') {
             $insert['rates'] = '';
         } else {
             $rates = unserialize($_POST['rates']);
@@ -4314,9 +4320,13 @@ class Admin_api extends CI_Controller {
             $response['id'] = $quotation[0]['id'];
             $response['message'] = 'Quotation Updated';
             $this->model->updateData('quotation', $insert, ['id' => $quotation[0]['id']]);
+            $this->model->updateData('terms_and_condition', $insert2, ['quotation_id' => $quotation[0]['id']]);
         } else {
             $response['message'] = 'Quotation Added';
             $id = $this->model->insertData('quotation', $insert);
+            // print_r($id);die;
+            $insert2['quotation_id'] = $id;
+            $id2 = $this->model->insertData('terms_and_condition', $insert2);
             $response['id'] = $id;
         }
         $response['code'] = 200;
@@ -4374,6 +4384,7 @@ class Admin_api extends CI_Controller {
             echo json_encode($response);
             return;
         }
+
         $select = '*';
         if (!empty($_POST['select']) && isset($_POST['select'])) {
             $select = $_POST['select'];
@@ -4391,6 +4402,7 @@ class Admin_api extends CI_Controller {
         }
         $_POST = empty($_POST) ? [] : $_POST;
         $_POST = array_merge($_POST, $where);
+
         $quotation = $this->model->getData('quotation', $_POST, $select, [], $group_by);
         if (empty($quotation)) {
             $response['message'] = 'Please Add Quotation';
@@ -4436,6 +4448,7 @@ class Admin_api extends CI_Controller {
                 if ($all_empty2) unset($quotation[$key]);
             }
         }
+        
         $global_rates = $this->model->getData('global_rates', ['company_id' => $_POST['company_id']]);
         if (empty($global_rates)) {
             $global_rates = [];
@@ -4478,6 +4491,34 @@ class Admin_api extends CI_Controller {
         $response['status'] = true;
         echo json_encode($response);
     }
+    function getTermsAndConditions() {
+        $response = array('code' => - 1, 'status' => false, 'message' => '');
+        // echo"<pre>";
+        // print_r($_POST);die;
+        // $validate = validateToken();
+        // if(!$validate){
+        // 	$response['message'] = 'Authentication required';
+        // 	$response['code'] = 203;
+        //  	echo json_encode($response);
+        //  	return;
+        // }
+        if ($_SERVER["REQUEST_METHOD"] != "POST") {
+            $response['message'] = 'Invalid Request';
+            $response['code'] = 204;
+            echo json_encode($response);
+            return;
+        }
+       
+
+        $terms_and_conditions = $this->model->getData('terms_and_condition', ['quotation_id' => $_POST['id']]);
+        $response['terms_and_conditions'] = $terms_and_conditions;
+        // $response['global_rates'] = $global_rates;
+        $response['message'] = 'success';
+        $response['code'] = 200;
+        $response['status'] = true;
+        echo json_encode($response);
+    }
+
     function getQuotationList() {
         $response = array('code' => - 1, 'status' => false, 'message' => '');
         // $validate = validateToken();
