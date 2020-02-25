@@ -883,6 +883,11 @@ class Admin_api extends CI_Controller {
                 $cft = $ids;
                 $response['cft'] = json_decode($cft, true);
             }
+            if ($fieldName == 'weight_types') {
+                $ids = explode(',', $ids);
+                $weight_types = $this->model->getData('weight', [], 'id,weight_name', [], ['id' => $ids]);
+                $response['weight_types'] = $weight_types;
+            }
         }
         $response['message'] = 'success';
         $response['code'] = 200;
@@ -4894,6 +4899,27 @@ class Admin_api extends CI_Controller {
         $response['status'] = true;
         echo json_encode($response);
     }
+    function updateOrderStatus() {
+        $response = array('code' => - 1, 'status' => false, 'message' => '');
+        // $validate = validateToken();
+        // if(!$validate){
+        //  $response['message'] = 'Authentication required';
+        //  $response['code'] = 203;
+        //      echo json_encode($response);
+        //      return;
+        // }
+        if ($_SERVER["REQUEST_METHOD"] != "POST") {
+            $response['message'] = 'Invalid Request';
+            $response['code'] = 204;
+            echo json_encode($response);
+            return;
+        }
+        $this->model->updateData('ship', $_POST, ['id' => $_POST['id']]);
+        $response['message'] = 'Order Status Updated';
+        $response['code'] = 200;
+        $response['status'] = true;
+        echo json_encode($response);
+    }
     function ship_history() {
         $response = array('code' => - 1, 'status' => false, 'message' => '');
         // $validate = validateToken();
@@ -5109,7 +5135,7 @@ class Admin_api extends CI_Controller {
                 }
             }
         }
-        if ($rate['transport_type'] == 'domestic') {
+        if ($rate['transport_type'] == 'domestic'){
             $from_zones = $this->model->getSqlData('SELECT id,zone_type,customer_id,zone FROM zone WHERE FIND_IN_SET(' . $_POST['sender_city_id'] . ',cities) > 0 AND company_id = ' . $_POST['company_id']);
             if (empty($from_zones)) {
                 $response['message'] = 'Incorrect Pincode';
@@ -5136,6 +5162,9 @@ class Admin_api extends CI_Controller {
                 return;
             }
             $to_zone_id = $to_zones[0]['id'];
+            $weight_type_id = '';
+            $rate = isset($rates[$from_zone_id][$to_zone_id]) ? $rates[$from_zone_id][$to_zone_id] : '';
+
             // $response['to_zone_id'] = $to_zone_id;
             // if($_POST['bill_to'] == 'recepient'){
             // 	foreach ($to_zones as $key => $value) {
@@ -5144,15 +5173,20 @@ class Admin_api extends CI_Controller {
             // 		}
             // 	}
             // }
-            
-        } else if ($rate['transport_type'] == 'international') {
+        
+        } else if ($rate['transport_type'] == 'international'){
             $from_zone_id = $_POST['sender_country_id'];
-            $to_zone_id = $_POST['recepient_country_id'];
+            $weight_type_id = $_POST['weight_type_id'];
+            $to_zone_id = '';
+
+        $rate = isset($rates[$from_zone_id][$weight_type_id]) ? $rates[$from_zone_id][$weight_type_id] : '';
+
+        
         }
-        $rate = isset($rates[$from_zone_id][$to_zone_id]) ? $rates[$from_zone_id][$to_zone_id] : '';
         $response['rate'] = $rate;
         $response['from_zone_id'] = $from_zone_id;
         $response['to_zone_id'] = $to_zone_id;
+        $response['weight_type_id'] = $weight_type_id;
         $response['message'] = 'success';
         $response['code'] = 200;
         $response['status'] = true;
