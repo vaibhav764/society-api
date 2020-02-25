@@ -856,6 +856,8 @@ class Model extends CI_Model {
 
 		$this->db->where('ship.ship_date >=',$data['from_date']);
 		$this->db->where('ship.ship_date <=',$data['to_date']);
+		$this->db->where('ship.company_id',$data['id']);
+		$this->db->where('tbl_forwarding.status','1');
         if (!empty($data['customer_name'])) {
             $this->db->where('ship.shipper_id', $data['customer_name']);
 		}
@@ -874,16 +876,27 @@ class Model extends CI_Model {
 		if (!empty($data['vehicle_id'])) {
             $this->db->where('source_outscan.vehicle_id', $data['vehicle_id']);
 		}
-		if (!empty($data['vehicle_id'])) {
-            $this->db->where('source_outscan.vehicle_id', $data['vehicle_id']);
+		if (!empty($data['modes'])) {
+            $this->db->where('ship.transport_mode', $data['modes']);
+		}
+		if (!empty($data['branch_id'])) {
+            $this->db->where('ship.branch_id', $data['branch_id']);
         }
         $this->db->group_by('ship.AWBno');
         $query = $this->db->get();
         $result = $query->result_array();
-        $response['status'] = 1;
-        $response['message'] = 'success';
-        $response['data'] = $result;
-        return $response;
+		if($query->num_rows() >= 1) {
+			$response['status'] = 1;
+			$response['message'] = 'success';
+			$response['data'] = $result;
+			return $response;
+	   }
+	   else
+	   {
+		$response['status'] = 0;
+		$response['message'] = 'Data Not Found';
+		return $response;
+	   }
 	}
 
 }//class ends here	
