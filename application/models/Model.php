@@ -857,7 +857,7 @@ class Model extends CI_Model {
 		$this->db->where('ship.ship_date >=',$data['from_date']);
 		$this->db->where('ship.ship_date <=',$data['to_date']);
 		$this->db->where('ship.company_id',$data['id']);
-		$this->db->where('tbl_forwarding.status','1');
+		// $this->db->where('tbl_forwarding.status','1');
         if (!empty($data['customer_name'])) {
             $this->db->where('ship.shipper_id', $data['customer_name']);
 		}
@@ -883,6 +883,7 @@ class Model extends CI_Model {
             $this->db->where('ship.branch_id', $data['branch_id']);
         }
         $this->db->group_by('ship.AWBno');
+        $this->db->order_by('ship.ship_date','DESC');
         $query = $this->db->get();
         $result = $query->result_array();
 		if($query->num_rows() >= 1) {
