@@ -8420,5 +8420,19 @@ class Admin_api extends CI_Controller {
             echo json_encode($response);
         }
 
+        public function get_pincode_details(){
+            $response = array('code' => - 1, 'status' => false, 'message' => '');
+            if ($_SERVER["REQUEST_METHOD"] == "POST") {
+                $postal_code = $this->input->post('postal_code');
+                $postal_code_data = $this->model->get_pincode_details($postal_code);
+                    $response = $postal_code_data;
+            } else {
+                $response['message'] = 'Invalid Request';
+                $response['code'] = 204;
+            }
+           
+            echo json_encode($response);
+        }
+
 
 }

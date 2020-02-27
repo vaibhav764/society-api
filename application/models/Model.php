@@ -900,4 +900,26 @@ class Model extends CI_Model {
 	   }
 	}
 
+	public function get_pincode_details($postal_code) {
+        $response = array();
+        $this->db->select('city,state_code');
+		$this->db->from('cities');
+        $this->db->where('pincode', $postal_code);
+        $query = $this->db->get();
+        $result = $query->row_array();
+		// return $result;
+		if ($query->num_rows() > 0){
+			$response['status'] = 1;
+			$response['message'] = 'success';
+			$response['data'] = $result;
+			return $response;
+		}
+		else
+		{
+			$response['status'] = 0;
+			$response['message'] = 'Pincode does not exist';
+			return $response;
+		}
+	}
+
 }//class ends here	
