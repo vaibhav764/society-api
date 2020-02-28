@@ -7726,16 +7726,27 @@ class Admin_api extends CI_Controller {
 
     public function pincode(){
         $response = array('code' => - 1, 'status' => false, 'message' => '');
+           
         if ($_SERVER["REQUEST_METHOD"] == "POST") {
-            $pincode = $this->Admin_Model->pincode();
+          
+            $select = '*';
+            if (!empty($_POST['select']) && isset($_POST['select'])) {
+                $select = $_POST['select'];
+                unset($_POST['select']);
+            }
+            $forwarding_master = $this->model->getData('pincode', $_POST, $select);
+          
+            $response['forwarding_master'] = $forwarding_master;
+            $response['message'] = 'success';
             $response['code'] = 200;
             $response['status'] = true;
-            $response= $pincode;
-
+            
+            
         } else {
             $response['message'] = 'Invalid Request';
             $response['code'] = 204;
         }
+       
         echo json_encode($response);
     }
 
@@ -8433,6 +8444,68 @@ class Admin_api extends CI_Controller {
            
             echo json_encode($response);
         }
+
+        function add_pincode_details() {
+            $response = array('code' => - 1, 'status' => false, 'message' => '');
+            // $validate = validateToken();
+            // if($validate){
+            if ($_SERVER["REQUEST_METHOD"] == "POST") {
+                $data =$_POST;
+                $data['mode']= json_decode($_POST['mode']);
+
+                $data ['mode'] = implode(', ', $data['mode']);
+                // print_r($data);die;
+                if (empty($data['postal_code'])) {
+                    $response['message'] = 'Postal Code is Required';
+                    $response['code'] = 201;
+                }else if(empty($data['city_name'])) {
+                    $response['message'] = 'City Name is required';
+                    $response['code'] = 201;
+
+                }else if(empty($data['state'])) {
+                    $response['message'] = 'State is required';
+                    $response['code'] = 201;
+
+                }else if(empty($data['international_service'])) {
+                    $response['message'] = 'International Service is required';
+                    $response['code'] = 201;
+
+                }else if(empty($data['domestic_service'])) {
+                    $response['message'] = 'Domestic Service is required';
+                    $response['code'] = 201;
+
+                }else if(empty($data['oda_opa'])) {
+                    $response['message'] = 'ODA/OPA is required';
+                    $response['code'] = 201;
+
+                }else if(empty($data['code_service'])) {
+                    $response['message'] = 'Code Service is required';
+                    $response['code'] = 201;
+
+                }else {
+                    $isExist = $this->model->getValue('pincode', 'postal_code', ['created_by' => $data['created_by'], 'postal_code' => $data['postal_code']]);
+                    if (empty($isExist)) {
+                        $this->model->insertData('pincode', $data);
+                        $response['message'] = 'success';
+                        $response['code'] = 200;
+                        $response['status'] = true;
+                    } else {
+                        $response['message'] = 'Pincode is already exist';
+                        $response['code'] = 201;
+                    }
+                }
+            } else {
+                $response['message'] = 'Invalid Request';
+                $response['code'] = 204;
+            }
+            // }
+            // else{
+            // 	$response['message'] = 'Authentication required';
+            // 	$response['code'] = 203;
+            // }
+            echo json_encode($response);
+        }
+       
 
 
 }
