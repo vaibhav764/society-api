@@ -7734,9 +7734,9 @@ class Admin_api extends CI_Controller {
                 $select = $_POST['select'];
                 unset($_POST['select']);
             }
-            $forwarding_master = $this->model->getData('pincode', $_POST, $select);
+            $pincode = $this->model->getData('pincode', $_POST, $select);
           
-            $response['forwarding_master'] = $forwarding_master;
+            $response['pincode'] = $pincode;
             $response['message'] = 'success';
             $response['code'] = 200;
             $response['status'] = true;
