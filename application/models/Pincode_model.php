@@ -9,8 +9,9 @@ class Pincode_model extends CI_Model
     public function __construct()
     {
     }
-    public function count_all()
+    public function count_all($data= array())
     {
+        // print_r($data);die;
         $i = 0;
      
         foreach ($this->column_search as $item) // loop column 
@@ -44,13 +45,16 @@ class Pincode_model extends CI_Model
             $this->db->order_by(key($order), $order[key($order)]);
         }
         
-        $this->db->from($this->data_table);
+        $this->db->from('pincode');
+        $this->db->where('company_id',$data['company_id']);
         return $this->db->count_all_results();
 	}
 	
-	function count_filtered()
+	function count_filtered($data=array())
     {
-        $this->db->from($this->data_table);
+        
+        $this->db->from('pincode');
+        $this->db->where('company_id',$data['company_id']);
         $query = $this->db->get();
         return $query->num_rows();
     }

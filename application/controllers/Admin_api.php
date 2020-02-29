@@ -7711,10 +7711,8 @@ class Admin_api extends CI_Controller {
                 unset($_POST['select']);
             }
             $pincode = $this->model->getData('pincode', $_POST, $select);
-            $count = $this->pincode_model->count_all();
-            $count_filtered = $this->pincode_model->count_filtered();
-            
-        //    print_r($count_filtered);die;
+            $count = $this->pincode_model->count_all($_POST);
+            $count_filtered = $this->pincode_model->count_filtered($_POST);
             $response['pincode'] = $pincode;
             $response['count'] = $count;
             $response['count_filtered'] = $count_filtered;
