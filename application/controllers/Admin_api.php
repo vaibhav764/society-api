@@ -3394,31 +3394,7 @@ class Admin_api extends CI_Controller {
         // }
         echo json_encode($response);
     }
-    function delete_pincode() {
-        $response = array('code' => - 1, 'status' => false, 'message' => '');
-        // $validate = validateToken();
-        // if($validate){
-        if ($_SERVER["REQUEST_METHOD"] == "POST") {
-            if (empty($_POST['id'])) {
-                $response['message'] = 'Pincode id is required';
-                $response['code'] = 201;
-            } else {
-                $pincode = $this->model->deleteData('pincode', ['id' => $_POST['id']]);
-                $response['message'] = 'success';
-                $response['code'] = 200;
-                $response['status'] = true;
-            }
-        } else {
-            $response['message'] = 'Invalid Request';
-            $response['code'] = 204;
-        }
-        // }
-        // else{
-        // 	$response['message'] = 'Authentication required';
-        // 	$response['code'] = 203;
-        // }
-        echo json_encode($response);
-    }
+    
     /********************************** Mode *****************************************/
     // function add_mode(){
     // 	$response = array('code' => -1, 'status' => false, 'message' => '');
@@ -7735,8 +7711,13 @@ class Admin_api extends CI_Controller {
                 unset($_POST['select']);
             }
             $pincode = $this->model->getData('pincode', $_POST, $select);
-          
+            $count = $this->pincode_model->count_all();
+            $count_filtered = $this->pincode_model->count_filtered();
+            
+        //    print_r($count_filtered);die;
             $response['pincode'] = $pincode;
+            $response['count'] = $count;
+            $response['count_filtered'] = $count_filtered;
             $response['message'] = 'success';
             $response['code'] = 200;
             $response['status'] = true;
@@ -8505,6 +8486,105 @@ class Admin_api extends CI_Controller {
             // }
             echo json_encode($response);
         }
+
+        function view_pincode_details(){
+            $response = array('code' => - 1, 'status' => false, 'message' => '');
+            
+            if ($_SERVER["REQUEST_METHOD"] == "POST") {
+                if (empty($_POST['id'])) {
+                    $response['message'] = 'Id is required';
+                    $response['code'] = 201;
+                } else {
+                    $select = '*';
+                    if (!empty($_POST['select']) && isset($_POST['select'])) {
+                        $select = $_POST['select'];
+                        unset($_POST['select']);
+                    }
+                    $pincode = $this->model->getData('pincode', $_POST, $select);
+                   
+                    $response['pincode'] = $pincode;
+                    $response['message'] = 'success';
+                    $response['code'] = 200;
+                    $response['status'] = true;
+                }
+            } else {
+                $response['message'] = 'Invalid Request';
+                $response['code'] = 204;
+            }
+           
+            echo json_encode($response);
+        }
+        function UpdatePincode(){
+            $response = array('code' => - 1, 'status' => false, 'message' => '');
+            // $validate = validateToken();
+            // if($validate){
+            if ($_SERVER["REQUEST_METHOD"] == "POST") {
+                $data =$_POST;
+                $data['mode']= json_decode($_POST['mode']);
+
+                $data ['mode'] = implode(', ', $data['mode']);
+                // print_r($data);die;
+                if(empty($data['international_service'])) {
+                    $response['message'] = 'International Service is required';
+                    $response['code'] = 201;
+
+                }else if(empty($data['domestic_service'])) {
+                    $response['message'] = 'Domestic Service is required';
+                    $response['code'] = 201;
+
+                }else if(empty($data['oda_opa'])) {
+                    $response['message'] = 'ODA/OPA is required';
+                    $response['code'] = 201;
+
+                }else if(empty($data['code_service'])) {
+                    $response['message'] = 'Code Service is required';
+                    $response['code'] = 201;
+
+                }else {
+                   
+                    $pincode = $this->model->updateData('pincode', $data, ['id' => $data['id']]);
+                    $response['message'] = 'Pincode Updated';
+                    $response['code'] = 200;
+                    $response['status'] = true;
+                }
+            } else {
+                $response['message'] = 'Invalid Request';
+                $response['code'] = 204;
+            }
+            // }
+            // else{
+            // 	$response['message'] = 'Authentication required';
+            // 	$response['code'] = 203;
+            // }
+            echo json_encode($response);           
+        }
+        function delete_pincode() {
+            $response = array('code' => - 1, 'status' => false, 'message' => '');
+            // $validate = validateToken();
+            // if($validate){
+            if ($_SERVER["REQUEST_METHOD"] == "POST") {
+                if (empty($_POST['id'])) {
+                    $response['message'] = 'Pincode id is required';
+                    $response['code'] = 201;
+                } else {
+                    $pincode = $this->model->deleteData('pincode', ['id' => $_POST['id']]);
+                    $response['message'] = 'success';
+                    $response['code'] = 200;
+                    $response['status'] = true;
+                }
+            } else {
+                $response['message'] = 'Invalid Request';
+                $response['code'] = 204;
+            }
+            // }
+            // else{
+            // 	$response['message'] = 'Authentication required';
+            // 	$response['code'] = 203;
+            // }
+            echo json_encode($response);
+        }
+
+       
        
 
 

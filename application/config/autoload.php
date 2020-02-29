@@ -132,4 +132,4 @@ $autoload['language'] = array();
 |
 |	$autoload['model'] = array('first_model' => 'first');
 */
-$autoload['model'] = array('model','Adminapi_Model','Admin_Model');
+$autoload['model'] = array('model','Adminapi_Model','Admin_Model','pincode_model');

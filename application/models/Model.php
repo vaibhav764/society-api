@@ -922,4 +922,6 @@ class Model extends CI_Model {
 		}
 	}
 
+	
+
 }//class ends here	
