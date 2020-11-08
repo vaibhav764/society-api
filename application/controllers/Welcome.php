@@ -20,12 +20,12 @@ class Welcome extends CI_Controller {
 	 */
 	public function index()
 	{
-		$pass = encyrpt_password('user');
-		// $this->load->view('welcome_message');
-		$video_names = ['a','b','c'];
-		echo json_encode($video_names);
+		// $pass = encyrpt_password('user');
+		// // $this->load->view('welcome_message');
+		// $video_names = ['a','b','c'];
+		// echo json_encode($video_names);
 
-		sendEmail('piyush.nerkar@microlan.in','piyush.nerkar@microlan.in','hiiiiiiiii','hiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii');
+		// sendEmail('piyush.nerkar@microlan.in','piyush.nerkar@microlan.in','hiiiiiiiii','hiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii');
 
 		
 	}

@@ -1,0 +1,1 @@
+ALTER TABLE `tbl_invoice_data` ADD `sinking_fund` INT NOT NULL AFTER `amount_paid`, ADD `sublet_charges` INT NOT NULL AFTER `sinking_fund`, ADD `conveysnce_deed` INT NOT NULL AFTER `sublet_charges`, ADD `fine_amount` INT NOT NULL AFTER `conveysnce_deed`, ADD `bill_amount` INT NOT NULL AFTER `fine_amount`, ADD `arrears_amount` INT NOT NULL AFTER `bill_amount`;

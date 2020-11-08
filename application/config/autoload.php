@@ -58,7 +58,7 @@ $autoload['packages'] = array();
 |
 |	$autoload['libraries'] = array('user_agent' => 'ua');
 */
-$autoload['libraries'] = array('database','user_agent','email');
+$autoload['libraries'] = array('form_validation','database','user_agent','email');
 
 /*
 | -------------------------------------------------------------------
@@ -89,7 +89,7 @@ $autoload['drivers'] = array();
 |
 |	$autoload['helper'] = array('url', 'file');
 */
-$autoload['helper'] = array('url','jwt','common');
+$autoload['helper'] = array('url', 'file','jwt','authorization','common');
 
 /*
 | -------------------------------------------------------------------
@@ -132,4 +132,4 @@ $autoload['language'] = array();
 |
 |	$autoload['model'] = array('first_model' => 'first');
 */
-$autoload['model'] = array('model','Adminapi_Model','Admin_Model','pincode_model');
+$autoload['model'] = array('model','Admin_model','link');

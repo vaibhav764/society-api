@@ -78,7 +78,7 @@ $db['default'] = array(
 	'hostname' => 'localhost',
 	'username' => 'root',
 	'password' => '',
-	'database' => 'logistics',
+	'database' => 'db_society_management',
 
  	//'hostname' => 'localhost',
 	// 'username' => 'apexworl_apex',
